@@ -1,0 +1,11 @@
+.thumbnail img {
+    width: 100%;
+}
+/*remove padding around image inside thumbnail*/
+.thumbnail {
+    padding: 0;
+}
+/*add padding around the text inside the caption*/
+.thumbnail .caption-full{
+    padding: 9px;
+}

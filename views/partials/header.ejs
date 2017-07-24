@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Business Enritchment Portal | BET</title>
+	<link rel="stylesheet" type="text/css" href="/stylesheets/bootstrap.css">
+	<link rel="stylesheet" type="text/css" href="/stylesheets/app.css">
+	<link rel="stylesheet" type="text/css" href="/stylesheets/font-awesome.css">
+	<script src="/javascript/jquery-3.2.1.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/javascript/bootstrap.js" type="text/javascript" charset="utf-8"></script>
+
+</head>
+<body>
+	<nav class="navbar navbar-default">
+		<div class="container-fluid">
+			<!-- Brand and toggle get grouped for better mobile display -->
+			<div class="navbar-header">
+				<a class="navbar-brand" href="#">TEData</a>
+			</div>
+
+			<!-- Collect the nav links, forms, and other content for toggling -->
+			<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+				<ul class="nav navbar-nav">
+					<li class="active"><a href="/">Home</a> </li>        
+					<li><a href="">About</a> </li>        
+					<li><a href="">Contact</a> </li>        
+				</ul>
+				
+				<ul class="nav navbar-nav navbar-right">
+					<% if(!currentUser){ %>
+						<li><a href="/signup">Sign Up <i class="fa fa-user-plus"></i></a></li>
+						<li><a href="/login">Login <i class="fa fa-user"></i></a></li>
+					<% } else { %>
+						<li><a href="#">Signed As <%= currentUser.name %></a></li>
+						<li><a href="/logout">Logout</a></li>
+					<% } %>
+				</ul>
+			</div><!-- /.navbar-collapse -->
+		</div><!-- /.container-fluid -->
+	</nav>
+
+    <div class="container">
+        <% if(error && error.length > 0){ %>
+	        <div class="alert alert-danger" role="alert">
+	            <%= error %></h1>        
+	        </div>
+        <% } %>
+        <% if(success && success.length > 0){ %>
+	        <div class="alert alert-success" role="alert">
+	            <%= success %></h1>        
+	        </div>
+        <% } %>
+    </div>
+
+

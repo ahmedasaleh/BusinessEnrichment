@@ -1,0 +1,31 @@
+<% include ../partials/header %>
+    <!--< the class container will give space around our contents>-->
+    <div class="container">
+        <header class="jumbotron">
+            <!--<adding second container to keep spacing around contents when we resize the page>-->
+            <div class="container">
+                <h1>Business Enrichment Portal</h1>
+                <p>View Network Information</p>
+                <p><a class="btn btn-primary btn-lg" href="/devices/new">Add New Device</a></p>
+            </div>
+        </header>
+        <div class="row">
+            <h3>List of Devices!</h3>
+        </div>
+
+        <!--<adding flex style to fix issue related to left alignment>-->
+        <div class="row text-center" style="display:flex; flex-wrap:wrap;">
+            <% devices.forEach(function(device){ %>
+                <div class="col-md-4 col-sm-6">
+                    <div class="thumbnail">
+                        <img src="/images/router.png">
+                        <div class="caption">
+                            <h4><%= device.name %></h4>
+                        </div>
+                        <a href="/devices/<%= device._id %>" class="btn btn-primary">More Info</a>
+                    </div>
+                </div>
+                <% }); %>
+        </div>
+    </div>
+    <% include ../partials/footer %>

@@ -1,0 +1,42 @@
+<% include ../partials/header %>
+<div class="container">
+    <div class="row">
+        <div class="col-md-9">
+            <h1><%=device.name  %></h1>
+            <div class="thumbnail">
+                <img class="img-responsive" src="/images/router.png">
+                <div class="caption-full">
+                    <h4 class="pull-right">IP: <%=device.ipaddress  %></h4>
+                    <h4><a href="/devices/<%= device._id %>"><%=device.hostname  %></a></h4>
+                    <p><%=device.description  %></p>
+                    <p><em>Added By:  <%= device.author.email %></em></p>
+                    <!--/currentUser is setted up application.js middleware/-->
+                    <% console.log("currentUser in show.ejs:\n"+currentUser) %>
+                    <% if(currentUser && device.author.id.equals(currentUser._id)){ %> 
+                        <a class="btn btn-warning" href="/devices/<%= device._id %>/edit">Edit</a>
+                        <form id="delete-form" action="/devices/<%= device._id %>/?_method=DELETE" method="POST">
+                            <button class="btn btn-danger">Delete</button>
+                        </form>
+                    <% } %>
+                </div>
+            </div>
+            <div class="well">
+                <div class="text-right">
+                    <a class="btn btn-success" href="/devices/<%= device._id %>/interfaces/new">Add a New Interface</a>
+                </div>
+                <hr>
+                <% device.interfaces.forEach(function(Interface){ %>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <strong><%= Interface.author.username %></strong>   
+                            <span class="pull-right">10 days ago</span>
+                            <p><%= Interface.text %></p>
+                        </div>
+                    </div>
+                <% }); %>
+                
+            </div>
+        </div>
+    </div>
+</div>
+<% include ../partials/footer %>
