@@ -7,10 +7,17 @@ var interfaceSchema = new mongoose.Schema({
     description: String,
     type: String,
     speed: Number,
+    hasAdjacent: {type: Boolean, default: false},
+    created: { type: Date, default: Date.now },
+    updated: Date,
     device: {
+        id:{
                 type: mongoose.Schema.Types.ObjectId,
                 //ref is the name of the model
                 ref: "Device"
+        },
+        hostname: String,
+        ipaddress: String
     },
     author: {
         id:{
@@ -18,7 +25,15 @@ var interfaceSchema = new mongoose.Schema({
             ref: "User"
         },
         email: String
-    }
+    },
+    lastUpdatedBy: {
+        id:{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User"
+        },
+        email: String
+    },
+    
 });
 
 module.exports = mongoose.model("Interface", interfaceSchema);

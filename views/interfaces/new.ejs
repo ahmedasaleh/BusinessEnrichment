@@ -5,13 +5,32 @@
         <div style="width: 30%; margin: 25px auto;">
             <form action="/devices/<%= device._id %>/interfaces" method="POST">
                 <div class="form-group">
-                    <input class="form-control" type="text" name="interface[name]" placeholder="interface name">
+                    <input class="form-control" type="text" name="interface[name]" placeholder="ifName">
                 </div>
                 <div class="form-group">
-                    <button class="btn btn-lg btn-primary btn-block">Add!</button>
+                    <input class="form-control" type="text" name="interface[alias]" placeholder="ifAlias">
+                </div>
+                <div class="form-group">
+                    <input class="form-control" type="text" name="interface[index]" placeholder="ifIndex">
+                </div>
+                <div class="form-group">
+                    <input class="form-control" type="text" name="interface[type]" placeholder="ifType">
+                </div>
+                <div class="form-group">
+                    <input class="form-control" type="text" name="interface[speed]" placeholder="actual ifSpeed">
+                </div>
+                <div class="form-group">
+                    <input class="form-control" type="text" name="interface[device][hostname]" value="<%= device.hostname %>" readonly>
+                </div>
+                <div class="form-group">
+                    <input class="form-control" type="hidden" name="interface[device][id]" value="<%= device._id %>" readonly>
+                    <input class="form-control" type="hidden" name="interface[device][ipaddress]" value="<%= device.ipaddress %>" readonly>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-lg btn-primary btn-block">Add Interface</button>
                 </div>
             </form>
-            <a href="/devices">Go Back</a>
+            <a href="/devices/<%= device._id %>">Go Back</a>
         </div>
     </div>
 </div>

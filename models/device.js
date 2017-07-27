@@ -1,23 +1,44 @@
-var mongoose = require("mongoose");
+var mongoose= require("mongoose");
 //Database template setup
 var deviceSchema = new mongoose.Schema({
     hostname: String,
     ipaddress: String,
     communityString: { type: String, default: 'public' },
     created: { type: Date, default: Date.now },
+    updated: Date,
     description: String,
-    popName: String,
+    popName: {
+        id:{
+            type: mongoose.Schema.Types.ObjectId,
+            //ref is the name of the model
+            ref: "POP"
+        },    
+        name: String  
+    },
     sector: {
-                type: mongoose.Schema.Types.ObjectId,
-                //ref is the name of the model
-                ref: "Sector"
+        id:{                
+            type: mongoose.Schema.Types.ObjectId,
+            //ref is the name of the model
+            ref: "Sector"
+        },
+        name: String
     },
     governorate: {
-                type: mongoose.Schema.Types.ObjectId,
-                //ref is the name of the model
-                ref: "Governorate"
+        id:{                
+            type: mongoose.Schema.Types.ObjectId,
+            //ref is the name of the model
+            ref: "Governorate"
+        },    
+        name: String
     },
     author: {
+        id:{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User"
+        },
+        email: String
+    },
+    lastUpdatedBy: {
         id:{
             type: mongoose.Schema.Types.ObjectId,
             ref: "User"

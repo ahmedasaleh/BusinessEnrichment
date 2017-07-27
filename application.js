@@ -5,8 +5,10 @@ var express             = require("express"),
     flash               = require("connect-flash"),
     passport            = require("passport"),
     LocalStrategy       = require("passport-local"),
-    User                = require("./models/user");
-//     seedDB              = require("./seeds");
+    methodOverride      = require("method-override"),
+    dotenv              = require("dotenv"),
+    User                = require("./models/user"),
+    seedDB              = require("./seeds");
 // //requiring routes
 var interfaceRoutes       = require("./routes/interfaces"),  
     deviceRoutes    = require("./routes/devices"),  
@@ -19,14 +21,16 @@ var indexBaseURL        = "/",
 var applicationVersion  = 1;
 
 //inistantiate app
+dotenv.config();
 var app = express();
 app.set("view engine", "ejs");
 app.use(express.static(__dirname+"/public"));
+app.use(methodOverride("_method"));
 app.use(flash());
 
 app.use(bodyParser.urlencoded({extended: true}));
 mongoose.Promise = global.Promise; //to vercome the warning about Mongoose mpromise
-mongoose.connect("mongodb://localhost/bet_dev_v1", {useMongoClient: true});
+mongoose.connect("mongodb://localhost/"+process.env.DEV_DB, {useMongoClient: true});
 //seedDB();
 
 //Passport configuration

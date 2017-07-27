@@ -20,9 +20,7 @@ router.get("/new",middleware.isLoggedIn,function(request,response){
 
 //CREATE ROUTE for new interface
 router.post("/",middleware.isLoggedIn,function(request,response){
-    console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-    console.log(request);
-    console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+    // console.log(request);
     //lookup device using ID
     Device.findById(request.params.id,function(error,foundDevice){
         if(error){
@@ -32,7 +30,9 @@ router.post("/",middleware.isLoggedIn,function(request,response){
         }
         else{
             //create new interface
-            Interface.create(request.body.interface,function(error,createdInterface){
+            var anInterface = request.body.interface;
+
+            Interface.create(anInterface,function(error,createdInterface){
                 if(error){
                     console.log(error);
                 }
@@ -55,5 +55,28 @@ router.post("/",middleware.isLoggedIn,function(request,response){
     });
 });
 
+router.get("/:id",function(request,response){
+    Interface.findById(request.params.id,function(error,foundInterface){
+        if(error){
+            console.log(error);
+        }
+        else{
+            response.render("interfaces/edit",{interface: foundInterface});
+        }
+        
+    });
+});
 
+//DESTROY Interface ROUTE
+router.delete("/:id", middleware.checkInterfaceOwnership,  function(request,response){
+    var containingDevice = request.body.interface.device;
+    Interface.findByIdAndRemove(request.params.id,function(error){
+        if(error){
+            console.log(error);
+        }
+        else{
+            response.redirect("/devices/"+containingDevice.id);
+        }
+    });
+});
 module.exports = router;

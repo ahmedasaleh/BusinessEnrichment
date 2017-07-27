@@ -4,6 +4,8 @@ var Device      = require("../models/device");
 var middleware  = require("../middleware");
 var snmp        = require ("net-snmp");
 var session     = snmp.createSession (process.env.IP, "public");
+var seedDB      = require("../seeds");
+
 //create and save a document, handle error if occured
 var aDevice ;
 //*********************
@@ -33,7 +35,7 @@ var maxRepetitions = 20;
 var theWalkSession; 
 
 //INDEX - show all devices
-router.get("/", function(request, response) {
+router.get("/", middleware.isLoggedIn ,function(request, response) {
     Device.find({}, function(err, foundDevices) {
         if (err) {
             console.log(err);
@@ -80,6 +82,10 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
 //NEW - show form to create new device
 //should show the form will post data to /devices
 router.get("/new",middleware.isLoggedIn ,function(request, response) {
+    if(process.env.SEED == "true"){
+        console.log("process.env.SEED: "+process.env.SEED);
+        seedDB(request.user);
+    }
     response.render("devices/new");
 });
 
@@ -91,7 +97,6 @@ router.get("/:id",function(request,response){
             console.log(error);
         }
         else{
-            console.log("-----------\nfound device: "+foundDevice+"\n----------");
             //render show template with that device
             response.render("devices/show",{device: foundDevice});
         }
@@ -109,6 +114,7 @@ router.get("/:id/edit", middleware.checkDeviceOwnership, function(request,respon
 //UPDATE DEVICE ROUTE
 router.put("/:id", middleware.checkDeviceOwnership,function(request,response){
     //find and update the correct DEVICE
+    console.log("\n\n\n************\nrequest.body.device"+request.body.device);
     Device.findByIdAndUpdate(request.params.id,request.body.device,function(error,updatedDevice){
         if(error){
             console.log(error);
@@ -122,6 +128,7 @@ router.put("/:id", middleware.checkDeviceOwnership,function(request,response){
 });
 //DESTROY Device ROUTE
 router.delete("/:id", middleware.checkDeviceOwnership, function(request,response){
+    console.log("Deleting device with id: "+request.params.id);
     Device.findByIdAndRemove(request.params.id,function(error){
         if(error){
             console.log(error);
