@@ -12,9 +12,12 @@ var popSchema = new mongoose.Schema({
     },
     district: String,
     sector: {
-                type: mongoose.Schema.Types.ObjectId,
-                //ref is the name of the model
-                ref: "Sector"
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            //ref is the name of the model
+            ref: "Sector"
+        },
+        name: String
     },
     author: {
                 id:{

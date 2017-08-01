@@ -5,68 +5,71 @@
             <!--<adding second container to keep spacing around contents when we resize the page>-->
             <div class="container">
                 <h1>Business Enrichment Portal</h1>
-                <p>View Network Information</p>
-                <p><a class="btn btn-primary btn-lg" href="/devices/new">Add New Device</a></p>
+                <p>View Devices Information</p>
+                <div class="btn-group" role="group" aria-label="all">
+                    <a href="/devices/"><button type="button" class="btn btn-default active">All Devices</button></a>
+                    <a href="/pops/"><button type="button" class="btn btn-default">All POPs</button></a>
+                    <a href="/interfaces/"><button type="button" class="btn btn-default">All Interfaces</button></a>
+                    <a href="/sectors/"><button type="button" class="btn btn-default">All Sectors</button></a>
+                    <a href="/governorates/"><button type="button" class="btn btn-default ">All Governorates</button></a>
+                    <a href="/users/"><button type="button" class="btn btn-default">All Users</button></a>
+                </div>        
             </div>
         </header>
-
-	<!--<div class="row">-->
-	<!--	<div class="col-md-12">-->
- <!--           <div class="input-group" id="adv-search">-->
- <!--               <input type="text" class="form-control" placeholder="Search for snippets" />-->
- <!--               <div class="input-group-btn">-->
- <!--                   <div class="btn-group" role="group">-->
- <!--                       <div class="dropdown dropdown-lg">-->
- <!--                           <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><span class="caret"></span></button>-->
- <!--                           <div class="dropdown-menu dropdown-menu-right" role="menu">-->
- <!--                               <form class="form-horizontal" role="form">-->
- <!--                                 <div class="form-group">-->
- <!--                                   <label for="filter">Filter by</label>-->
- <!--                                   <select class="form-control">-->
- <!--                                       <option value="0" selected>All Snippets</option>-->
- <!--                                       <option value="1">Featured</option>-->
- <!--                                       <option value="2">Most popular</option>-->
- <!--                                       <option value="3">Top rated</option>-->
- <!--                                       <option value="4">Most commented</option>-->
- <!--                                   </select>-->
- <!--                                 </div>-->
- <!--                                 <div class="form-group">-->
- <!--                                   <label for="contain">Author</label>-->
- <!--                                   <input class="form-control" type="text" />-->
- <!--                                 </div>-->
- <!--                                 <div class="form-group">-->
- <!--                                   <label for="contain">Contains the words</label>-->
- <!--                                   <input class="form-control" type="text" />-->
- <!--                                 </div>-->
- <!--                                 <button type="submit" class="btn btn-primary"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>-->
- <!--                               </form>-->
- <!--                           </div>-->
- <!--                       </div>-->
- <!--                       <button type="button" class="btn btn-primary"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>-->
- <!--                   </div>-->
- <!--               </div>-->
- <!--           </div>-->
- <!--         </div>-->
- <!--       </div>-->
-	<!--</div>-->
-
-        <div class="row">
-            <h3>List of Devices!</h3>
-        </div>
+        <div class="btn-group" role="group" aria-label="devices">
+            <a href="#"><button type="button " class="btn  btn-primary">Add Device</button></a>
+            <a href="#"><button type="button " class="btn  btn-danger">Delete Device</button></a>
+            <a href="#"><button type="button " class="btn  btn-warning">Update Device</button></a>
+        </div>        
 
         <!--<adding flex style to fix issue related to left alignment>-->
-        <div class="row text-center" style="display:flex; flex-wrap:wrap;">
-            <% devices.forEach(function(device){ %>
-                <div class="col-md-4 col-sm-6">
-                    <div class="thumbnail">
-                        <img src="/images/router.png">
-                        <div class="caption">
-                            <h4><%= device.hostname %></h4>
-                        </div>
-                        <a href="/devices/<%= device._id %>" class="btn btn-primary">More Info</a>
-                    </div>
-                </div>
-                <% }); %>
+        <div class="row text-left">
+            <div class="table-responsive">
+                <table id="eventsTable" data-pagination="true" data-search="true"data-toggle="table" data-height="525" data-pagination="true" 
+                data-maintain-selected="true" data-search="true" data-show-refresh="true" data-show-toggle="true" data-show-columns="true" 
+                data-toolbar="#toolbar" data-single-select="true">
+                    <thead>
+                        <tr>
+                            <th data-field="state" data-checkbox="true"> </th>
+                            <th data-field="_id" data-visible="false">ID</th>
+                            <th data-field="name" data-sortable="true">Name</th>
+                            <th data-field="ipaddress">IP Address</th>
+                            <th data-field="communitystring">Community String</th>
+                            <th data-field="datecreated" data-sortable="true">Date Created</th>
+                            <th data-field="dateupdated" data-sortable="true">Date Updated</th>
+                            <th data-field="description">Description</th>
+                            <th data-field="popname" data-sortable="true">POP Name</th>
+                            <th data-field="sectorname" data-sortable="true">Sector Name</th>
+                            <th data-field="governorate" data-sortable="true">Governorate</th>
+                            <th data-field="createdby">Created By</th>
+                            <th data-field="updatedby">Last Updated By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% devices.forEach(function(device){ %>
+                            <tr>
+                                <td><% %></td>
+                                <td><%= device._id %></td>
+                                <td><a href="/devices/<%= device._id %>"><%= device.hostname %></a></td>
+                                <td><%= device.ipaddress %></td>
+                                <td><%= device.communityString %></td>
+                                <td><%= device.created.toDateString() %></td>
+                                <td>
+                                    <% if(device.updated) { %>
+                                    <%= device.updated.toDateString() %>
+                                    <% } %>
+                                </td>
+                                <td><%= device.description %></td>
+                                <td><%= device.popName.name %></td>
+                                <td><%= device.sector.name %></td>
+                                <td><%= device.governorate.name %></td>
+                                <td><%= device.author.email %></td>
+                                <td><%= device.lastUpdatedBy.email %></td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-    <% include ../partials/footer %>
+<% include ../partials/footer %>

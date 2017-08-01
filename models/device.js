@@ -1,8 +1,8 @@
 var mongoose= require("mongoose");
 //Database template setup
 var deviceSchema = new mongoose.Schema({
-    hostname: String,
-    ipaddress: String,
+    hostname: {type: String, required: [true, 'Hostname is required']},
+    ipaddress: {type: String, required: [true, 'IP Address is required']},
     communityString: { type: String, default: 'public' },
     created: { type: Date, default: Date.now },
     updated: Date,

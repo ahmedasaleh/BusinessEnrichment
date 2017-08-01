@@ -1,7 +1,7 @@
 var mongoose = require("mongoose");
 //Database template setup
 var governorateSchema = new mongoose.Schema({
-    name: String,
+    name: {type: String, required: [true,'Name is required']},
     acronym: String,
     author: {
         id:{

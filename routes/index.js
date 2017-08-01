@@ -70,7 +70,7 @@ router.get("/login",function(request,response){
 
 // handling login logic
 router.post("/login",passport.authenticate('local',{
-    successRedirect: "/devices",
+    successRedirect: "/home",
     failureRedirect: "/login"
     }));
 

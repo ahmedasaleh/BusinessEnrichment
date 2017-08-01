@@ -9,12 +9,21 @@ var express             = require("express"),
     dotenv              = require("dotenv"),
     User                = require("./models/user"),
     seedDB              = require("./seeds");
+var cluster = require('cluster');    
 // //requiring routes
 var interfaceRoutes       = require("./routes/interfaces"),  
+    popRoutes    = require("./routes/pops"),  
+    sectorRoutes    = require("./routes/sectors"),  
+    governorateRoutes    = require("./routes/governorates"),  
+    userRoutes    = require("./routes/users"),  
     deviceRoutes    = require("./routes/devices"),  
     indexRoutes     = require("./routes/index"); 
 
 var indexBaseURL        = "/",
+    popBaseURL   = "/pops",
+    sectorBaseURL   = "/sectors",
+    governorateBaseURL   = "/governorates",
+    userBaseURL   = "/users",
     deviceBaseURL   = "/devices",
     interfaceBaseURL      = "/devices/:id/interfaces";
 
@@ -52,13 +61,24 @@ app.use(function(request,response,next){
     response.locals.currentUser = request.user;
     response.locals.error       = request.flash("error");
     response.locals.success     = request.flash("success");
+    response.locals.warning     = request.flash("warning");
     next();
 });
 
 app.use(indexBaseURL, indexRoutes);
 app.use(deviceBaseURL, deviceRoutes);
 app.use(interfaceBaseURL, interfaceRoutes);
+app.use(popBaseURL, popRoutes);
+app.use(sectorBaseURL, sectorRoutes);
+app.use(governorateBaseURL, governorateRoutes);
+app.use(userBaseURL, userRoutes);
 //start server
+process.on('uncaughtException', function (err) {
+  console.error(err);
+  console.log("Node NOT Exiting...");
+});
 app.listen(process.env.PORT, process.env.IP, function() {
     console.log("Business Enrichment V"+ applicationVersion +" Server Started on "+process.env.IP+":"+process.env.PORT);
 });
+
+

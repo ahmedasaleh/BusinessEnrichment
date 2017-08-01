@@ -1,0 +1,52 @@
+<% include ../partials/header %>
+    <!--< the class container will give space around our contents>-->
+    <div class="container">
+        <header class="jumbotron">
+            <!--<adding second container to keep spacing around contents when we resize the page>-->
+            <div class="container">
+                <h1>Business Enrichment Portal</h1>
+                <p>View Sectors Information</p>
+                <div class="btn-group" role="group" aria-label="all">
+                    <a href="/devices/"><button type="button" class="btn btn-default ">All Devices</button></a>
+                    <a href="/pops/"><button type="button" class="btn btn-default ">All POPs</button></a>
+                    <a href="/interfaces/"><button type="button" class="btn btn-default">All Interfaces</button></a>
+                    <a href="/sectors/"><button type="button" class="btn btn-default active">All Sectors</button></a>
+                    <a href="/governorates/"><button type="button" class="btn btn-default ">All Governorates</button></a>
+                    <a href="/users/"><button type="button" class="btn btn-default">All Users</button></a>
+                </div>        
+            </div>
+        </header>
+        <div class="btn-group" role="group" aria-label="sectors">
+            <a href="#"><button type="button " class="btn  btn-primary">Add Sector</button></a>
+            <a href="#"><button type="button " class="btn  btn-danger">Delete Sector</button></a>
+            <a href="#"><button type="button " class="btn  btn-warning">Update Sector</button></a>
+        </div>        
+        
+        <div class="row text-left">
+            <div class="table-responsive">
+                <table id="eventsTable" data-pagination="true" data-search="true"data-toggle="table" data-height="525" data-pagination="true" 
+                data-maintain-selected="true" data-search="true" data-show-refresh="true" data-show-toggle="true" data-show-columns="true" 
+                data-toolbar="#toolbar" data-single-select="true">
+                    <thead>
+                        <tr>
+                            <th data-field="state" data-checkbox="true"> </th>
+                            <th data-field="_id" data-visible="false">ID</th>
+                            <th data-field="name" data-sortable="true">Name</th>
+                            <th data-field="description">Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% sectors.forEach(function(sector){ %>
+                            <tr>
+                                <td><% %></td>
+                                <td><%= sector._id %></td>
+                                <td><a href="/sectors/<%= sector._id %>"><%= sector.name %></a></td>
+                                <td><%= sector.description %></td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+<% include ../partials/footer %>

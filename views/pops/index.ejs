@@ -1,0 +1,62 @@
+<% include ../partials/header %>
+    <!--< the class container will give space around our contents>-->
+
+    <div class="container">
+        <header class="jumbotron">
+            <!--<adding second container to keep spacing around contents when we resize the page>-->
+            <div class="container">
+                <h1>Business Enrichment Portal</h1>
+                <p>View POPs Information</p>
+                <div class="btn-group" role="group" aria-label="all">
+                    <a href="/devices/"><button type="button" class="btn btn-default ">All Devices</button></a>
+                    <a href="/pops/"><button type="button" class="btn btn-default active">All POPs</button></a>
+                    <a href="/interfaces/"><button type="button" class="btn btn-default">All Interfaces</button></a>
+                    <a href="/sectors/"><button type="button" class="btn btn-default">All Sectors</button></a>
+                    <a href="/governorates/"><button type="button" class="btn btn-default ">All Governorates</button></a>
+                    <a href="/users/"><button type="button" class="btn btn-default">All Users</button></a>
+                </div>        
+            </div>
+        </header>
+        <div class="btn-group" role="group" aria-label="pops">
+            <a href="#"><button type="button " class="btn  btn-primary">Add POP</button></a>
+            <a href="#"><button type="button " class="btn  btn-danger">Delete POP</button></a>
+            <a href="#"><button type="button " class="btn  btn-warning">Update POP</button></a>
+        </div>        
+<!--<button class="add_cart">Add to card</button>-->
+<!--<ul id="output"></ul>-->
+<!--<button class="myclass">My Class</button>-->
+
+        <div class="row text-left" >
+            <div class="table-responsive">
+                <table id="eventsTable" data-pagination="true" data-search="true"data-toggle="table" data-height="525" data-pagination="true" 
+                data-maintain-selected="true" data-search="true" data-show-refresh="true" data-show-toggle="true" data-show-columns="true" 
+                data-toolbar="#toolbar" data-single-select="true">
+                    <thead>
+                        <tr>
+                            <th data-field="state" data-checkbox="true"> </th>
+                            <th data-field="_id" data-visible="false">ID</th>
+                            <th data-field="name" data-sortable="true">Name</th>
+                            <th data-field="acronym">Acronym</th>
+                            <th data-field="governorate" data-sortable="true">Governorate</th>
+                            <th data-field="district" data-sortable="true">District</th>
+                            <th data-field="sector" data-sortable="true">Sector</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% pops.forEach(function(pop){ %>
+                            <tr>
+                                <td><% %></td>
+                                <td><%= pop._id %></td>
+                                <td><a href="/pops/<%= pop._id %>"><%= pop.name %></a></td>
+                                <td><%= pop.shortName %></td>
+                                <td><%= pop.governorateAcro %></td>
+                                <td><%= pop.district %></td>
+                                <td><%= pop.sector %></td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+<% include ../partials/footer %>
