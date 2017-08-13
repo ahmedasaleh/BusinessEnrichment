@@ -1,8 +1,27 @@
 <% include partials/header %>
 	<div class="container">
-		<div class="jumbotron">
-			<h1><i class="fa fa-database" aria-hidden="true"></i>  Business Enrichment Portal</h1>
-		</div>
+		<header class="jumbotron">
+		    <div class="container">
+    			<h1><i class="fa fa-database" aria-hidden="true"></i>  Business Enrichment Portal</h1>
+    			<p>View Network Information</p>
+		    </div>
+		</header>
+        <div class="row text-center">
+            <div class="container">
+                <div class="jumbotron">
+                    <div class="btn-group" role="group" aria-label="sync-data">
+                            <a href="/devices/sync"><button type="button" id="device-sync" class="btn  btn-info btn-lg">Synchronize Devices</button></a>
+                            <!--<a href="#"><button type="button " class="btn  btn-info btn-lg">Create Interface Links</button></a>-->
+                    </div>        
+                    <div class="btn-group" role="group" aria-label="import-data">
+                            <a href="#"><button type="button " class="btn  btn-info btn-lg">Import Enrichment Data</button></a>
+                            <a href="#"><button type="button " class="btn  btn-info btn-lg">Export Enrichment Data</button></a>
+                            <!--<a href="/links/new"><button type="button " class="btn  btn-info btn-lg">Import Links Data</button></a>-->
+                    </div>
+                </div>
+                
+            </div>
+        </div>
         <!--<adding flex style to fix issue related to left alignment>-->
         <div class="row text-center" style="display:flex; flex-wrap:wrap;">
             <div class="col-md-4 col-sm-6">
@@ -14,15 +33,21 @@
             <div class="col-md-4 col-sm-6">
                 <div class="thumbnail">
                     <img src="/images/router.png">
-                    <a href="/pops/" class="btn btn-primary">Go To POPs</a>
+                    <a href="/links/" class="btn btn-primary">Go To Links</a>
                 </div>
             </div>
             <div class="col-md-4 col-sm-6">
                 <div class="thumbnail">
                     <img src="/images/router.png">
-                    <a href="/interfaces/" class="btn btn-primary">Go To Interfaces</a>
+                    <a href="/pops/" class="btn btn-primary">Go To POPs</a>
                 </div>
             </div>
+            <!--<div class="col-md-4 col-sm-6">-->
+            <!--    <div class="thumbnail">-->
+            <!--        <img src="/images/router.png">-->
+            <!--        <a href="/interfaces/" class="btn btn-primary">Go To Interfaces</a>-->
+            <!--    </div>-->
+            <!--</div>-->
             <div class="col-md-4 col-sm-6">
                 <div class="thumbnail">
                     <img src="/images/router.png">
@@ -33,6 +58,12 @@
                 <div class="thumbnail">
                     <img src="/images/router.png">
                     <a href="/governorates/" class="btn btn-primary">Go To Governorates</a>
+                </div>
+            </div>
+            <div class="col-md-4 col-sm-6">
+                <div class="thumbnail">
+                    <img src="/images/router.png">
+                    <a href="/validatedusers/" class="btn btn-primary">Go To Validated Users</a>
                 </div>
             </div>
             <div class="col-md-4 col-sm-6">

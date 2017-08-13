@@ -1,0 +1,40 @@
+<% include ../partials/header %>
+<div class="container">
+    <div class="row">
+        <div class="col-md-3">
+            <p class="lead">BET</p>
+            <div class="list-group">
+                <a href="/devices/"><li class="list-group-item" href="/devices">All Devices</li></a>
+                <a href="/pops/"><li class="list-group-item">All POPs</li></a>
+                <a href="/governorates/"><li class="list-group-item active" href="/governorates">All Governorates</li></a>
+                <a href="/sectors/"><li class="list-group-item">All Sectors</li></a>
+                <a href="/links/"><li class="list-group-item">All Links</li></a>
+                <a href="/users/"><li class="list-group-item">All Users</li></a>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            <h1><%= governorate.name  %></h1>
+            <div class="thumbnail">
+                <!--<img class="img-responsive" src="/images/router.png">-->
+                <div class="caption-full">
+                    <h4 class="pull-right">Acronym: <%= governorate.acronym  %></h4>
+                    <h4><a href="/governorates/<%= governorate._id %>"><%= governorate.name  %></a></h4>
+                    <% if(governorate.author.email == undefined){ %>
+                        <p><em>Added By: admin imported</em></p>
+                    <% } else { %>
+                        <p><em>Added By:  <%= governorate.author.email %></em></p>
+                    <% } %>
+                    
+                    <% if(currentUser && governorate.author.id && governorate.author.id.equals(currentUser._id)){ %> 
+                        <a class="btn btn-warning" href="/governorates/<%= governorate._id %>/edit">Edit</a>
+                        <form id="delete-form" action="/governorates/<%= governorate._id %>/?_method=DELETE" method="POST">
+                            <button class="btn btn-danger">Delete</button>
+                        </form>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<% include ../partials/footer %>

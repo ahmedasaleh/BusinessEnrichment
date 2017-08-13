@@ -5,28 +5,28 @@
             <!--<adding second container to keep spacing around contents when we resize the page>-->
             <div class="container">
                 <h1>Business Enrichment Portal</h1>
-                <p>View Users Information</p>
+                <p>View Links Information</p>
                 <div class="btn-group" role="group" aria-label="all">
                     <a href="/devices/"><button type="button" class="btn btn-default ">All Devices</button></a>
                     <a href="/pops/"><button type="button" class="btn btn-default ">All POPs</button></a>
                     <!--<a href="/interfaces/"><button type="button" class="btn btn-default">All Interfaces</button></a>-->
-                    <a href="/sectors/"><button type="button" class="btn btn-default ">All Sectors</button></a>
+                    <a href="/sectors/"><button type="button" class="btn btn-default">All Sectors</button></a>
                     <a href="/governorates/"><button type="button" class="btn btn-default ">All Governorates</button></a>
-                    <a href="/users/"><button type="button" class="btn btn-default active">All Users</button></a>
-                    <a href="/links/"><button type="button" class="btn btn-default">All Links</button></a>
+                    <a href="/users/"><button type="button" class="btn btn-default">All Users</button></a>
+                    <a href="/links/"><button type="button" class="btn btn-default active">All Links</button></a>
                     <a href="/validatedusers/"><button type="button" class="btn btn-default">All Validated Users</button></a>
                 </div>        
             </div>
         </header>
-        <div class="btn-group" role="group" aria-label="users">
-            <!--<form id="user-add-form"  class="btn-group" action="/users/new" method="GET">-->
-            <!--    <button type="button " class="btn  btn-primary">Add User</button>-->
-            <!--</form>-->
-            <form id="user-delete-form"  class="btn-group" action="/users/-1/?_method=DELETE" method="POST">
-                <button id="user-delete-button"  type="button " class="btn  btn-danger">Delete User</button>
+        <div class="btn-group" role="group" aria-label="sectors">
+            <form id="link-add-form"  class="btn-group" action="/links/new" method="GET">
+                <button type="button " class="btn  btn-primary">Add Link</button>
             </form>
-            <form id="user-update-form"  class="btn-group" action="" method="GET">
-                <button type="button " class="btn  btn-warning">Update User</button>
+            <form id="link-delete-form"  class="btn-group" action="/links/-1/?_method=DELETE" method="POST">
+                <button id="link-delete-button"  type="button " class="btn  btn-danger">Delete Link</button>
+            </form>
+            <form id="link-update-form"  class="btn-group" action="" method="GET">
+                <button type="button " class="btn  btn-warning">Update Link</button>
             </form>
         </div>        
         
@@ -39,19 +39,21 @@
                         <tr>
                             <th data-field="state" data-checkbox="true"> </th>
                             <th data-field="_id" data-visible="false">ID</th>
-                            <th data-field="name" data-sortable="true">Name</th>
-                            <th data-field="role" data-sortable="true">Role</th>
-                            <th data-field="email">E-mail</th>
+                            <th data-field="device1" data-sortable="true">Device1</th>
+                            <th data-field="interface1">Interface1</th>
+                            <th data-field="device2" data-sortable="true">Device2</th>
+                            <th data-field="interface2">Interface2</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <% users.forEach(function(user){ %>
+                        <% links.forEach(function(link){ %>
                             <tr>
                                 <td><% %></td>
-                                <td><%= user._id %></td>
-                                <td><a href="/users/<%= user._id %>"><%= user.name %></a></td>
-                                <td><%= user.role %></td>
-                                <td><%= user.email %></td>
+                                <td><%= link._id %></td>
+                                <td><%= link.device1 %></td>
+                                <td><%= link.interface1 %></td>
+                                <td><%= link.device2 %></td>
+                                <td><%= link.interface2 %></td>
                             </tr>
                         <% }); %>
                     </tbody>

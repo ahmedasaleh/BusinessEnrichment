@@ -6,6 +6,10 @@
             <div class="list-group">
                 <a href="/devices/"><li class="list-group-item active" href="/devices">All Devices</li></a>
                 <a href="/pops/"><li class="list-group-item">All POPs</li></a>
+                <a href="/governorates/"><li class="list-group-item" href="/governorates">All Governorates</li></a>
+                <a href="/sectors/"><li class="list-group-item">All Sectors</li></a>
+                <a href="/links/"><li class="list-group-item">All Links</li></a>
+                <a href="/users/"><li class="list-group-item">All Users</li></a>
             </div>
         </div>
         
@@ -29,21 +33,22 @@
                 </div>
             </div>
             <div class="well">
-                <div class="text-right">
-                    <a class="btn btn-success" href="/devices/<%= device._id %>/interfaces/new">Add a New Interface</a>
-                </div>
-                <hr>
-                <% device.interfaces.forEach(function(Interface){ %>
+                <!--<div class="text-right">-->
+                <!--    <a class="btn btn-success" href="/devices/<!%= device._id %>/interfaces/new">Add a New Interface</a>-->
+                <!--</div>-->
+                <!--<hr>-->
+                <% device.interfaces.forEach(function(interface){ %>
+                <%= console.log(interface._id)  %>
                     <div class="row">
                         <div class="col-md-12">
-                            <strong><%= Interface.author.username %></strong>   
-                            <span class="pull-right">Created <%= Interface.created.toDateString() %></span>
-                            <form id="if-delete-form" action="/devices/<%= device._id %>/interfaces/<%= Interface._id %>/?_method=DELETE" method="POST">
+                            <p><em>Created by: <%= interface.author.email %></em></p>   
+                            <span class="pull-right">Created <%= interface.created.toDateString() %></span>
+                            <form id="if-delete-form" action="/devices/<%= device._id %>/interfaces/<%= interface._id %>/?_method=DELETE" method="POST">
                                 <div class="form-group">
                                     <input class="form-control" type="hidden" name="interface[device][id]" value="<%= device._id %>" readonly>
                                 </div>
                                 <button class="btn btn-sm">
-                                    <i class="glyphicon glyphicon-remove" aria-hidden="true"><%= Interface.name %></i>
+                                    <i class="glyphicon glyphicon-remove" aria-hidden="true"><%= interface.description %></i>
                                 </button>
                             </form>
                         </div>

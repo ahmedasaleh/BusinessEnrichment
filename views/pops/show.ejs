@@ -1,0 +1,43 @@
+<% include ../partials/header %>
+<div class="container">
+    <div class="row">
+        <div class="col-md-3">
+            <p class="lead">BET</p>
+            <div class="list-group">
+                <a href="/devices/"><li class="list-group-item" href="/devices">All Devices</li></a>
+                <a href="/pops/"><li class="list-group-item active">All POPs</li></a>
+                <a href="/governorates/"><li class="list-group-item " href="/governorates">All Governorates</li></a>
+                <a href="/sectors/"><li class="list-group-item">All Sectors</li></a>
+                <a href="/links/"><li class="list-group-item">All Links</li></a>
+                <a href="/users/"><li class="list-group-item">All Users</li></a>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            <h1><%= pop.name  %></h1>
+            <div class="thumbnail">
+                <!--<img class="img-responsive" src="/images/router.png">-->
+                <div class="caption-full">
+                    <h4 class="pull-right">Acronum: <%= pop.shortName  %></h4>
+                    <h4><a href="/pops/<%= pop._id %>"><%= pop.name  %></a></h4>
+                    <h4>Governorate: <%= pop.governorateAcro.acronym  %></h4>
+                    <h4>District: <%= pop.district  %></h4>
+                    <h4>Sector: <%= pop.sector  %></h4>
+                    <% if(pop.author.email == undefined){ %>
+                        <p><em>Added By: admin imported</em></p>
+                    <% } else { %>
+                        <p><em>Added By:  <%= pop.author.email %></em></p>
+                    <% } %>
+                    
+                    <% if(currentUser && pop.author.id && pop.author.id.equals(currentUser._id)){ %> 
+                        <a class="btn btn-warning" href="/pops/<%= pop._id %>/edit">Edit</a>
+                        <form id="delete-form" action="/pops/<%= pop._id %>/?_method=DELETE" method="POST">
+                            <button class="btn btn-danger">Delete</button>
+                        </form>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<% include ../partials/footer %>

@@ -1,0 +1,40 @@
+<% include ../partials/header %>
+<div class="container">
+    <div class="row">
+        <div class="col-md-3">
+            <p class="lead">BET</p>
+            <div class="list-group">
+                <a href="/devices/"><li class="list-group-item" href="/devices">All Devices</li></a>
+                <a href="/pops/"><li class="list-group-item">All POPs</li></a>
+                <a href="/governorates/"><li class="list-group-item " href="/governorates">All Governorates</li></a>
+                <a href="/sectors/"><li class="list-group-item">All Sectors</li></a>
+                <a href="/links/"><li class="list-group-item">All Links</li></a>
+                <a href="/users/"><li class="list-group-item active">All Users</li></a>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            <h1><%= user.name  %></h1>
+            <div class="thumbnail">
+                <div class="caption-full">
+                    <h4 class="pull-right">Name: <%= user.role  %></h4>
+                    <h4><a href="/users/<%= user._id %>"><%= user.name  %></a></h4>
+                    <h4>E-mail: <%= user.email  %></h4>
+                    <% if(user.author.email == undefined){ %>
+                        <p><em>Added By: admin imported</em></p>
+                    <% } else { %>
+                        <p><em>Added By:  <%= user.author.email %></em></p>
+                    <% } %>
+                    
+                    <% if(currentUser && user.author.id && user.author.id.equals(currentUser._id)){ %> 
+                        <a class="btn btn-warning" href="/users/<%= user._id %>/edit">Edit</a>
+                        <form id="delete-form" action="/users/<%= user._id %>/?_method=DELETE" method="POST">
+                            <button class="btn btn-danger">Delete</button>
+                        </form>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<% include ../partials/footer %>

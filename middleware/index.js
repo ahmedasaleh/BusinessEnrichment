@@ -1,8 +1,8 @@
 var Device      = require("../models/device"),
     Interface   = require("../models/interface");
-
 //all the middleware goes here
 var middlewareObj = {};
+
 middlewareObj.checkDeviceOwnership = function(request, response, next) {
  if(request.isAuthenticated()){
         Device.findById(request.params.id, function(err, foundDevice){
@@ -55,7 +55,6 @@ middlewareObj.checkInterfaceOwnership = function(request, response, next) {
     }
 }
 
-
 middlewareObj.isLoggedIn = function(request, response, next){
     // return next();//hack
     if(request.isAuthenticated()){
@@ -64,5 +63,6 @@ middlewareObj.isLoggedIn = function(request, response, next){
     request.flash("error", "You need to be logged in to do that");
     response.redirect("/login");
 }
+
 
 module.exports = middlewareObj;

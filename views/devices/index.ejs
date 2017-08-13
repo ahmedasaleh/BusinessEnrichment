@@ -9,17 +9,25 @@
                 <div class="btn-group" role="group" aria-label="all">
                     <a href="/devices/"><button type="button" class="btn btn-default active">All Devices</button></a>
                     <a href="/pops/"><button type="button" class="btn btn-default">All POPs</button></a>
-                    <a href="/interfaces/"><button type="button" class="btn btn-default">All Interfaces</button></a>
+                    <!--<a href="/interfaces/"><button type="button" class="btn btn-default">All Interfaces</button></a>-->
                     <a href="/sectors/"><button type="button" class="btn btn-default">All Sectors</button></a>
                     <a href="/governorates/"><button type="button" class="btn btn-default ">All Governorates</button></a>
                     <a href="/users/"><button type="button" class="btn btn-default">All Users</button></a>
+                    <a href="/links/"><button type="button" class="btn btn-default">All Links</button></a>
+                    <a href="/validatedusers/"><button type="button" class="btn btn-default">All Validated Users</button></a>
                 </div>        
             </div>
         </header>
         <div class="btn-group" role="group" aria-label="devices">
-            <a href="#"><button type="button " class="btn  btn-primary">Add Device</button></a>
-            <a href="#"><button type="button " class="btn  btn-danger">Delete Device</button></a>
-            <a href="#"><button type="button " class="btn  btn-warning">Update Device</button></a>
+            <form id="device-add-form"  class="btn-group" action="/devices/new" method="GET">
+                <button type="button " class="btn  btn-primary">Add Device</button>
+            </form>
+            <form id="device-delete-form"  class="btn-group" action="/devices/-1/?_method=DELETE" method="POST">
+                <button type="button " class="btn  btn-danger">Delete Device</button>
+            </form>
+            <form id="device-update-form"  class="btn-group" action="" method="GET">
+                <button type="button " class="btn  btn-warning">Update Device</button>
+            </form>
         </div>        
 
         <!--<adding flex style to fix issue related to left alignment>-->

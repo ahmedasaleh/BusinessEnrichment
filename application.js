@@ -15,7 +15,9 @@ var interfaceRoutes       = require("./routes/interfaces"),
     popRoutes    = require("./routes/pops"),  
     sectorRoutes    = require("./routes/sectors"),  
     governorateRoutes    = require("./routes/governorates"),  
+    linkRoutes    = require("./routes/links"),  
     userRoutes    = require("./routes/users"),  
+    validatedUserRoutes    = require("./routes/validatedUsers"),  
     deviceRoutes    = require("./routes/devices"),  
     indexRoutes     = require("./routes/index"); 
 
@@ -23,7 +25,9 @@ var indexBaseURL        = "/",
     popBaseURL   = "/pops",
     sectorBaseURL   = "/sectors",
     governorateBaseURL   = "/governorates",
+    linkBaseURL   = "/links",
     userBaseURL   = "/users",
+    validatedUserBaseURL   = "/validatedusers",
     deviceBaseURL   = "/devices",
     interfaceBaseURL      = "/devices/:id/interfaces";
 
@@ -72,6 +76,8 @@ app.use(popBaseURL, popRoutes);
 app.use(sectorBaseURL, sectorRoutes);
 app.use(governorateBaseURL, governorateRoutes);
 app.use(userBaseURL, userRoutes);
+app.use(linkBaseURL, linkRoutes);
+app.use(validatedUserBaseURL, validatedUserRoutes);
 //start server
 process.on('uncaughtException', function (err) {
   console.error(err);

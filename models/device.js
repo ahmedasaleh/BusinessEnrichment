@@ -1,4 +1,5 @@
-var mongoose= require("mongoose");
+var mongoose = require("mongoose");
+var Interface = require("./interface");
 //Database template setup
 var deviceSchema = new mongoose.Schema({
     hostname: {type: String, required: [true, 'Hostname is required']},
@@ -45,13 +46,17 @@ var deviceSchema = new mongoose.Schema({
         },
         email: String
     },
-    interfaces: [
-            {
-                type: mongoose.Schema.Types.ObjectId,
-                //ref is the name of the model
-                ref: "Interface"
-            }
-        ]
+    interfaces: [Interface.schema]
+    // interfaces: [
+    //         {
+    //             id: {
+    //                     type: mongoose.Schema.Types.ObjectId,
+    //                     //ref is the name of the model
+    //                     ref: "Interface"
+    //                 },
+    //             name: String
+    //         }
+    //     ]
 });
 
 module.exports = mongoose.model("Device", deviceSchema);

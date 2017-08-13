@@ -10,17 +10,25 @@
                 <div class="btn-group" role="group" aria-label="all">
                     <a href="/devices/"><button type="button" class="btn btn-default ">All Devices</button></a>
                     <a href="/pops/"><button type="button" class="btn btn-default active">All POPs</button></a>
-                    <a href="/interfaces/"><button type="button" class="btn btn-default">All Interfaces</button></a>
+                    <!--<a href="/interfaces/"><button type="button" class="btn btn-default">All Interfaces</button></a>-->
                     <a href="/sectors/"><button type="button" class="btn btn-default">All Sectors</button></a>
                     <a href="/governorates/"><button type="button" class="btn btn-default ">All Governorates</button></a>
                     <a href="/users/"><button type="button" class="btn btn-default">All Users</button></a>
+                    <a href="/links/"><button type="button" class="btn btn-default">All Links</button></a>
+                    <a href="/validatedusers/"><button type="button" class="btn btn-default">All Validated Users</button></a>
                 </div>        
             </div>
         </header>
         <div class="btn-group" role="group" aria-label="pops">
-            <a href="#"><button type="button " class="btn  btn-primary">Add POP</button></a>
-            <a href="#"><button type="button " class="btn  btn-danger">Delete POP</button></a>
-            <a href="#"><button type="button " class="btn  btn-warning">Update POP</button></a>
+            <form id="pop-add-form"  class="btn-group" action="/pops/new" method="GET">
+                <button type="button " class="btn  btn-primary">Add POP</button>
+            </form>
+            <form id="pop-delete-form"  class="btn-group" action="/pops/-1/?_method=DELETE" method="POST">
+                <button id="pop-delete-button"  type="button " class="btn  btn-danger">Delete POP</button>
+            </form>
+            <form id="pop-update-form"  class="btn-group" action="" method="GET">
+                <button type="button " class="btn  btn-warning">Update POP</button>
+            </form>
         </div>        
 <!--<button class="add_cart">Add to card</button>-->
 <!--<ul id="output"></ul>-->

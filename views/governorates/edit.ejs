@@ -1,0 +1,27 @@
+<% include ../partials/header %>
+<div class="container">
+    <!--<will need to create my own style sheet to center the 2 inputs and make them
+    smaller>-->
+    <div class="row">
+        <h1 style="text-align: center;">Edit <%= governorate.name %></h1>
+        <!--<margin 25 px for top and bottom, auto for left and right>-->
+        <div style="width:30%; margin:25px auto;">
+            <form method="POST" action="/governorates/<%= governorate._id %>/?_method=PUT">
+                <!--<use form-group to make spacing between components>-->
+                <div class="form-group">
+                    <input class="form-control" type="text" name="governorate[name]" value="<%= governorate.name %>" readonly>
+                </div>
+                <div class="form-group">
+                    <input class="form-control" type="text" name="governorate[acronym]" value="<%= governorate.acronym %>">
+                </div>
+                <div class="form-group">
+                    <!--<btn-block will let the button takes width of the 2 inputs>-->
+                    <button class="btn btn-lg btn-primary btn-block">Submit!</button>
+                </div>
+            </form>
+            <!--<a href="/devices/<%= governorate._id %>/">Go Back</a>-->
+            <a href="/governorates/">Go Back</a>
+        </div>
+    </div>
+</div>
+<% include ../partials/footer %>

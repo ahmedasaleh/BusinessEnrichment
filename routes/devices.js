@@ -8,7 +8,7 @@ var session     = snmp.createSession (process.env.IP, "public");
 var seedDB      = require("../seeds");
 
 //create and save a document, handle error if occured
-var aDevice ;
+var aDevice = new Device() ;
 //*********************
 //  SNMP HANDLER
 //*********************
@@ -84,8 +84,8 @@ function responseCb (error, table) {
             // Print index, then each column indented under the index
             console.log ("row for index = " + indexes[i]);
             for (var j = 0; j < columns.length; j++) {
-                console.log ("   column " + columns[j] + " = " + table[indexes[i]][columns[j]]);
                 if(ifTableRead){
+                console.log ("   column " + columns[j] + " = " + table[indexes[i]][columns[j]]);
                     anInterface.index = table[indexes[i]][columns[0]];
                     anInterface.description = table[indexes[i]][columns[1]];
                     anInterface.type = table[indexes[i]][columns[2]];
@@ -94,8 +94,29 @@ function responseCb (error, table) {
                     anInterface.operStatus  = table[indexes[i]][columns[5]];
                 }
             }
-            deviceInterfaces.push(anInterface);
+            console.log("1111111111111111111111111111111111111111")
+            console.log(anInterface);
+            Interface.create(anInterface,function(error,interface){
+                if(error){
+                    console.log(error);
+                }
+                else{
+                    //save comment
+                    interface.save();
+                    //connect new comment to campground
+                    aDevice.interfaces.push(interface);
+                    aDevice.save();
+                }
+            });
+
+            console.log("2222222222222222222222222222222222222222")
+            console.log(aDevice);
+            console.log("3333333333333333333333333333333333333333")
+            console.log(aDevice.interfaces);
+            console.log("4444444444444444444444444444444444444444")
         }
+        console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@2");
+        console.log(deviceInterfaces);
         ifTableError = false;
         ifXTableError = false;
     }
@@ -141,6 +162,39 @@ router.get("/", middleware.isLoggedIn ,function(request, response) {
     });
 });
 
+router.get("/sync", middleware.isLoggedIn ,function(request, response) {
+    Device.find({}, function(err, foundDevices) {
+        if (err) {
+            console.log(err);
+        }
+        else {
+            foundDevices.forEach(function(device){
+                //if device has no update date perform sync
+                if(device.updated == undefined){
+                    console.log(device.updated);
+                    //perform smpwalk
+                    aDevice = new Device();
+                    anInterface = new Interface();
+                    aDevice = {
+                        hostname: device.hostname,
+                        ipaddress: device.ipaddress,
+                        updated: Date.now,
+                        communityString: device.communityString 
+                    };
+                    session = snmp.createSession(aDevice.ipaddress, aDevice.communityString,{ timeout: 5000 });
+                    ifTableRead = true;
+                    anInterface.device = aDevice;
+                    anInterface.author = {id: request.user._id, email: request.user.email};
+                    session.tableColumns(oids.ifTable.OID, oids.ifTable.Columns, maxRepetitions, responseCb);
+                    //update device
+                    aDevice.save();
+                }
+            });
+            // response.render("devices/index", { devices: foundDevices });
+            // response.send("VIEW DEVICES");
+        }
+    });
+});
 
 //CREATE - add new device to DB
 router.post("/",middleware.isLoggedIn, function(request, response) {
@@ -155,6 +209,7 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
             author: {id: request.user._id, email: request.user.email},
             communityString: communityString 
     };
+    aDevice.interfaces = [];
     console.log("Device discovery started");
     console.log(aDevice.hostname);
     console.log(aDevice.ipaddress);
@@ -171,10 +226,11 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
             request.flash("warning","Will start device discovery now");
             session = snmp.createSession(aDevice.ipaddress, aDevice.communityString,{ timeout: 5000 });
             ifTableRead = true;
-            anInterface.device = aDevice;
+            anInterface.device = device;
             anInterface.author = {id: request.user._id, email: request.user.email};
-            // session.tableColumns(oids.ifTable.OID, oids.ifTable.Columns, maxRepetitions, responseCb);
-            session.subtree(oids.ifTable.OID, maxRepetitions, feedCb, doneCb);
+            aDevice = device;
+            session.tableColumns(oids.ifTable.OID, oids.ifTable.Columns, maxRepetitions, responseCb);
+            // session.subtree(oids.ifTable.OID, maxRepetitions, feedCb, doneCb);
             // theWalkSession = session.walk(oids.ifTable.OID, maxRepetitions, feedCb, doneCb);
             //update device with the interface information
             // Device.findByIdAndUpdate(aDevice._id,aDevice,function(error,updatedDevice){
@@ -188,7 +244,7 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
             //     }
             // });
             //redirect back to devices page
-            // response.redirect("/devices"); //will redirect as a GET request
+            response.redirect("/devices"); //will redirect as a GET request
         }
     });
 
@@ -208,6 +264,7 @@ router.get("/new",middleware.isLoggedIn ,function(request, response) {
     response.render("devices/new");
 });
 
+//SHOW DEVICE ROUTE
 router.get("/:id",middleware.isLoggedIn ,function(request,response){
     //find device with provided id
     console.log("request.params.id: "+request.params.id);
@@ -225,6 +282,7 @@ router.get("/:id",middleware.isLoggedIn ,function(request,response){
 //EDIT DEVICE ROUTE
 router.get("/:id/edit", middleware.checkDeviceOwnership, function(request,response){
     //is user logged in?
+    console.log("Update a device");
     Device.findById(request.params.id,function(error,foundDevice){
         response.render("devices/edit",{device: foundDevice});
     });
@@ -248,6 +306,9 @@ router.put("/:id", middleware.checkDeviceOwnership,function(request,response){
 //DESTROY Device ROUTE
 router.delete("/:id", middleware.checkDeviceOwnership, function(request,response){
     console.log("Deleting device with id: "+request.params.id);
+    if(request.params.id == -1){
+        response.redirect("/devices");
+    }
     Device.findByIdAndRemove(request.params.id,function(error){
         if(error){
             console.log(error);
