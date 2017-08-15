@@ -1,12 +1,14 @@
-var express     = require("express");
-var router      = express.Router();
-var Device      = require("../models/device");
-var Interface   = require("../models/interface");
-var middleware  = require("../middleware");
-var snmp        = require ("net-snmp");
-var session     = snmp.createSession (process.env.IP, "public");
-var seedDB      = require("../seeds");
-
+var express         = require("express");
+var router          = express.Router();
+var Device          = require("../models/device");
+var Interface       = require("../models/interface");
+var middleware      = require("../middleware");
+var Promise         = require('bluebird');
+var snmp            = Promise.promisifyAll(require ("net-snmp"));
+var session         = snmp.createSession (process.env.IP, "public");
+var seedDB          = require("../seeds");
+var snmpConstants   = require("../lookUps");
+var async           = require('async');
 //create and save a document, handle error if occured
 var aDevice = new Device() ;
 //*********************
@@ -53,74 +55,67 @@ function sortInt (a, b) {
     else
         return 0;
 }
-function responseCb (error, table) {
-    if (error) {
-        console.error (error.toString ());
-        ifTableError = true;
-        ifXTableError = true;
-    } else {
-        // This code is purely used to print rows out in index order,
-        // ifIndex's are integers so we'll sort them numerically using
-        // the sortInt() function above
+
+var saveDevice = function(device){
+    Device.findByIdAndUpdate(device._id,{interfaces: interfaces},function(){
+        
+    });
+}
+var createInterfaces  = function(device,interfaceList){
+    console.log("createInterface");
+    for(var i=0;i<interfaceList.length;i++){
+        Interface.create(interfaceList[i],function(error,interface){
+            if(error){
+                console.log(error);
+            }
+            else{
+            }
+        });
+        
+    }
+    device.interfaces = interfaces;
+    return device;
+}
+var interfaces = [];
+var retrieveIfTable = function( table,callback){
         var indexes = [];
-        console.log(table);
         for (index in table){
-            console.log(index);
             indexes.push (parseInt (index));
         }
         indexes.sort (sortInt);
 
         // Use the sorted indexes we've calculated to walk through each
         // row in order
-        for (var i = 0; i < indexes.length; i++) {
-            // Like indexes we sort by column, so use the same trick here,
-            // some rows may not have the same columns as other rows, so
-            // we calculate this per row
-            var columns = [];
-            for (column in table[indexes[i]])
-                columns.push (parseInt (column));
-            columns.sort (sortInt);
-            
-            // Print index, then each column indented under the index
-            console.log ("row for index = " + indexes[i]);
-            for (var j = 0; j < columns.length; j++) {
-                if(ifTableRead){
-                console.log ("   column " + columns[j] + " = " + table[indexes[i]][columns[j]]);
-                    anInterface.index = table[indexes[i]][columns[0]];
-                    anInterface.description = table[indexes[i]][columns[1]];
-                    anInterface.type = table[indexes[i]][columns[2]];
-                    anInterface.speed = table[indexes[i]][columns[3]];
-                    anInterface.adminStatus = table[indexes[i]][columns[4]];
-                    anInterface.operStatus  = table[indexes[i]][columns[5]];
-                }
-            }
-            console.log("1111111111111111111111111111111111111111")
-            console.log(anInterface);
-            Interface.create(anInterface,function(error,interface){
-                if(error){
-                    console.log(error);
-                }
-                else{
-                    //save comment
-                    interface.save();
-                    //connect new comment to campground
-                    aDevice.interfaces.push(interface);
-                    aDevice.save();
-                }
-            });
+        var i = indexes.length
+        var columns = [];
+        var columnSorted = false;
 
-            console.log("2222222222222222222222222222222222222222")
-            console.log(aDevice);
-            console.log("3333333333333333333333333333333333333333")
-            console.log(aDevice.interfaces);
-            console.log("4444444444444444444444444444444444444444")
-        }
-        console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@2");
-        console.log(deviceInterfaces);
+        async.forEachOf(table,function (value, key, callback){
+            anInterface = new Interface();
+            anInterface.index = value[ifTableColumns.ifIndex];
+            anInterface.description = value[ifTableColumns.ifDescr];
+            anInterface.type = value[ifTableColumns.ifType];
+            anInterface.speed = value[ifTableColumns.ifSpeed];
+            anInterface.adminStatus = value[ifTableColumns.ifAdminStatus];
+            anInterface.operStatus  = value[ifTableColumns.ifOperStatus];
+            if( (anInterface.adminStatus == snmpConstants.ifAdminOperStatus.up) && (anInterface.operStatus == snmpConstants.ifAdminOperStatus.up)) interfaces.push(anInterface);
+        }); 
         ifTableError = false;
         ifXTableError = false;
-    }
+    return interfaces;
 }
+var ifTableResponseCb = function  (error, table) {
+        if (error) {
+        console.error (error.toString ());
+        ifTableError = true;
+        ifXTableError = true;
+        return;
+    }
+    var discoveredDevice = createInterfaces(aDevice,retrieveIfTable(table,function(){}));
+    console.log(discoveredDevice);
+    saveDevice(discoveredDevice);
+};
+
 //SNMP Walk
 
 function doneCb (error) {
@@ -224,26 +219,17 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
             console.log(device);
             request.flash("success","Successfully added device");
             request.flash("warning","Will start device discovery now");
+            console.log("new device created and saved");
+            console.log(device);
             session = snmp.createSession(aDevice.ipaddress, aDevice.communityString,{ timeout: 5000 });
             ifTableRead = true;
+            ifXTableRead = false;
             anInterface.device = device;
-            anInterface.author = {id: request.user._id, email: request.user.email};
             aDevice = device;
-            session.tableColumns(oids.ifTable.OID, oids.ifTable.Columns, maxRepetitions, responseCb);
-            // session.subtree(oids.ifTable.OID, maxRepetitions, feedCb, doneCb);
-            // theWalkSession = session.walk(oids.ifTable.OID, maxRepetitions, feedCb, doneCb);
-            //update device with the interface information
-            // Device.findByIdAndUpdate(aDevice._id,aDevice,function(error,updatedDevice){
-            //     if(error){
-            //         console.log(error);
-            //         response.redirect("/devices");
-            //     }
-            //     else{
-            //         //redirect somewhere (show page)
-            //         response.redirect("/devices/"+aDevice._id);
-            //     }
-            // });
-            //redirect back to devices page
+            session.tableColumnsAsync(oids.ifTable.OID, oids.ifTable.Columns, maxRepetitions, ifTableResponseCb);
+            ifTableRead = false;
+            ifXTableRead = true;
+            // session.tableColumnsAsync(oids.ifXTable.OID, oids.ifXTable.Columns, maxRepetitions, ifXTableResponseCb);
             response.redirect("/devices"); //will redirect as a GET request
         }
     });
