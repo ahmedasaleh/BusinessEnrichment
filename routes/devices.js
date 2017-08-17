@@ -9,6 +9,7 @@ var session         = snmp.createSession (process.env.IP, "public");
 var seedDB          = require("../seeds");
 var snmpConstants   = require("../lookUps");
 var async           = require('async');
+var S               = require('string');
 //create and save a document, handle error if occured
 var aDevice = new Device() ;
 //*********************
@@ -18,9 +19,6 @@ var aDevice = new Device() ;
 // SNMP verison 2c
 var maxRepetitions = 20;
 var theWalkSession, theTableSession, theTableColumnsSession; 
-// var oid = "1.3.6.1.2.1"; //SNMP MIB-2
-// var ifTable = "1.3.6.1.2.1.2.2";
-// var ifXTable = "1.3.6.1.2.1.31.1.1";
 var ifTableColumns ={ifIndex:1 , ifDescr:2,ifType:3,ifSpeed:5,ifAdminStatus:7,ifOperStatus:8};
 var ifXTableColumns ={ifName:1 , ifAlias:18};
 var deviceInterfaces = [Interface];
@@ -61,22 +59,27 @@ var saveDevice = function(device){
         
     });
 }
-var createInterfaces  = function(device,interfaceList){
-    console.log("createInterface");
-    for(var i=0;i<interfaceList.length;i++){
-        Interface.create(interfaceList[i],function(error,interface){
-            if(error){
-                console.log(error);
-            }
-            else{
-            }
-        });
-        
+var createInterfaces  = function(device,ready,interfaceList){
+    if(ready){
+        console.log("createInterface");
+        for(var i=0;i<interfaceList.length;i++){
+            Interface.create(interfaceList[i],function(error,interface){
+                if(error){
+                    console.log(error);
+                }
+                else{
+                }
+            });
+            
+        }
+        device.interfaces = interestInterfaces;//interfaces;
     }
-    device.interfaces = interfaces;
     return device;
 }
 var interfaces = [];
+var interestKeys = [];
+var interestInterfaces = [];
+
 var retrieveIfTable = function( table,callback){
         var indexes = [];
         for (index in table){
@@ -92,18 +95,64 @@ var retrieveIfTable = function( table,callback){
 
         async.forEachOf(table,function (value, key, callback){
             anInterface = new Interface();
+            anInterface.device = aDevice;
+            anInterface.author = {id: aDevice.author.id, email: aDevice.author.email};
             anInterface.index = value[ifTableColumns.ifIndex];
             anInterface.description = value[ifTableColumns.ifDescr];
             anInterface.type = value[ifTableColumns.ifType];
             anInterface.speed = value[ifTableColumns.ifSpeed];
             anInterface.adminStatus = value[ifTableColumns.ifAdminStatus];
             anInterface.operStatus  = value[ifTableColumns.ifOperStatus];
-            if( (anInterface.adminStatus == snmpConstants.ifAdminOperStatus.up) && (anInterface.operStatus == snmpConstants.ifAdminOperStatus.up)) interfaces.push(anInterface);
+            if( (anInterface.adminStatus == snmpConstants.ifAdminOperStatus.up) && (anInterface.operStatus == snmpConstants.ifAdminOperStatus.up)){
+                interfaces.push([key,anInterface]);
+                interestKeys.push(key);//push index to be used during ifXTable walk
+            } 
         }); 
         ifTableError = false;
         ifXTableError = false;
     return interfaces;
 }
+
+var retrieveIfXTable = function( table,callback){
+        var indexes = [];
+        for (index in table){
+            indexes.push (parseInt (index));
+        }
+        indexes.sort (sortInt);
+
+        // Use the sorted indexes we've calculated to walk through each
+        // row in order
+        var i = indexes.length
+        var columns = [];
+        var columnSorted = false;
+
+        async.forEachOf(table,function (value, key, callback){
+            if(interestKeys.includes(key)){
+                var intf= interfaces[key];
+                console.log(intf.index);
+                // anInterface = new Interface();
+                // anInterface.device = aDevice;
+                // anInterface.author = {id: aDevice.author.id, email: aDevice.author.email};
+                intf.name = value[ifXTableColumns.ifName];
+                intf.alias = value[ifXTableColumns.ifAlias];
+                var name = S(intf.name).toString();
+                name = name.toLowerCase();
+                // check interface is main i.e. doesn't contain '.'
+                if( !S(name).contains('.') && 
+                    ( S(name).contains("gi") || 
+                    S(name).contains("te") || 
+                    S(name).contains("so") || 
+                    S(name).contains("xe") || 
+                    S(name).contains("eth") || 
+                    S(name).contains("ee") ) ) interestInterfaces.push(intf);
+            }
+        }); 
+        ifTableError = false;
+        ifXTableError = false;
+    return interfaces;
+}
+
+
 var ifTableResponseCb = function  (error, table) {
         if (error) {
         console.error (error.toString ());
@@ -111,38 +160,25 @@ var ifTableResponseCb = function  (error, table) {
         ifXTableError = true;
         return;
     }
-    var discoveredDevice = createInterfaces(aDevice,retrieveIfTable(table,function(){}));
-    console.log(discoveredDevice);
+    var discoveredDevice = createInterfaces(aDevice,false,retrieveIfTable(table,function(){}));
+    session.tableColumnsAsync(oids.ifXTable.OID, oids.ifXTable.Columns, maxRepetitions, ifXTableResponseCb);
+     // retrieveIfTable(table,function(){});
+    // console.log(discoveredDevice);
+    // saveDevice(discoveredDevice);
+};
+
+var ifXTableResponseCb = function  (error, table) {
+        if (error) {
+        console.error (error.toString ());
+        ifTableError = true;
+        ifXTableError = true;
+        return;
+    }
+    var discoveredDevice = createInterfaces(aDevice,true,retrieveIfXTable(table,function(){}));
+    // console.log(discoveredDevice);
     saveDevice(discoveredDevice);
 };
 
-//SNMP Walk
-
-function doneCb (error) {
-    if (error)
-        console.error(error.toString ());
-}
-
-function feedCb (varbinds) {
-    var table;//me
-    for (var i = 0; i < varbinds.length; i++) {
-        if (snmp.isVarbindError (varbinds[i])){
-            console.error(snmp.varbindError (varbinds[i]));
-        }
-        else{
-            // console.log(varbinds[i].oid + "|" + varbinds[i].value);
-            //most of the logic for interface filtering must be here
-            var oid = varbinds[i].oid;//.replace ((oids.ifTable.OID + ".1."), "");
-			var match = oid.match (/^(\d+)\.(.+)$/);
-			if (match && match[1] > 0) {
-				if (! table[match[2]])
-					table[match[2]] = {};
-				table[match[2]][match[1]] = varbinds[i].value;
-			}
-        }
-    }
-    console.log(table);
-}
 
 //INDEX - show all devices
 router.get("/", middleware.isLoggedIn ,function(request, response) {
@@ -219,8 +255,6 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
             console.log(device);
             request.flash("success","Successfully added device");
             request.flash("warning","Will start device discovery now");
-            console.log("new device created and saved");
-            console.log(device);
             session = snmp.createSession(aDevice.ipaddress, aDevice.communityString,{ timeout: 5000 });
             ifTableRead = true;
             ifXTableRead = false;
