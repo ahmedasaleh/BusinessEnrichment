@@ -3,7 +3,7 @@ var router      = express.Router({mergeParams: true});
 var Device  = require("../models/device");
 var Interface  = require("../models/interface");
 var middleware  = require("../middleware");
-
+var async           = require('async');
 //Add Route for NEW interface linked with device
 //NEW ROUTE for new interface
 router.get("/new",middleware.isLoggedIn,function(request,response){
@@ -68,7 +68,7 @@ router.get("/:id",function(request,response){
 });
 
 //DESTROY Interface ROUTE
-router.delete("/:id", middleware.checkInterfaceOwnership,  function(request,response){
+router.delete("/:id", middleware.isLoggedIn,  function(request,response){
     var containingDevice = request.body.interface.device;
     Interface.findByIdAndRemove(request.params.id,function(error){
         if(error){
@@ -77,6 +77,65 @@ router.delete("/:id", middleware.checkInterfaceOwnership,  function(request,resp
         else{
             response.redirect("/devices/"+containingDevice.id);
         }
+    });
+});
+
+//EDIT INTERFACE ROUTE
+router.get("/:id/edit", middleware.isLoggedIn, function(request,response){
+    //is user logged in?
+    console.log("Update an interface");
+    console.log(request.params.id);
+    // console.log(request);
+    // response.redirect("/devices/");
+    Interface.findById(request.params.id,function(error,foundInterface){
+        response.render("interfaces/edit",{interface: foundInterface, device: foundInterface.device});
+    });
+    
+});
+//UPDATE INTERFACE ROUTE
+router.put("/:id", middleware.isLoggedIn,function(request,response){
+    //find and update the correct DEVICE
+    request.body.interface.updated = new Date();
+    request.body.interface.lastUpdatedBy = {id: request.user._id, email: request.user.email};
+
+    Interface.findById(request.params.id,function(error,foundInterface){
+        if(error){
+            console.log(error);
+            request.flash("error","something went wrong while updating the interface");
+        }
+        else{
+            foundInterface.name = request.body.interface.name;
+            foundInterface.alias = request.body.interface.alias;
+            foundInterface.description = request.body.interface.description;
+            foundInterface.type = request.body.interface.type;
+            foundInterface.actualspeed = request.body.interface.actualspeed;
+            foundInterface.hasAdjacent = request.body.interface.hasAdjacent;
+            foundInterface.updated = new Date();
+            foundInterface.lastUpdatedBy = {id: request.user._id, email: request.user.email};
+
+            foundInterface.save(function(error,intf){
+                if(error) console.log(error);
+            });
+            Device.findOne({hostname: foundInterface.device.hostname},function(error,foundDevice){
+                if(error){
+                    request.flash("error","Can't find containing device");
+                    console.log("Can't find containing device");
+                }
+                else{
+                    for(var i=0; i<foundDevice.interfaces.length;i++){
+                        if(foundDevice.interfaces[i].index ==  foundInterface.index){
+                            foundDevice.interfaces[i] = foundInterface;
+                            console.log(foundDevice.interfaces[i]);
+                            Device.update({_id: foundDevice._id},foundDevice,function(error,device){
+                                 if(error) console.log(error);
+                            });
+                            break;
+                        }
+                    }
+                }
+            });
+        }
+        response.redirect("/devices/");
     });
 });
 module.exports = router;

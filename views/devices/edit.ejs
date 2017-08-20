@@ -9,22 +9,47 @@
             <form method="POST" action="/devices/<%= device._id %>/?_method=PUT">
                 <!--<use form-group to make spacing between components>-->
                 <div class="form-group">
+                    <label for="hostname">Host Name</label>
                     <input class="form-control" type="text" name="device[hostname]" value="<%= device.hostname %>" readonly>
                 </div>
                 <div class="form-group">
+                    <label for="ipaddress">IP Address</label>
                     <input class="form-control" type="text" name="device[ipaddress]" value="<%= device.ipaddress %>" readonly>
                 </div>
                 <div class="form-group">
+                    <label for="communityString">Community String</label>
                     <input class="form-control" type="text" name="device[communityString]" value="<%= device.communityString %>">
                 </div>
                 <div class="form-group">
-                    <input class="form-control" type="text" name="device[popName][name]" placeholder="POP name">
+                    <label for="popName">POP Name</label>
+                    <input class="form-control" type="text" name="device[popName][name]" value="<%= device.popName.name %>">
                 </div>
                 <div class="form-group">
-                    <input class="form-control" type="text" name="device[sector][name]" placeholder="Sector">
+                    <label for="sector">Sector Name</label>
+                    <input class="form-control" type="text" name="device[sector][name]" value="<%= device.sector.name %>">
                 </div>
                 <div class="form-group">
-                    <input class="form-control" type="text" name="device[governorate][name]" placeholder="Governorate">
+                    <label for="governorate">Governorate Name</label>
+                    <input class="form-control" type="text" name="device[governorate][name]" value="<%= device.governorate.name %>">
+                </div>
+                <div class="form-group">
+                    <label for="type">Type</label>
+                    <!-- <input class="form-control" type="text" name="device[type]" value="<%= device.type %>"> -->
+                    <select class="form-control selectpicker" name="device[type]" value="<%= device.type %>">
+                      <option>Router</option>
+                      <option>Switch</option>
+                      <option>Access Switch</option>
+                      <option>DSLAM</option>
+                      <option>MSAN</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="model">Model</label>
+                    <input class="form-control" type="text" name="device[model]" value="<%= device.model %>">
+                </div>
+                <div class="form-group">
+                    <label for="vendor">Vendor</label>
+                    <input class="form-control" type="text" name="device[vendor]" value="<%= device.vendor %>">
                 </div>
                 <div class="form-group">
                     <!--<btn-block will let the button takes width of the 2 inputs>-->

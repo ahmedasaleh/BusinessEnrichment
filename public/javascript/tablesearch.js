@@ -35,6 +35,7 @@ var $jtable = $j('#eventsTable');
         $j('#user-update-form').attr('action', '/users/'+value.id+'/edit');
         $j('#validateduser-delete-form').attr('action', '/validatedusers/'+value.id+'/?_method=DELETE');
         $j('#validateduser-update-form').attr('action', '/validatedusers/'+value.id+'/edit');
+        $j('#interface-update-form').attr('action', '/interfaces/'+value.id+'/edit');
     });
 
   });

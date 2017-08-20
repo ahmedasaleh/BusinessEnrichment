@@ -9,7 +9,7 @@ var interfaceSchema = new mongoose.Schema({
     speed: Number,
     adminStatus: String,
     operStatus: String,
-    speed: Number,
+    actualspeed: Number,
     hasAdjacent: {type: Boolean, default: false},
     created: { type: Date, default: Date.now },
     updated: Date,
@@ -35,7 +35,7 @@ var interfaceSchema = new mongoose.Schema({
             ref: "User"
         },
         email: String
-    },
+    }
     
 });
 

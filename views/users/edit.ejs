@@ -9,9 +9,11 @@
             <form method="POST" action="/users/<%= user._id %>/?_method=PUT">
                 <!--<use form-group to make spacing between components>-->
                 <div class="form-group">
+                    <label for="username">User Name</label>
                     <input class="form-control" type="text" name="user[name]" value="<%= user.name %>" readonly>
                 </div>
                 <div class="form-group">
+                    <label for="role">User Role</label>
                     <input class="form-control" type="text" name="user[role]" value="<%= user.role %>">
                 </div>
                 <div class="form-group">

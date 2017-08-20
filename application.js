@@ -29,7 +29,8 @@ var indexBaseURL        = "/",
     userBaseURL   = "/users",
     validatedUserBaseURL   = "/validatedusers",
     deviceBaseURL   = "/devices",
-    interfaceBaseURL      = "/devices/:id/interfaces";
+    interfaceBaseURL      = "/interfaces";
+    // interfaceBaseURL      = "/devices/:id/interfaces";
 
 var applicationVersion  = 1;
 

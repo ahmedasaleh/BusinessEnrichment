@@ -3,24 +3,43 @@
     <div class="row">
         <h1 style="text-align: center">Edit Interface</h1>
         <div style="width: 30%; margin: 25px auto;">
-            <form action="/devices/<%= interface.device.id %>/interfaces/<%= interface._id %>?_method=PUT" method="POST">
+            <!-- <form action="/devices/<%= interface.device.id %>/interfaces/<%= interface._id %>?_method=PUT" method="POST"> -->
+            <form action="/interfaces/<%= interface._id %>?_method=PUT" method="POST">
                 <div class="form-group">
+                    <label for="interfacename">Interface Name</label>
                     <input class="form-control" type="text" name="interface[name]" value="<%= interface.name %>">
                 </div>
                 <div class="form-group">
+                    <label for="description">Interface Description</label>
+                    <input class="form-control" type="text" name="interface[description]" value="<%= interface.description %>">
+                </div>
+                <div class="form-group">
+                    <label for="alias">Interface Alias</label>
                     <input class="form-control" type="text" name="interface[alias]" value="<%= interface.alias %>">
                 </div>
                 <div class="form-group">
-                    <input class="form-control" type="text" name="interface[index]" value="<%= interface.index %>">
+                    <label for="index">Interface Index</label>
+                    <input class="form-control" type="text" name="interface[index]" value="<%= interface.index %>" readonly>
                 </div>
                 <div class="form-group">
+                    <label for="type">Interface Type</label>
                     <input class="form-control" type="text" name="interface[type]" value="<%= interface.type %>">
                 </div>
                 <div class="form-group">
-                    <input class="form-control" type="text" name="interface[speed]" value="<%= interface.speed %>">
+                    <label for="speed">Interface Speed</label>
+                    <input class="form-control" type="text" name="interface[speed]" value="<%= interface.speed %>" readonly>
                 </div>
                 <div class="form-group">
-                    <input class="form-control" type="text" name="interface[device]" value="<%= interface.device.hostname %>" readonly>
+                    <label for="speed">Interface Actual Speed</label>
+                    <input class="form-control" type="text" name="interface[actualspeed]" value="<%= interface.actualspeed %>">
+                </div>
+                <div class="form-group">
+                    <label for="speed">Is Link</label>
+                    <input class="form-control" type="text" name="interface[hasAdjacent]" value="<%= interface.hasAdjacent %>">
+                </div>
+                <div class="form-group">
+                    <label for="devicename">Device Name</label>
+                    <input class="form-control" type="text" name="interface[device][hostname]" value="<%= interface.device.hostname %>" readonly>
                 </div>
                 <div class="form-group">
                     <button class="btn btn-lg btn-primary btn-block">Update</button>

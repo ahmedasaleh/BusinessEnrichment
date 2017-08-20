@@ -49,6 +49,9 @@
                             <th data-field="popname" data-sortable="true">POP Name</th>
                             <th data-field="sectorname" data-sortable="true">Sector Name</th>
                             <th data-field="governorate" data-sortable="true">Governorate</th>
+                            <th data-field="type" data-sortable="true">Type</th>
+                            <th data-field="model" data-sortable="true">Model</th>
+                            <th data-field="vendor" data-sortable="true">Vendor</th>
                             <th data-field="createdby">Created By</th>
                             <th data-field="updatedby">Last Updated By</th>
                         </tr>
@@ -61,16 +64,19 @@
                                 <td><a href="/devices/<%= device._id %>"><%= device.hostname %></a></td>
                                 <td><%= device.ipaddress %></td>
                                 <td><%= device.communityString %></td>
-                                <td><%= device.created.toDateString() %></td>
+                                <td><%= device.createdAt.toDateString() %></td>
                                 <td>
-                                    <% if(device.updated) { %>
-                                    <%= device.updated.toDateString() %>
+                                    <% if(device.updatedAt) { %>
+                                    <%= device.updatedAt.toDateString() %>
                                     <% } %>
                                 </td>
                                 <td><%= device.description %></td>
                                 <td><%= device.popName.name %></td>
                                 <td><%= device.sector.name %></td>
                                 <td><%= device.governorate.name %></td>
+                                <td><%= device.type %></td>
+                                <td><%= device.model %></td>
+                                <td><%= device.vendor %></td>
                                 <td><%= device.author.email %></td>
                                 <td><%= device.lastUpdatedBy.email %></td>
                             </tr>

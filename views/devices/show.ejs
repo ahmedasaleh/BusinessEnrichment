@@ -20,7 +20,7 @@
                 <div class="caption-full">
                     <h4 class="pull-right">IP: <%=device.ipaddress  %></h4>
                     <h4><a href="/devices/<%= device._id %>"><%=device.hostname  %></a></h4>
-                    <p><%=device.description  %></p>
+                    <p><%= device.description  %></p>
                     <p><em>Added By:  <%= device.author.email %></em></p>
                     <!--/currentUser is setted up application.js middleware/-->
                     <!--<!% console.log("show.ejs currentUser: "+ currentUser) %>-->
@@ -32,37 +32,76 @@
                     <% } %>
                 </div>
             </div>
-            <div class="well">
-                <!--<div class="text-right">-->
-                <!--    <a class="btn btn-success" href="/devices/<!%= device._id %>/interfaces/new">Add a New Interface</a>-->
-                <!--</div>-->
-                <!--<hr>-->
-                <% device.interfaces.forEach(function(interface){ %>
-                <%= console.log(interface._id)  %>
-                    <div class="row">
-                        <div class="col-md-12">
-                            <p><em>Created by: <%= interface.author.email %></em></p>   
-                            <span class="pull-right">Created <%= interface.created.toDateString() %></span>
-                            <form id="if-delete-form" action="/devices/<%= device._id %>/interfaces/<%= interface._id %>/?_method=DELETE" method="POST">
-                                <div class="form-group">
-                                    <input class="form-control" type="hidden" name="interface[device][id]" value="<%= device._id %>" readonly>
-                                </div>
-                                <button class="btn btn-sm">
-                                    <i class="glyphicon glyphicon-remove" aria-hidden="true"><%= interface.description %></i>
-                                </button>
-                                <div>
-                                    <h5>ifIndex: <%= interface.index %></h5>
-                                    <h5>ifType: <%= interface.type %></h5>
-                                    <h5>is link: <%= interface.hasAdjacent %></h5>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                    <hr>
-                <% }); %>
-                
+
+            <div>
+                <h3>Device Interface List</h3>
             </div>
-        </div>
+
+            <div class="btn-group" role="group" aria-label="devices">
+                <form id="interface-update-form"  class="btn-group" action="" method="GET">
+                    <button type="button " class="btn  btn-warning">Update Interface</button>
+                </form>
+            </div>        
+
+            <div class="row text-left">
+                <div class="table-responsive">
+                    <table id="eventsTable" data-pagination="true" data-search="true"data-toggle="table" data-height="525" data-pagination="true" 
+                    data-maintain-selected="true" data-search="true" data-show-refresh="true" data-show-toggle="true" data-show-columns="true" 
+                    data-toolbar="#toolbar" data-single-select="true">
+                        <thead>
+                            <tr>
+                                <th data-field="state" data-checkbox="true"> </th>
+                                <th data-field="_id" data-visible="false">ID</th>
+                                <th data-field="index">Index</th>
+                                <th data-field="name" data-sortable="true">Name</th>
+                                <th data-field="alias">Alias</th>
+                                <th data-field="description">Description</th>
+                                <th data-field="type" data-sortable="true">Type</th>
+                                <th data-field="speed" data-sortable="true">Speed</th>
+                                <th data-field="adminStatus" data-sortable="true">Admin Status</th>
+                                <th data-field="operStatus" data-sortable="true">Operational Status</th>
+                                <th data-field="actualspeed" data-sortable="true">Actual Speed</th>
+                                <th data-field="hasAdjacent" data-sortable="true">Is Link</th>
+                                <th data-field="createdby">Created By</th>
+                                <th data-field="updatedby">Last Updated By</th>
+                                <th data-field="datecreated" data-sortable="true">Date Created</th>
+                                <th data-field="dateupdated" data-sortable="true">Date Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% device.interfaces.forEach(function(interface){ %>
+                                <tr>
+                                    <td><% %></td>
+                                    <td><%= interface._id %></td>
+                                    <td><%= interface.index %></td>
+                                    <td><%= interface.name %></a></td>
+                                    <td><%= interface.alias %></td>
+                                    <td><%= interface.description %></td>
+                                    <td><%= interface.type %></td>
+                                    <td><%= interface.speed %></td>
+                                    <td><%= interface.adminStatus %></td>
+                                    <td><%= interface.operStatus %></td>
+                                    <td><%= interface.actualspeed %></td>
+                                    <td><%= interface.hasAdjacent %></td>
+                                    <td><%= interface.author.email %></td>
+                                    <td><%= interface.lastUpdatedBy.email %></td>
+                                    <td>
+                                        <% if(interface.created) { %>
+                                            <%= interface.created.toDateString() %>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <% if(interface.updated) { %>
+                                            <%= interface.updatedAt.toDateString() %>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>               
     </div>
 </div>
 <% include ../partials/footer %>
