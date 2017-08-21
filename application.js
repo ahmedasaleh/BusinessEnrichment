@@ -9,6 +9,9 @@ var express             = require("express"),
     dotenv              = require("dotenv"),
     User                = require("./models/user"),
     seedDB              = require("./seeds");
+
+var CronJob = require('cron').CronJob;   
+
 var cluster = require('cluster');    
 // //requiring routes
 var interfaceRoutes       = require("./routes/interfaces"),  
@@ -84,6 +87,13 @@ process.on('uncaughtException', function (err) {
   console.error(err);
   console.log("Node NOT Exiting...");
 });
+
+//sec min hour day month weekday
+new CronJob('0 0 0 */2 * *', function() {
+  console.log('You will see this message every second');
+  deviceRoutes.syncDevices();
+}, null, true, 'Africa/Cairo');
+
 app.listen(process.env.PORT, process.env.IP, function() {
     console.log("Business Enrichment V"+ applicationVersion +" Server Started on "+process.env.IP+":"+process.env.PORT);
 });

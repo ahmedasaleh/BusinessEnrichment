@@ -7,6 +7,9 @@ var aPOP = new POP() ;
 
 //INDEX - show all pops
 router.get("/", middleware.isLoggedIn ,function(request, response) {
+    POP.paginate({}, { select: 'name',offset: 20, limit: 10 }, function(err, result) {
+    });
+    
     POP.find({}, function(error, foundPOPs) {
         if (error) {
             console.log(error);

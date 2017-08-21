@@ -20,9 +20,14 @@
                     <label for="communityString">Community String</label>
                     <input class="form-control" type="text" name="device[communityString]" value="<%= device.communityString %>">
                 </div>
-                <div class="form-group">
+<!--                 <div class="form-group">
                     <label for="popName">POP Name</label>
                     <input class="form-control" type="text" name="device[popName][name]" value="<%= device.popName.name %>">
+                </div>
+ -->                <div class="form-group">
+                    <label for="popName">POP Name</label>
+                    <select id="device-pop-name" class="form-control" type="text" name="device[popName][name]" value="<%= device.popName.name %>">
+                    </select>
                 </div>
                 <div class="form-group">
                     <label for="sector">Sector Name</label>

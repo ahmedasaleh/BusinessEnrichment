@@ -1,4 +1,6 @@
 var mongoose = require("mongoose");
+var mongoosePaginate = require('mongoose-paginate');
+
 //Database template setup
 var popSchema = new mongoose.Schema({
     name: String,
@@ -28,4 +30,9 @@ var popSchema = new mongoose.Schema({
     }
 });
 
-module.exports = mongoose.model("POP", popSchema);
+popSchema.plugin(mongoosePaginate);
+var POP = mongoose.model("POP", popSchema);
+
+
+
+module.exports = POP;//mongoose.model("POP", popSchema);

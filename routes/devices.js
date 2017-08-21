@@ -14,9 +14,6 @@ var S               = require('string');
 //create and save a document, handle error if occured
 var aDevice = new Device() ;
 var targets = [];
-// var interfaces = [];
-// var interestKeys = [];
-// var interestInterfaces = [];
 
 function discoveredDevice(device) {
     var self = this;
@@ -25,10 +22,14 @@ function discoveredDevice(device) {
     self.interfaces = [];
     self.interestKeys = [];
     self.interestInterfaces = [];
+    self.interestInterfacesIndices = [];//this will make iterating on interfaces during sync mode faster
+    self.interfaceUpdateList = [];
+    self.interfaceRemoveList = [];
     self.ifTableError = false;
     self.ifXTableError = false;
     self.ifTableRead = false;
     self.ifXTableRead = false;
+    self.inSyncMode = false;
     self.session = snmp.createSession(self.device.ipaddress, self.device.communityString,{ timeout: 5000 });
 
     self.saveDevice = function(device){
@@ -37,7 +38,39 @@ function discoveredDevice(device) {
                 console.log(error);
             }
         });
+    };
+    self.getInterfaceFromInterestList = function(interfaceIndex){
+        var intf = new Interface();
+        async.forEachOf(self.interestInterfaces,function(interface,key,callback){
+            if(interface.index == interfaceIndex){
+                intf = {
+                    index: interface.index,
+                    speed: interface.speed,
+                    name: interface.name,
+                    alias: interface.alias,
+                    description: interface.description,
+                    type: interface.type
+                };
+            }
+        }); 
+        return intf;
     };    
+    self.removeInterfaceFromInterestList = function(interfaceIndex){
+        console.log("removeInterfaceFromInterestList");
+        console.log(interfaceIndex);
+        console.log(self.interestInterfaces);
+        for(var i=0; i<self.interestInterfaces.length;i++){
+        console.log(self.interestInterfaces[i].index);
+            if(self.interestInterfaces[i].index ==  interfaceIndex){
+                //remove interface from the list
+                self.interestInterfaces.splice(i,1);
+                break;
+            }
+        }
+                console.log(self.interestInterfaces);
+
+    };    
+
     self.retrieveIfTable = function( table,callback){
         var indexes = [];
         for (index in table){
@@ -99,6 +132,7 @@ function discoveredDevice(device) {
                     S(name).contains("eth") || 
                     S(name).contains("ee") ) ) {
                       self.interestInterfaces.push(intf);
+                      self.interestInterfacesIndices.push(intf.index);
                 }
             }
         }); 
@@ -107,7 +141,9 @@ function discoveredDevice(device) {
         return self.interestInterfaces;
     };    
     self.createInterfaces  = function(interfaceList){
+        console.log("createInterfaces");
         for(var i=0;i<interfaceList.length;i++){
+        console.log("createInterfaces FOR LOOP");
             Interface.create(interfaceList[i],function(error,interface){
                 if(error){
                     console.log(error);
@@ -118,7 +154,36 @@ function discoveredDevice(device) {
             });
             
         }
-        self.device.interfaces = self.interestInterfaces;//interfaces;
+    };
+    self.updateInterfaces  = function(interfaceList){
+        console.log("updateInterfaces");
+        for(var i=0;i<interfaceList.length;i++){
+        console.log("updateInterfaces FOR LOOP");
+            Interface.create(interfaceList[i],function(error,interface){
+                if(error){
+                    console.log(error);
+                }
+                else{
+                    console.log(interface);
+                }
+            });
+            
+        }
+    };
+    self.removeInterfaces  = function(interfaceList){
+        console.log("removeInterfaces");
+        for(var i=0;i<interfaceList.length;i++){
+        console.log("removeInterfaces FOR LOOP");
+            Interface.create(interfaceList[i],function(error,interface){
+                if(error){
+                    console.log(error);
+                }
+                else{
+                    console.log(interface);
+                }
+            });
+            
+        }
     };
     self.ifXTableResponseCb = function  (error, table) {
         if (error) {
@@ -127,8 +192,72 @@ function discoveredDevice(device) {
             self.ifXTableError = true;
             return;
         }
-        self.createInterfaces(self.retrieveIfXTable(table,function(){}));
-        self.saveDevice(self.device);
+        if(self.inSyncMode){
+            self.retrieveIfXTable(table,function(){});
+            console.log("before asyncForEach");
+            async.forEachOf(self.device.interfaces,function(interface,key,callback){
+            console.log(interface);
+                console.log(interface.index+": "+interface.name+" , "+interface.updated +" , syncCycles "+interface.syncCyles);
+
+                // if: current interface index found in interestInterfaces and interface not updated, then: update interface
+                if(self.interestInterfacesIndices.includes(interface.index) && (interface.updated === undefined)){
+                    console.log("1111111111111111111111111111111111111111111");
+                    var intf = self.getInterfaceFromInterestList(interface.index);
+                    interface.name = intf.name;
+                    interface.alias = intf.alias;
+                    interface.description = intf.description;
+                    interface.type = intf.type;
+                    interface.speed = intf.speed;
+                    self.interfaceUpdateList.push(interface);
+                    console.log("found interface "+interface.name +" with index "+interface.index+", with update state "+interface.updated);
+                    //remove interface from list of interest interfaces as it is already exists
+                    self.removeInterfaceFromInterestList(interface.index);
+                }
+                // if: current interface index not found and updated and syncCyles > threshold, then: let "delete = true" and update interface
+                else if((!self.interestInterfacesIndices.includes(interface.index)) && 
+                    (interface.updated instanceof Date) && 
+                    (interface.syncCycles > syncCyclesThreshold)){
+                    console.log("2222222222222222222222222222222222222222222222222");
+                    var intf = self.getInterfaceFromInterestList(interface.index);
+                    interface.name = intf.name;
+                    interface.alias = intf.alias;
+                    interface.description = intf.description;
+                    interface.type = intf.type;
+                    interface.speed = intf.speed;
+                    interface.delete = true;
+                    self.interfaceUpdateList.push(interface);
+                }
+                // if: current interface index not found and not updated and syncCyles > threshold, then: delete interface
+                else if((!self.interestInterfacesIndices.includes(interface.index)) && 
+                    (interface.updated === undefined) && 
+                    (interface.syncCycles > syncCyclesThreshold)){
+                    console.log("333333333333333333333333333333333333333333333333");
+                    self.interfaceUpdateList.push(interface);
+                }
+                // if: current interface index found in interestInterfaces and interface updated, then: skip
+                else if(self.interestInterfacesIndices.includes(interface.index) && (interface.updated instanceof Date)){
+                    //remove interface from list of interest interfaces as it is already exists
+                    console.log("44444444444444444444444444444444444444444444444");
+                    self.interfaceUpdateList.push(interface);
+                    self.removeInterfaceFromInterestList(interface.index);
+                }
+                // if: new interface index, then create interface 
+                else {
+                }
+            });
+            if(self.interestInterfaces.length > 0) self.createInterfaces(self.interestInterfaces);
+            if(self.interfaceUpdateList.length > 0) self.updateInterfaces(self.interfaceUpdateList);
+            if(self.interfaceRemoveList.length > 0) self.removeInterfaces(self.interfaceRemoveList);
+            //now the device will use interestInterfaces array during save action, so modify it to include only new and updated
+            //interfaces
+            console.log(self.interestInterfaces);
+            self.interestInterfaces = self.interestInterfaces.concat(self.interfaceUpdateList);
+            console.log(self.interestInterfaces);
+            self.saveDevice(self.device); 
+        }else{
+            self.createInterfaces(self.retrieveIfXTable(table,function(){}));
+            self.saveDevice(self.device);         
+        }
     };    
     self.ifTableResponseCb = function  (error, table) {
         if (error) {
@@ -142,12 +271,15 @@ function discoveredDevice(device) {
         self.session.tableColumnsAsync(oids.ifXTable.OID, oids.ifXTable.Columns, maxRepetitions, self.ifXTableResponseCb);
     };
     this.syncInterfaces = function(){
+        self.inSyncMode = true;
+        console.log(self.inSyncMode);
         console.log("starting "+self.name+" sync process");
-        // gather list of filtered interface indices
+        // discover new list of filtered interface indices
         // if: current interface index found in list and interface updated, then: skip
         // if: current interface index found in list and interface not updated, then: update interface
-        // if: current interface index not found and updated and syncCyles > threshold, then: delete = true
-        // if: current interface index not found and not updated and syncCyles > threshold, then: delete 
+        // if: current interface index not found and updated and syncCyles > threshold, then: let "delete = true" and update interface
+        // if: current interface index not found and not updated and syncCyles > threshold, then: delete interface
+        // if: new interface index, then create interface 
         self.session.tableColumnsAsync(oids.ifTable.OID, oids.ifTable.Columns, maxRepetitions, self.ifTableResponseCb);
     };
     this.discoverInterfaces = function(){
@@ -160,6 +292,7 @@ function discoveredDevice(device) {
 //*********************
 // The maxRepetitions argument is optional, and will be ignored unless using
 // SNMP verison 2c
+var syncCyclesThreshold = 3;
 var snmpError = "";
 var maxRepetitions = 20;
 var theWalkSession, theTableSession, theTableColumnsSession; 
@@ -272,8 +405,8 @@ router.get("/new",middleware.isLoggedIn ,function(request, response) {
 });
 
 //Sync devices
-router.get("/sync", middleware.isLoggedIn ,function(request, response) {
-    console.log("syncing devices!!!!!!!!!!!");
+var syncDevices = function(){
+    console.log("Checking if devices ready for sync!!!!!!!!!!!");
     Device.find({}, function(err, foundDevices) {
         if (err) {
             console.log(err);
@@ -286,10 +419,13 @@ router.get("/sync", middleware.isLoggedIn ,function(request, response) {
                     var discoDevice = new discoveredDevice(device);
                     discoDevice.syncInterfaces();
                 }
-                request.flash("warning","Devices synchronization will start now");
             });
         }
     });
+
+}
+router.get("/sync", middleware.isLoggedIn ,function(request, response) {
+    syncDevices();
     response.redirect("/devices");
 });
 
@@ -349,3 +485,4 @@ router.delete("/:id", middleware.checkDeviceOwnership, function(request,response
 });
 
 module.exports = router;
+module.exports.syncDevices = syncDevices;
