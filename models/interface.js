@@ -10,6 +10,8 @@ var interfaceSchema = new mongoose.Schema({
     adminStatus: String,
     operStatus: String,
     actualspeed: Number,
+    delete: {type: Boolean, default: false},//used to mark interface for deletion
+    syncCycles: {type: Number, default: 0},//used to track number of sync cycles where interface was missed
     hasAdjacent: {type: Boolean, default: false},
     created: { type: Date, default: Date.now },
     updated: Date,

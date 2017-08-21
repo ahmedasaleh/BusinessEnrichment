@@ -36,6 +36,7 @@ var deviceSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now },
     updatedAt: Date,
     description: String,
+    discovered: {type: Boolean, default: false},//used to mark device as discovered, useful during sync process
     popName: {
         id:{
             type: mongoose.Schema.Types.ObjectId,

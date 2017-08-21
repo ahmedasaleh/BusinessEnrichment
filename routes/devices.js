@@ -30,8 +30,9 @@ function discoveredDevice(device) {
     self.ifTableRead = false;
     self.ifXTableRead = false;
     self.session = snmp.createSession(self.device.ipaddress, self.device.communityString,{ timeout: 5000 });
+
     self.saveDevice = function(device){
-        Device.findByIdAndUpdate(device._id,{interfaces: self.interestInterfaces},function(error,updatedDevice){
+        Device.findByIdAndUpdate(device._id,{interfaces: self.interestInterfaces, discovered: true},function(error,updatedDevice){
             if(error){
                 console.log(error);
             }
@@ -140,6 +141,15 @@ function discoveredDevice(device) {
         self.retrieveIfTable(table,function(){});
         self.session.tableColumnsAsync(oids.ifXTable.OID, oids.ifXTable.Columns, maxRepetitions, self.ifXTableResponseCb);
     };
+    this.syncInterfaces = function(){
+        console.log("starting "+self.name+" sync process");
+        // gather list of filtered interface indices
+        // if: current interface index found in list and interface updated, then: skip
+        // if: current interface index found in list and interface not updated, then: update interface
+        // if: current interface index not found and updated and syncCyles > threshold, then: delete = true
+        // if: current interface index not found and not updated and syncCyles > threshold, then: delete 
+        self.session.tableColumnsAsync(oids.ifTable.OID, oids.ifTable.Columns, maxRepetitions, self.ifTableResponseCb);
+    };
     this.discoverInterfaces = function(){
         console.log(self.name+" "+self.device.ipaddress+" "+self.device.communityString);
         self.session.tableColumnsAsync(oids.ifTable.OID, oids.ifTable.Columns, maxRepetitions, self.ifTableResponseCb);
@@ -202,43 +212,6 @@ router.get("/", middleware.isLoggedIn ,function(request, response) {
     });
 });
 
-router.get("/sync", middleware.isLoggedIn ,function(request, response) {
-    Device.find({}, function(err, foundDevices) {
-        if (err) {
-            console.log(err);
-        }
-        else {
-            foundDevices.forEach(function(device){
-                //if device has no update date perform sync
-                if(device.updated == undefined){
-                    console.log(device.updated);
-                    //perform smpwalk
-                    aDevice = new Device();
-                    anInterface = new Interface();
-                    aDevice = {
-                        hostname: device.hostname,
-                        ipaddress: device.ipaddress,
-                        updated: Date.now,
-                        communityString: device.communityString,
-                        type: device.type,
-                        model: device.model,
-                        vendor: device.vendor,
- 
-                    };
-                    session = snmp.createSession(aDevice.ipaddress, aDevice.communityString,{ timeout: 5000 });
-                    ifTableRead = true;
-                    anInterface.device = aDevice;
-                    anInterface.author = {id: request.user._id, email: request.user.email};
-                    session.tableColumns(oids.ifTable.OID, oids.ifTable.Columns, maxRepetitions, responseCb);
-                    //update device
-                    aDevice.save();
-                }
-            });
-            // response.render("devices/index", { devices: foundDevices });
-            // response.send("VIEW DEVICES");
-        }
-    });
-});
 
 //CREATE - add new device to DB
 router.post("/",middleware.isLoggedIn, function(request, response) {
@@ -296,6 +269,28 @@ router.get("/new",middleware.isLoggedIn ,function(request, response) {
         seedDB(request.user);
     }
     response.render("devices/new");
+});
+
+//Sync devices
+router.get("/sync", middleware.isLoggedIn ,function(request, response) {
+    console.log("syncing devices!!!!!!!!!!!");
+    Device.find({}, function(err, foundDevices) {
+        if (err) {
+            console.log(err);
+        }
+        else {
+            foundDevices.forEach(function(device){
+                if(device.discovered){//only handle discovered devices
+                    console.log("device " + device.hostname +" will be synced now");
+                    // perform interface sync
+                    var discoDevice = new discoveredDevice(device);
+                    discoDevice.syncInterfaces();
+                }
+                request.flash("warning","Devices synchronization will start now");
+            });
+        }
+    });
+    response.redirect("/devices");
 });
 
 //SHOW DEVICE ROUTE

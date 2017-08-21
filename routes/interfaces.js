@@ -69,14 +69,42 @@ router.get("/:id",function(request,response){
 
 //DESTROY Interface ROUTE
 router.delete("/:id", middleware.isLoggedIn,  function(request,response){
-    var containingDevice = request.body.interface.device;
-    Interface.findByIdAndRemove(request.params.id,function(error){
+    Interface.findById(request.params.id,function(error,foundInterface){
         if(error){
             console.log(error);
+            request.flash("error","something went wrong while updating the interface");
         }
         else{
-            response.redirect("/devices/"+containingDevice.id);
+            var device = foundInterface.device.hostname;
+            console.log(device);
+
+            Interface.findByIdAndRemove(request.params.id,function(error){
+                if(error){
+                    console.log(error);
+                }
+            });
+
+            Device.findOne({hostname: foundInterface.device.hostname},function(error,foundDevice){
+                if(error){
+                    request.flash("error","Can't find containing device");
+                    console.log("Can't find containing device");
+                }
+                else{
+                    for(var i=0; i<foundDevice.interfaces.length;i++){
+                        if(foundDevice.interfaces[i].index ==  foundInterface.index){
+                            //remove interface from the device
+                            foundDevice.interfaces.splice(i,1);
+                            console.log(foundDevice.interfaces);
+                            Device.update({_id: foundDevice._id},foundDevice,function(error,device){
+                                 if(error) console.log(error);
+                            });
+                            break;
+                        }
+                    }
+                }
+            });
         }
+        response.redirect("back");
     });
 });
 
