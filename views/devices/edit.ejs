@@ -20,22 +20,32 @@
                     <label for="communityString">Community String</label>
                     <input class="form-control" type="text" name="device[communityString]" value="<%= device.communityString %>">
                 </div>
-<!--                 <div class="form-group">
-                    <label for="popName">POP Name</label>
-                    <input class="form-control" type="text" name="device[popName][name]" value="<%= device.popName.name %>">
-                </div>
- -->                <div class="form-group">
-                    <label for="popName">POP Name</label>
-                    <select id="device-pop-name" class="form-control" type="text" name="device[popName][name]" value="<%= device.popName.name %>">
+                <div class="form-group">
+                    <label for="device-pop-name">POP Name</label>
+                    <select id="device-pop-name" class="form-control select2-single" type="text" name="device[popName][name]"  data-init-text="<%= device.popName.name %>" >
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="sector">Sector Name</label>
-                    <input class="form-control" type="text" name="device[sector][name]" value="<%= device.sector.name %>">
+                    <label for="device-sector-name">Sector Name</label>
+                    <!-- <input class="form-control" type="text" name="device[sector][name]" value="<%= device.sector.name %>"> -->
+                    <!-- data-init-text="<%= device.sector.name %>" -->
+                    <% if(device.sector.name === undefined){ %>
+                        <select id="device-sector-name" class="form-control select2-single" type="text" name="device[sector][name]"  value="<%= device.sector.name %>"  >
+                        </select>
+                    <% } else {  %>
+                        <select id="device-sector-name" class="form-control select2-single" type="text" name="device[sector][name]"  data-init-text="<%= device.sector.name %>"  >
+                        </select>
+                    <%   } %>
                 </div>
                 <div class="form-group">
-                    <label for="governorate">Governorate Name</label>
-                    <input class="form-control" type="text" name="device[governorate][name]" value="<%= device.governorate.name %>">
+                    <label for="device-governorate-name">Governorate Name</label>
+                    <% if(device.governorate.name === undefined){ %>
+                    <select id="device-governorate-name" class="form-control select2-single" type="text" name="device[governorate][name]"  value="<%= device.governorate.name %>" >
+                    </select>
+                    <% } else {%>
+                    <select id="device-governorate-name" class="form-control select2-single" type="text" name="device[governorate][name]"  data-init-text="<%= device.governorate.name %>" >
+                    </select>
+                    <% } %>
                 </div>
                 <div class="form-group">
                     <label for="type">Type</label>

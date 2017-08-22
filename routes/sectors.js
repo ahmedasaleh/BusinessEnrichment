@@ -5,6 +5,13 @@ var middleware  = require("../middleware");
 var seedDB      = require("../seeds");
 var aSector = new Sector() ;
 
+//Mongoose PAGINATION
+router.get("/pagination",middleware.isLoggedIn ,function(request, response) {
+    Sector.paginate({}, { select: 'name', lean: true,limit: 500 }, function(err, result) {
+        response.setHeader('Content-Type', 'application/json');
+        response.send(JSON.stringify(result));
+    });
+});
 //INDEX - show all Sectors
 router.get("/", middleware.isLoggedIn ,function(request, response) {
     Sector.find({}, function(error, foundSectors) {

@@ -1,4 +1,5 @@
 var mongoose = require("mongoose");
+var mongoosePaginate = require('mongoose-paginate');
 //Database template setup
 var governorateSchema = new mongoose.Schema({
     name: {type: String, required: [true,'Name is required']},
@@ -12,4 +13,7 @@ var governorateSchema = new mongoose.Schema({
     }
 });
 
-module.exports = mongoose.model("Governorate", governorateSchema);
+governorateSchema.plugin(mongoosePaginate);
+
+var Governorate = mongoose.model("Governorate", governorateSchema);
+module.exports = Governorate;//mongoose.model("Governorate", governorateSchema);

@@ -4,6 +4,14 @@ var Governorate  = require("../models/governorate");
 var middleware  = require("../middleware");
 var seedDB      = require("../seeds");
 var aGovernorate = new Governorate() ;
+
+//Mongoose PAGINATION
+router.get("/pagination",middleware.isLoggedIn ,function(request, response) {
+    Governorate.paginate({}, { select: 'name', lean: true,limit: 500 }, function(err, result) {
+        response.setHeader('Content-Type', 'application/json');
+        response.send(JSON.stringify(result));
+    });
+});
 //INDEX - show all pops
 router.get("/", middleware.isLoggedIn ,function(request, response) {
     Governorate.find({}, function(error, foundGovernorates) {

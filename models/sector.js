@@ -1,4 +1,5 @@
 var mongoose = require("mongoose");
+var mongoosePaginate = require('mongoose-paginate');
 //Database template setup
 var sectorSchema = new mongoose.Schema({
     name: String,
@@ -11,5 +12,7 @@ var sectorSchema = new mongoose.Schema({
         email: String
     }
 });
+sectorSchema.plugin(mongoosePaginate);
+var Sector = mongoose.model("Sector", sectorSchema);
 
-module.exports = mongoose.model("Sector", sectorSchema);
+module.exports = Sector;//mongoose.model("Sector", sectorSchema);

@@ -5,10 +5,15 @@ var middleware  = require("../middleware");
 var seedDB      = require("../seeds");
 var aPOP = new POP() ;
 
+//Mongoose PAGINATION
+router.get("/pagination",middleware.isLoggedIn ,function(request, response) {
+    POP.paginate({}, { select: 'name', lean: true,limit: 5000 }, function(err, result) {
+        response.setHeader('Content-Type', 'application/json');
+        response.send(JSON.stringify(result));
+    });
+});
 //INDEX - show all pops
 router.get("/", middleware.isLoggedIn ,function(request, response) {
-    POP.paginate({}, { select: 'name',offset: 20, limit: 10 }, function(err, result) {
-    });
     
     POP.find({}, function(error, foundPOPs) {
         if (error) {

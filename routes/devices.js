@@ -2,6 +2,9 @@ var express         = require("express");
 var router          = express.Router();
 var Device          = require("../models/device");
 var Interface       = require("../models/interface");
+var POP             = require("../models/pop");
+var Sector          = require("../models/sector");
+var Governorate     = require("../models/governorate");
 var middleware      = require("../middleware");
 var Promise         = require('bluebird');
 var snmp            = Promise.promisifyAll(require ("net-snmp"));
@@ -10,6 +13,7 @@ var seedDB          = require("../seeds");
 var snmpConstants   = require("../lookUps");
 var async           = require('async');
 var S               = require('string');
+var mongoose         = require('mongoose');
 
 //create and save a document, handle error if occured
 var aDevice = new Device() ;
@@ -458,17 +462,52 @@ router.put("/:id", middleware.checkDeviceOwnership,function(request,response){
     //find and update the correct DEVICE
     request.body.device.updatedAt = new Date();
     request.body.device.lastUpdatedBy = {id: request.user._id, email: request.user.email};
-    Device.findByIdAndUpdate(request.params.id,request.body.device,function(error,updatedDevice){
-        if(error){
-            console.log(error);
-            response.redirect("/devices");
-        }
-        else{
-            //redirect somewhere (show page)
-            updatedDevice.save();
-            response.redirect("/devices/"+request.params.id);
-        }
-    });
+    console.log(request.body.device);
+    // note: Select2 has a defect which removes pop name and replace it with the id
+    POP.findById({_id: mongoose.Types.ObjectId(request.body.device.popName.name)},function(error,foundPOP){
+    if(error){
+        console.log(error);
+    }
+    else{
+        request.body.device.popName.name = foundPOP.name;
+        // request.body.device.popName._id = foundPOP._id;
+        // note: Select2 has a defect which removes pop name and replace it with the id
+        // Sector.findById({_id: mongoose.Types.ObjectId(request.body.device.sector.name)},function(error,foundSector){
+        //     if(error){
+        //         console.log(error);
+        //     }
+        //     else{
+        //         console.log("sector name: ");
+        //         console.log(foundSector);
+        //         console.log(foundSector.name);
+        //         request.body.device.sector.name = foundSector.name;
+                // request.body.device.sector._id = foundSector._id;
+                Governorate.findById({_id: mongoose.Types.ObjectId(request.body.device.governorate.name)},function(error,foundGove){
+                    if(error){
+                        console.log(error);
+                    }
+                    else{
+                console.log("governorate name: "+ foundGove.name);
+                        request.body.device.governorate.name = foundGove.name;
+                        Device.findByIdAndUpdate(request.params.id,request.body.device,function(error,updatedDevice){
+                            if(error){
+                                console.log(error);
+                                response.redirect("/devices");
+                            }
+                            else{
+                                //redirect somewhere (show page)
+                                updatedDevice.save();
+                            }
+                        });
+                    }
+                });
+            // }
+
+        // });
+    }
+});
+                response.redirect("/devices/"+request.params.id);
+
 });
 //DESTROY Device ROUTE
 router.delete("/:id", middleware.checkDeviceOwnership, function(request,response){
