@@ -36,6 +36,12 @@ function discoveredDevice(device) {
     self.inSyncMode = false;
     self.session = snmp.createSession(self.device.ipaddress, self.device.communityString,{ timeout: 5000 });
 
+    //parse ifAlias
+    self.parseInternationalInterfaces = function(ifAlias){
+        var choppedAlias = S(ifAlias).trim().splitLeft('-');
+        console.log(choppedAlias);
+    }
+
     self.saveDevice = function(device){
         Device.findByIdAndUpdate(device._id,{interfaces: self.interestInterfaces, discovered: true},function(error,updatedDevice){
             if(error){
@@ -98,7 +104,9 @@ function discoveredDevice(device) {
             anInterface.speed = value[ifTableColumns.ifSpeed];
             anInterface.adminStatus = value[ifTableColumns.ifAdminStatus];
             anInterface.operStatus  = value[ifTableColumns.ifOperStatus];
-            if( (anInterface.adminStatus == snmpConstants.ifAdminOperStatus.up) && (anInterface.operStatus == snmpConstants.ifAdminOperStatus.up)){
+            if( (anInterface.adminStatus == snmpConstants.ifAdminOperStatus.up) && 
+                (anInterface.operStatus == snmpConstants.ifAdminOperStatus.up) &&
+                (!S(anInterface.description).contains("mpls") )) {
                 self.interfaces[key] = anInterface;
                 self.interestKeys.push(key);//push index to be used during ifXTable walk
             } 
@@ -134,8 +142,13 @@ function discoveredDevice(device) {
                     S(name).contains("so") || 
                     S(name).contains("xe") || 
                     S(name).contains("eth") || 
+                    S(name).contains("at") || 
+                    S(name).contains("po") || 
+                    S(name).contains("ge") || 
+                    S(name).contains("ae") || 
                     S(name).contains("ee") ) ) {
                       self.interestInterfaces.push(intf);
+                        self.parseInternationalInterfaces(intf.alias);
                       self.interestInterfacesIndices.push(intf.index);
                 }
             }

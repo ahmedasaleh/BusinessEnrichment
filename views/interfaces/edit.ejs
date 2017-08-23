@@ -1,4 +1,12 @@
 <% include ../partials/header %>
+// <script> 
+// function checkIsInternational() {
+//     // document.getElementById("panel").style.display = "block";
+//     var select = this.value;
+//     console.log(select);
+// }
+// </script>
+
 <div class="container">
     <div class="row">
         <h1 style="text-align: center">Edit Interface</h1>
@@ -75,36 +83,36 @@
                 <div class="form-group">
                     <label for="linkType">Link Type</label>
                     <select id="interface-link-type" class="form-control select2-single" name="interface[linkType]" data-init-text="<%= interface.linkType %>">
-                      <option>Local_LAN</option>
-                      <option>Core_WAN</option>
-                      <option>Normal</option>
-                      <option>DSLAM_UpLink</option>
-                      <option>International</option>
-                      <option>Non</option>
+                      <option value="Local_LAN">Local_LAN</option>
+                      <option value="Core_WAN">Core_WAN</option>
+                      <option value="Normal">Normal</option>
+                      <option value="DSLAM_UpLink">DSLAM_UpLink</option>
+                      <option value="International">International</option>
+                      <option value="None">None</option>
                     </select>
                 </div>
-                <!-- <div id="provider" class="form-group" style="display:none;"> -->
-                <div id="provider" class="form-group">
+                <div id="provider" class="form-group" style="display:none;">
+                <!-- <div id="provider" class="form-group"> -->
                     <label for="provider">Provider</label>
                     <input class="form-control" type="text" name="interface[provider]" value="<%= interface.provider %>">
                 </div>
-                <div id="service" class="form-group" >
+                <div id="service" class="form-group" style="display:none;">
                     <label for="service">Service</label>
                     <input class="form-control" type="text" name="interface[service]" value="<%= interface.service %>">
                 </div>
-                <div id="linkID" class="form-group" >
+                <div id="linkID" class="form-group" style="display:none;">
                     <label for="linkID">Link ID</label>
                     <input class="form-control" type="text" name="interface[linkID]" value="<%= interface.linkID %>">
                 </div>
-                <div id="subCable" class="form-group" >
+                <div id="subCable" class="form-group" style="display:none;">
                     <label for="subCable">Sub Cable</label>
                     <input class="form-control" type="text" name="interface[subCable]" value="<%= interface.subCable %>">
                 </div>
-                <div id="teCID" class="form-group" >
+                <div id="teCID" class="form-group" style="display:none;">
                     <label for="teCID">TE CID</label>
                     <input class="form-control" type="text" name="interface[teCID]" value="<%= interface.teCID %>">
                 </div>
-                <div id="termination" class="form-group" >
+                <div id="termination" class="form-group" style="display:none;">
                     <label for="termination">Termination</label>
                     <input class="form-control" type="text" name="interface[termination]" value="<%= interface.termination %>">
                 </div>

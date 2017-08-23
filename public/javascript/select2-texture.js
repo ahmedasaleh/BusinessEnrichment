@@ -15,6 +15,26 @@ $j(document).ready(function() {
 	var governoratesData = [];
 	var mappedGovernoratesData = [];
 	
+	$j("#interface-link-type").on("change", function (e) { 
+		var select = this.value;
+		if ($j(this).val().toLowerCase() == 'international') {
+			console.log(select); 
+        	$j('#provider').show();
+        	$j('#service').show();
+        	$j('#linkID').show();
+        	$j('#subCable').show();
+        	$j('#teCID').show();
+        	$j('#termination').show();
+    	}
+	    else{
+	    	$j('#provider').hide(); // hide div if value is not "international"
+        	$j('#service').hide();
+        	$j('#linkID').hide();
+        	$j('#subCable').hide();
+        	$j('#teCID').hide();
+        	$j('#termination').hide();
+	    } 
+	});
 
 	$j("#interface-link-type").select2({
 		placeholder: "Search",
