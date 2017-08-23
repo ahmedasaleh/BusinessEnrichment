@@ -52,6 +52,7 @@
                             <th data-field="type" data-sortable="true">Type</th>
                             <th data-field="model" data-sortable="true">Model</th>
                             <th data-field="vendor" data-sortable="true">Vendor</th>
+                            <th data-field="defaultCollector" data-sortable="true">Default Collector</th>
                             <th data-field="createdby">Created By</th>
                             <th data-field="updatedby">Last Updated By</th>
                         </tr>
@@ -77,6 +78,7 @@
                                 <td><%= device.type %></td>
                                 <td><%= device.model %></td>
                                 <td><%= device.vendor %></td>
+                                <td><%= device.defaultCollector %></td>
                                 <td><%= device.author.email %></td>
                                 <td><%= device.lastUpdatedBy.email %></td>
                             </tr>

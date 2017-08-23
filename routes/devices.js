@@ -205,7 +205,6 @@ function discoveredDevice(device) {
 
                 // if: current interface index found in interestInterfaces and interface not updated, then: update interface
                 if(self.interestInterfacesIndices.includes(interface.index) && (interface.updated === undefined)){
-                    console.log("1111111111111111111111111111111111111111111");
                     var intf = self.getInterfaceFromInterestList(interface.index);
                     interface.name = intf.name;
                     interface.alias = intf.alias;
@@ -221,7 +220,6 @@ function discoveredDevice(device) {
                 else if((!self.interestInterfacesIndices.includes(interface.index)) && 
                     (interface.updated instanceof Date) && 
                     (interface.syncCycles > syncCyclesThreshold)){
-                    console.log("2222222222222222222222222222222222222222222222222");
                     var intf = self.getInterfaceFromInterestList(interface.index);
                     interface.name = intf.name;
                     interface.alias = intf.alias;
@@ -235,13 +233,11 @@ function discoveredDevice(device) {
                 else if((!self.interestInterfacesIndices.includes(interface.index)) && 
                     (interface.updated === undefined) && 
                     (interface.syncCycles > syncCyclesThreshold)){
-                    console.log("333333333333333333333333333333333333333333333333");
                     self.interfaceUpdateList.push(interface);
                 }
                 // if: current interface index found in interestInterfaces and interface updated, then: skip
                 else if(self.interestInterfacesIndices.includes(interface.index) && (interface.updated instanceof Date)){
                     //remove interface from list of interest interfaces as it is already exists
-                    console.log("44444444444444444444444444444444444444444444444");
                     self.interfaceUpdateList.push(interface);
                     self.removeInterfaceFromInterestList(interface.index);
                 }

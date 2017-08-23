@@ -137,7 +137,32 @@ router.put("/:id", middleware.isLoggedIn,function(request,response){
             foundInterface.description = request.body.interface.description;
             foundInterface.type = request.body.interface.type;
             foundInterface.actualspeed = request.body.interface.actualspeed;
-            foundInterface.hasAdjacent = request.body.interface.hasAdjacent;
+            if(request.body.interface.isDeviceUpLink && request.body.interface.isDeviceUpLink.toLowerCase() == "yes"){
+                foundInterface.isDeviceUpLink = true;
+            } else {
+                foundInterface.isDeviceUpLink = false;
+            }
+            foundInterface.secondHost = request.body.interface.secondHost;
+            foundInterface.secondPOP =  request.body.interface.secondPOP;
+            foundInterface.connectionType = request.body.interface.connectionType
+            if(request.body.interface.isPOPUpLink && request.body.interface.isPOPUpLink.toLowerCase() == "yes"){
+                foundInterface.isPOPUpLink = true;
+            } else {
+                foundInterface.isPOPUpLink = false;                
+            }
+            foundInterface.linkBandwidth = request.body.interface.linkBandwidth
+            foundInterface.linkIP = request.body.interface.linkIP
+            foundInterface.linkNumber = request.body.interface.linkNumber
+            foundInterface.linkType = request.body.interface.linkType
+            if(foundInterface.linkType && foundInterface.linkType.toLowerCase() == "international"){
+                foundInterface.provider = request.body.interface.provider 
+                foundInterface.service = request.body.interface.service 
+                foundInterface.linkID = request.body.interface.linkID
+                foundInterface.subCable = request.body.interface.subCable 
+                foundInterface.teCID = request.body.interface.teCID 
+                foundInterface.termination = request.body.interface.termination     
+            }
+
             foundInterface.updated = new Date();
             foundInterface.lastUpdatedBy = {id: request.user._id, email: request.user.email};
 

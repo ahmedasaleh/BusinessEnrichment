@@ -12,7 +12,21 @@ var interfaceSchema = new mongoose.Schema({
     actualspeed: Number,
     delete: {type: Boolean, default: false},//used to mark interface for deletion
     syncCycles: {type: Number, default: 0},//used to track number of sync cycles where interface was missed
-    hasAdjacent: {type: Boolean, default: false},
+    secondHost: String,
+    secondPOP: String,
+    connectionType: String,
+    isDeviceUpLink: {type: Boolean, default: false},
+    isPOPUpLink: {type: Boolean, default: false},
+    linkBandwidth: {type: Number, default: 0},
+    linkID: String,
+    linkIP: String,
+    linkNumber: String,
+    linkType: {type: String, default: "Normal"},
+    provider: String,
+    service: String,
+    subCable: String,
+    teCID: String,
+    termination: String,
     created: { type: Date, default: Date.now },
     updated: Date,
     device: {

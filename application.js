@@ -8,6 +8,7 @@ var express             = require("express"),
     methodOverride      = require("method-override"),
     dotenv              = require("dotenv"),
     User                = require("./models/user"),
+    winston             = require('winston'),//logging component
     seedDB              = require("./seeds");
 
 var CronJob = require('cron').CronJob;   

@@ -6,12 +6,24 @@ $j(document).ready(function() {
 	// var $jeventSelect = $j("#device-sector-name");
 	// var $jeventSelect = $j("#device-governorate-name");
 
+
+  
 	var popsData = [];
 	var mappedPopsData = [];
 	var sectorsData = [];
 	var mappedSectorsData = [];
 	var governoratesData = [];
 	var mappedGovernoratesData = [];
+	
+
+	$j("#interface-link-type").select2({
+		placeholder: "Search",
+		theme: "bootstrap",
+		initSelection: function(element, callback) {
+			callback({ id: element.val(), text: element.attr('data-init-text') 
+			});
+		}
+	});
 
 	$j.ajax({
 	  url: "http://127.0.0.1:8080/pops/pagination",

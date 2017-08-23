@@ -30,12 +30,83 @@
                     <input class="form-control" type="text" name="interface[speed]" value="<%= interface.speed %>" readonly>
                 </div>
                 <div class="form-group">
-                    <label for="speed">Interface Actual Speed</label>
+                    <label for="actualspeed">Interface Actual Speed</label>
                     <input class="form-control" type="text" name="interface[actualspeed]" value="<%= interface.actualspeed %>">
                 </div>
                 <div class="form-group">
-                    <label for="speed">Is Link</label>
-                    <input class="form-control" type="text" name="interface[hasAdjacent]" value="<%= interface.hasAdjacent %>">
+                    <label for="deviceUpLink">Is Device UpLink</label>
+                    <!-- <input class="form-control" type="text" name="interface[isDeviceUpLink]" value="<%= interface.isDeviceUpLink %>"> -->
+                    <select class="form-control selectpicker" name="interface[isDeviceUpLink]" value="<%= interface.isDeviceUpLink %>">
+                      <option>Yes</option>
+                      <option>No</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="POPUpLink">Is POP UpLink</label>
+                    <select class="form-control selectpicker" name="interface[isPOPUpLink]" value="<%= interface.isPOPUpLink %>">
+                      <option>Yes</option>
+                      <option>No</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="secondHost">Second Host</label>
+                    <input class="form-control" type="text" name="interface[secondHost]" value="<%= interface.secondHost %>">
+                </div>
+                <div class="form-group">
+                    <label for="secondPOP">Second POP</label>
+                    <input class="form-control" type="text" name="interface[secondPOP]" value="<%= interface.secondPOP %>">
+                </div>
+                <div class="form-group">
+                    <label for="connectionType">Connection Type</label>
+                    <input class="form-control" type="text" name="interface[connectionType]" value="<%= interface.connectionType %>">
+                </div>
+                <div class="form-group">
+                    <label for="linkBandwidth">Link Bandwidth</label>
+                    <input class="form-control" type="text" name="interface[linkBandwidth]" value="<%= interface.linkBandwidth %>">
+                </div>
+                <div class="form-group">
+                    <label for="linkIP">Link IP</label>
+                    <input class="form-control" type="text" name="interface[linkIP]" value="<%= interface.linkIP %>">
+                </div>
+                <div class="form-group">
+                    <label for="linkNumber">Link Number</label>
+                    <input class="form-control" type="text" name="interface[linkNumber]" value="<%= interface.linkNumber %>">
+                </div>
+                <div class="form-group">
+                    <label for="linkType">Link Type</label>
+                    <select id="interface-link-type" class="form-control select2-single" name="interface[linkType]" data-init-text="<%= interface.linkType %>">
+                      <option>Local_LAN</option>
+                      <option>Core_WAN</option>
+                      <option>Normal</option>
+                      <option>DSLAM_UpLink</option>
+                      <option>International</option>
+                      <option>Non</option>
+                    </select>
+                </div>
+                <!-- <div id="provider" class="form-group" style="display:none;"> -->
+                <div id="provider" class="form-group">
+                    <label for="provider">Provider</label>
+                    <input class="form-control" type="text" name="interface[provider]" value="<%= interface.provider %>">
+                </div>
+                <div id="service" class="form-group" >
+                    <label for="service">Service</label>
+                    <input class="form-control" type="text" name="interface[service]" value="<%= interface.service %>">
+                </div>
+                <div id="linkID" class="form-group" >
+                    <label for="linkID">Link ID</label>
+                    <input class="form-control" type="text" name="interface[linkID]" value="<%= interface.linkID %>">
+                </div>
+                <div id="subCable" class="form-group" >
+                    <label for="subCable">Sub Cable</label>
+                    <input class="form-control" type="text" name="interface[subCable]" value="<%= interface.subCable %>">
+                </div>
+                <div id="teCID" class="form-group" >
+                    <label for="teCID">TE CID</label>
+                    <input class="form-control" type="text" name="interface[teCID]" value="<%= interface.teCID %>">
+                </div>
+                <div id="termination" class="form-group" >
+                    <label for="termination">Termination</label>
+                    <input class="form-control" type="text" name="interface[termination]" value="<%= interface.termination %>">
                 </div>
                 <div class="form-group">
                     <label for="devicename">Device Name</label>

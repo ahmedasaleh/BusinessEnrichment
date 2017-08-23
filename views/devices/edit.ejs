@@ -21,6 +21,10 @@
                     <input class="form-control" type="text" name="device[communityString]" value="<%= device.communityString %>">
                 </div>
                 <div class="form-group">
+                    <label for="defaultCollector">Default Collector</label>
+                    <input class="form-control" type="text" name="device[defaultCollector]" value="<%= device.defaultCollector %>" readonly>
+                </div>
+                <div class="form-group">
                     <label for="device-pop-name">POP Name</label>
                     <select id="device-pop-name" class="form-control select2-single" type="text" name="device[popName][name]"  data-init-text="<%= device.popName.name %>" >
                     </select>
