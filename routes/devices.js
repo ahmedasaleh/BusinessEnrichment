@@ -169,7 +169,6 @@ function discoveredDevice(device) {
     self.createInterfaces  = function(interfaceList){
         console.log("createInterfaces");
         for(var i=0;i<interfaceList.length;i++){
-        console.log("createInterfaces FOR LOOP");
             Interface.create(interfaceList[i],function(error,interface){
                 if(error){
                     console.log(error);
@@ -199,7 +198,6 @@ function discoveredDevice(device) {
                     }
                     else{
                         console.log("link not found!");
-                        request.flash("error","link not found!");
                     }
                     
                   });

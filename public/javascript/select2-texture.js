@@ -45,6 +45,15 @@ $j(document).ready(function() {
 		}
 	});
 
+	$j("#device-type").select2({
+		placeholder: "Search",
+		theme: "bootstrap",
+		initSelection: function(element, callback) {
+			callback({ id: element.val(), text: element.attr('data-init-text') 
+			});
+		}
+	});
+
 	$j.ajax({
 	  url: "http://127.0.0.1:8080/pops/pagination",
 	  beforeSend: function( xhr ) {
