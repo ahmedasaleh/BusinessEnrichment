@@ -136,7 +136,27 @@ function discoveredDevice(device) {
                 intf.alias = value[ifXTableColumns.ifAlias];
                 var name = S(intf.name).toString();
                 name = name.toLowerCase();
-                // check interface is main i.e. doesn't contain '.'
+                var alias = S(intf.alias).toString();
+                alias = alias.toLowerCase();
+                //check if ifAlias contains any of the following:
+                // 1-INT
+                // 2-BITSTREAM
+                // 3-ESP
+                // 4-NR
+                // 5-FW
+                if(
+                    S(alias).contains("int") ||
+                    S(alias).contains("bitstream") ||
+                    S(alias).contains("esp") ||
+                    S(alias).contains("nr") ||
+                    S(alias).contains("fw") 
+                    )
+                {
+                    self.interestInterfaces.push(intf);
+                    self.parseInternationalInterfaces(intf.alias);
+                    self.interestInterfacesIndices.push(intf.index);
+                }
+                // check interface is main i.e. doesn't contain '.' and ':'
                 if( !S(name).contains('.') && //main interface
                     ( 
                         S(name).contains("ae") ||
@@ -156,9 +176,9 @@ function discoveredDevice(device) {
                         S(name).contains("te") ||
                         S(name).contains("xe")                    
                     ) ) {
-                      self.interestInterfaces.push(intf);
+                        self.interestInterfaces.push(intf);
                         self.parseInternationalInterfaces(intf.alias);
-                      self.interestInterfacesIndices.push(intf.index);
+                        self.interestInterfacesIndices.push(intf.index);
                 }
             }
         }); 
