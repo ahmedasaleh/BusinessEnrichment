@@ -5,6 +5,7 @@ var Interface       = require("../models/interface");
 var POP             = require("../models/pop");
 var Sector          = require("../models/sector");
 var Governorate     = require("../models/governorate");
+var Link     = require("../models/link");
 var middleware      = require("../middleware");
 var Promise         = require('bluebird');
 var snmp            = Promise.promisifyAll(require ("net-snmp"));
@@ -137,16 +138,24 @@ function discoveredDevice(device) {
                 name = name.toLowerCase();
                 // check interface is main i.e. doesn't contain '.'
                 if( !S(name).contains('.') && //main interface
-                    ( S(name).contains("gi") || 
-                    S(name).contains("te") || 
-                    S(name).contains("so") || 
-                    S(name).contains("xe") || 
-                    S(name).contains("eth") || 
-                    S(name).contains("at") || 
-                    S(name).contains("po") || 
-                    S(name).contains("ge") || 
-                    S(name).contains("ae") || 
-                    S(name).contains("ee") ) ) {
+                    ( 
+                        S(name).contains("ae") ||
+                        S(name).contains("at") ||
+                        S(name).contains("e1") ||
+                        S(name).contains("et") ||
+                        S(name).contains("fa") ||
+                        S(name).contains("fe") ||
+                        S(name).contains("ge") ||
+                        S(name).contains("gi") ||
+                        S(name).contains("gr") ||
+                        S(name).contains("mu") ||
+                        S(name).contains("po") ||
+                        S(name).contains("se") ||
+                        S(name).contains("so") ||
+                        S(name).contains("t1") ||
+                        S(name).contains("te") ||
+                        S(name).contains("xe")                    
+                    ) ) {
                       self.interestInterfaces.push(intf);
                         self.parseInternationalInterfaces(intf.alias);
                       self.interestInterfacesIndices.push(intf.index);
@@ -167,6 +176,34 @@ function discoveredDevice(device) {
                 }
                 else{
                     console.log(interface);
+                    //populate some enrichment information automatically
+                    Link.findOne({ device1: S(self.device.hostname), interface1: S(interface.name) }, function (error, foundLink){
+                    if(error){
+                        console.log(error);
+                    }
+                    else if(foundLink){
+                        console.log(foundLink.device2);
+                        interface.secondHost = foundLink.device2
+                        Device.findOne({ hostname: S(foundLink.device2).trim()}, function(error, foundDevice){
+                            if(error){
+                                console.log(error);
+                            }
+                            else if(foundDevice){
+                                interface.secondPOP = foundDevice.popName.name;
+                                interface.save();
+                            }
+                            else{
+                                console.log("device2 from Link collection was not found!");
+                            }
+                        });
+                    }
+                    else{
+                        console.log("link not found!");
+                        request.flash("error","link not found!");
+                    }
+                    
+                  });
+
                 }
             });
             
@@ -215,7 +252,7 @@ function discoveredDevice(device) {
             async.forEachOf(self.device.interfaces,function(interface,key,callback){
             console.log(interface);
                 console.log(interface.index+": "+interface.name+" , "+interface.updated +" , syncCycles "+interface.syncCyles);
-
+                //content of interestInterfaces are the found interfaces in the current sync cycles
                 // if: current interface index found in interestInterfaces and interface not updated, then: update interface
                 if(self.interestInterfacesIndices.includes(interface.index) && (interface.updated === undefined)){
                     var intf = self.getInterfaceFromInterestList(interface.index);
@@ -224,6 +261,8 @@ function discoveredDevice(device) {
                     interface.description = intf.description;
                     interface.type = intf.type;
                     interface.speed = intf.speed;
+                    interface.delete = false;
+                    interface.syncCycles = 0;
                     self.interfaceUpdateList.push(interface);
                     console.log("found interface "+interface.name +" with index "+interface.index+", with update state "+interface.updated);
                     //remove interface from list of interest interfaces as it is already exists
@@ -239,6 +278,7 @@ function discoveredDevice(device) {
                     interface.description = intf.description;
                     interface.type = intf.type;
                     interface.speed = intf.speed;
+                    intreface.syncCycles = S(interface.syncCycles).toInt() + 1;
                     interface.delete = true;
                     self.interfaceUpdateList.push(interface);
                 }
@@ -251,6 +291,7 @@ function discoveredDevice(device) {
                 // if: current interface index found in interestInterfaces and interface updated, then: skip
                 else if(self.interestInterfacesIndices.includes(interface.index) && (interface.updated instanceof Date)){
                     //remove interface from list of interest interfaces as it is already exists
+                    interface.syncCycles = 0;
                     self.interfaceUpdateList.push(interface);
                     self.removeInterfaceFromInterestList(interface.index);
                 }

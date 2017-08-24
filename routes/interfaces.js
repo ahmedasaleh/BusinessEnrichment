@@ -5,12 +5,9 @@ var Link  = require("../models/link");
 var Interface  = require("../models/interface");
 var middleware  = require("../middleware");
 var async           = require('async');
+var S               = require('string');
 
-//parse ifAlias
-var parseInternationalInterfaces = function(ifAlias){
-    var choppedAlias = S(ifAlias).trim().splitLeft('-');
-    console.log(choppedAlias);
-}
+
 //Add Route for NEW interface linked with device
 //NEW ROUTE for new interface
 router.get("/new",middleware.isLoggedIn,function(request,response){
@@ -127,31 +124,17 @@ router.get("/:id/edit", middleware.isLoggedIn, function(request,response){
     Interface.findById(request.params.id,function(error,foundInterface){
         if(error){
             console.log(error);
-            request.flash("error","Can't find request interface!!!");
+            request.flash("error","error found while searching for interface!!!");
             response.redirect("back");
         }
+        else if(foundInterface){
+            response.render("interfaces/edit",{interface: foundInterface, device: foundInterface.device });
+        }
         else{
-            Link.findOne({ device1: foundInterface.device, interface1: foundInterface.name }, function (error, foundLink){
-                if(error){
-                    console.log(error);
-                }
-                else{
-                    secondhost = link.device2;
-                    Device.findOne({ hostname: secondhost}, function(error, foundDevice){
-                        if(error){
-                            console.log(error);
-                        }
-                        else{
-                            secondPOP = foundDevice.popName.name;
-                        }
-                    });
-                }
-                
-            });
-            response.render("interfaces/edit",{interface: foundInterface, device: foundInterface.device});
+            request.flash("error","can't find interface!!!");
+            response.redirect("back");
         }
     });
-    
 });
 //UPDATE INTERFACE ROUTE
 router.put("/:id", middleware.isLoggedIn,function(request,response){

@@ -10,11 +10,13 @@ var express             = require("express"),
     User                = require("./models/user"),
     winston             = require('winston'),//logging component
     seedDB              = require("./seeds");
+var parser      = require("./middleware/parser");
+
 
 var CronJob = require('cron').CronJob;   
 
 var cluster = require('cluster');    
-// //requiring routes
+//requiring routes
 var interfaceRoutes       = require("./routes/interfaces"),  
     popRoutes    = require("./routes/pops"),  
     sectorRoutes    = require("./routes/sectors"),  
@@ -94,6 +96,9 @@ new CronJob('0 0 0 */2 * *', function() {
   console.log('You will see this message every second');
   deviceRoutes.syncDevices();
 }, null, true, 'Africa/Cairo');
+
+// parser.parseIfAlias("INT-IPT-TINET-ALX-10G-B5-L10-ALX_MRM_10GE_LAN PHY_017_M-SM4_IPT_10G_0007-SMW4");
+console.log(parser.parseIfAlias("INT-IPT-TINET-ALX-10G-B5-L10-ALX_MRM_10GE_LAN PHY_017_M-SM4_IPT_10G_0007-SMW4"));
 
 app.listen(process.env.PORT, process.env.IP, function() {
     console.log("Business Enrichment V"+ applicationVersion +" Server Started on "+process.env.IP+":"+process.env.PORT);
