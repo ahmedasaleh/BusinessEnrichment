@@ -59,23 +59,23 @@ var $jtable = $j('#eventsTable');
       // $j('#output').append($j('<li></li>').text(value.id + " | " + value.name + " | " + value.acronym));
     });
   });  
-  
-  $j(".add_cart").click(function() {
-    $j("#output").empty();
-    $j.each(checkedRows, function(index, value) {
-      console.log(index);
-      console.log(value);
-      $j('#output').append($j('<li></li>').text(value.id + " | " + value.name + " | " + value.acronym));
-    });
-  });  
-  $j(".myclass").click(function() {
-    $j("#output").empty();
-    $j.each(checkedRows, function(index, value) {
-      console.log(index);
-      console.log(value);
-      $j('#output').append($j('<li></li>').text(value.id + " | " + value.name + " | " + value.acronym));
-    });
-  
-});
+
+  // //the following lines were only added for testing purpose
+  // $j(".add_cart").click(function() {
+  //   $j("#output").empty();
+  //   $j.each(checkedRows, function(index, value) {
+  //     console.log(index);
+  //     console.log(value);
+  //     $j('#output').append($j('<li></li>').text(value.id + " | " + value.name + " | " + value.acronym));
+  //   });
+  // });  
+  // $j(".myclass").click(function() {
+  //   $j("#output").empty();
+  //   $j.each(checkedRows, function(index, value) {
+  //     console.log(index);
+  //     console.log(value);
+  //     $j('#output').append($j('<li></li>').text(value.id + " | " + value.name + " | " + value.acronym));
+  //   });
+  // });
   
 });

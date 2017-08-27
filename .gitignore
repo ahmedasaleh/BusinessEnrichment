@@ -1,4 +1,8 @@
 .env
 package.json
 node_modules
+log
+import
+export
+.log
 .txt

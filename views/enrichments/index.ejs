@@ -1,0 +1,175 @@
+<% include ../partials/header %>
+    <!--< the class container will give space around our contents>-->
+    <div class="container">
+        <header class="jumbotron">
+            <!--<adding second container to keep spacing around contents when we resize the page>-->
+            <div class="container">
+                <h1>Business Enrichment Portal</h1>
+                <p>View Devices Information</p>
+                <div class="btn-group" role="group" aria-label="all">
+                    <a href="/devices/"><button type="button" class="btn btn-default ">All Devices</button></a>
+                    <a href="/pops/"><button type="button" class="btn btn-default">All POPs</button></a>
+                    <!--<a href="/interfaces/"><button type="button" class="btn btn-default">All Interfaces</button></a>-->
+                    <a href="/sectors/"><button type="button" class="btn btn-default">All Sectors</button></a>
+                    <a href="/governorates/"><button type="button" class="btn btn-default ">All Governorates</button></a>
+                    <a href="/users/"><button type="button" class="btn btn-default">All Users</button></a>
+                    <a href="/links/"><button type="button" class="btn btn-default">All Links</button></a>
+                    <a href="/validatedusers/"><button type="button" class="btn btn-default">All Validated Users</button></a>
+                    <a href="/enrichments/"><button type="button" class="btn btn-default active">All Enrichment Data</button></a>
+                </div>        
+            </div>
+        </header>
+
+        <!--<adding flex style to fix issue related to left alignment>-->
+        <div class="row text-left">
+            <div class="table-responsive">
+                <table id="eventsTable" data-pagination="true" data-search="true"data-toggle="table" data-height="525" data-pagination="true" 
+                data-maintain-selected="true" data-search="true" data-show-refresh="true" data-show-toggle="true" data-show-columns="true" 
+                data-toolbar="#toolbar" data-single-select="true">
+                    <thead>
+                        <tr>
+                            <th data-field="state" data-checkbox="true"> </th>
+                            <th data-field="_id" data-visible="false">ID</th>
+							<th data-field="SE_Name"	data-sortable="true" >	SE_Name	</th>
+							<th data-field="B_TED_2ndHost"	data-visible="false" >	B_TED_2ndHost	</th>
+							<th data-field="B_TED_2ndPop"	data-visible="false" >	B_TED_2ndPop	</th>
+							<th data-field="B_TED_BadrRelease"	data-visible="false" >	B_TED_BadrRelease	</th>
+							<th data-field="B_TED_badrRelease"	data-visible="false" >	B_TED_badrRelease	</th>
+							<th data-field="B_TED_bundleId"	 >	B_TED_bundleId	</th>
+							<th data-field="B_TED_cardType"	data-visible="false" >	B_TED_cardType	</th>
+							<th data-field="B_TED_circuitId"	data-visible="false" >	B_TED_circuitId	</th>
+							<th data-field="B_TED_connType"	 >	B_TED_connType	</th>
+							<th data-field="B_TED_Customer"	 >	B_TED_Customer	</th>
+							<th data-field="B_TED_CustProbe"	data-visible="false" >	B_TED_CustProbe	</th>
+							<th data-field="B_TED_Default_Coll"	data-visible="false" >	B_TED_Default_Coll	</th>
+							<th data-field="B_TED_Elt_Device"	data-sortable="true" >	B_TED_Elt_Device	</th>
+							<th data-field="B_TED_Elt_IP"	 >	B_TED_Elt_IP	</th>
+							<th data-field="B_TED_Elt_Model"	data-sortable="true" >	B_TED_Elt_Model	</th>
+							<th data-field="B_TED_Elt_POP_Gov"	 >	B_TED_Elt_POP_Gov	</th>
+							<th data-field="B_TED_Elt_POP_Name"	 >	B_TED_Elt_POP_Name	</th>
+							<th data-field="B_TED_Elt_Type"	 >	B_TED_Elt_Type	</th>
+							<th data-field="B_TED_Elt_Vendor"	 >	B_TED_Elt_Vendor	</th>
+							<th data-field="B_TED_esp_bw"	data-visible="false" >	B_TED_esp_bw	</th>
+							<th data-field="B_TED_esp_conntype"	data-visible="false" >	B_TED_esp_conntype	</th>
+							<th data-field="B_TED_esp_customer"	data-visible="false" >	B_TED_esp_customer	</th>
+							<th data-field="B_TED_esp_if"	data-visible="false" >	B_TED_esp_if	</th>
+							<th data-field="B_TED_esp_order"	data-visible="false" >	B_TED_esp_order	</th>
+							<th data-field="B_TED_esp_pop"	data-visible="false" >	B_TED_esp_pop	</th>
+							<th data-field="B_TED_ifDescrSt"	 >	B_TED_ifDescrSt	</th>
+							<th data-field="B_TED_IMA_Flag"	data-visible="false" >	B_TED_IMA_Flag	</th>
+							<th data-field="B_TED_intCID"	 >	B_TED_intCID	</th>
+							<th data-field="B_TED_interface"	data-visible="false" >	B_TED_interface	</th>
+							<th data-field="B_TED_IntProbe"	data-visible="false" >	B_TED_IntProbe	</th>
+							<th data-field="B_TED_IP_Pool"	data-visible="false" >	B_TED_IP_Pool	</th>
+							<th data-field="B_TED_IP_Pool_Name"	data-visible="false" >	B_TED_IP_Pool_Name	</th>
+							<th data-field="B_TED_IPSLA_COS"	data-visible="false" >	B_TED_IPSLA_COS	</th>
+							<th data-field="B_TED_isbundle"	 >	B_TED_isbundle	</th>
+							<th data-field="B_TED_isCPE"	data-visible="false" >	B_TED_isCPE	</th>
+							<th data-field="B_TED_isDeviceUplink"	 >	B_TED_isDeviceUplink	</th>
+							<th data-field="B_TED_isPopUplink"	 >	B_TED_isPopUplink	</th>
+							<th data-field="B_TED_IXIA_IsDestPOP"	data-visible="false" >	B_TED_IXIA_IsDestPOP	</th>
+							<th data-field="B_TED_IXIA_Mesh"	data-visible="false" >	B_TED_IXIA_Mesh	</th>
+							<th data-field="B_TED_IXIA_Module"	data-visible="false" >	B_TED_IXIA_Module	</th>
+							<th data-field="B_TED_IXIA_PairName"	data-visible="false" >	B_TED_IXIA_PairName	</th>
+							<th data-field="B_TED_IXIA_PhysHost"	data-visible="false" >	B_TED_IXIA_PhysHost	</th>
+							<th data-field="B_TED_IXIA_PhysTarget"	data-visible="false" >	B_TED_IXIA_PhysTarget	</th>
+							<th data-field="B_TED_IXIA_Service"	data-visible="false" >	B_TED_IXIA_Service	</th>
+							<th data-field="B_TED_IXIA_Type"	data-visible="false" >	B_TED_IXIA_Type	</th>
+							<th data-field="B_TED_Label"	 >	B_TED_Label	</th>
+							<th data-field="B_TED_linkBw"	 >	B_TED_linkBw	</th>
+							<th data-field="B_TED_linkId"	 >	B_TED_linkId	</th>
+							<th data-field="B_TED_linkIp"	 >	B_TED_linkIp	</th>
+							<th data-field="B_TED_linkNum"	 >	B_TED_linkNum	</th>
+							<th data-field="B_TED_linkType"	 >	B_TED_linkType	</th>
+							<th data-field="B_TED_MSAN"	data-visible="false" >	B_TED_MSAN	</th>
+							<th data-field="B_TED_ProbeFrom"	data-visible="false" >	B_TED_ProbeFrom	</th>
+							<th data-field="B_TED_ProbeService"	data-visible="false" >	B_TED_ProbeService	</th>
+							<th data-field="B_TED_ProbeTo"	data-visible="false" >	B_TED_ProbeTo	</th>
+							<th data-field="B_TED_provider"	data-visible="false" >	B_TED_provider	</th>
+							<th data-field="B_TED_routerName"	data-visible="false" >	B_TED_routerName	</th>
+							<th data-field="B_TED_service"	data-visible="false" >	B_TED_service	</th>
+							<th data-field="B_TED_ShortLabel"	data-visible="false" >	B_TED_ShortLabel	</th>
+							<th data-field="B_TED_Site"	data-visible="false" >	B_TED_Site	</th>
+							<th data-field="B_TED_subCable"	 >	B_TED_subCable	</th>
+							<th data-field="B_TED_teCID"	 >	B_TED_teCID	</th>
+							<th data-field="B_TED_termination"	 >	B_TED_termination	</th>
+							<th data-field="B_TED_TestTarget"	data-visible="false" >	B_TED_TestTarget	</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% enrichments.forEach(function(enrichment){ %>
+                            <tr>
+                                <td><% %></td>
+                                <td><%= enrichment._id %></td>
+								<td><%= enrichment.SE_Name	%></td>
+								<td><%= enrichment.B_TED_2ndHost	%></td>
+								<td><%= enrichment.B_TED_2ndPop	%></td>
+								<td><%= enrichment.B_TED_BadrRelease	%></td>
+								<td><%= enrichment.B_TED_badrRelease	%></td>
+								<td><%= enrichment.B_TED_bundleId	%></td>
+								<td><%= enrichment.B_TED_cardType	%></td>
+								<td><%= enrichment.B_TED_circuitId	%></td>
+								<td><%= enrichment.B_TED_connType	%></td>
+								<td><%= enrichment.B_TED_Customer	%></td>
+								<td><%= enrichment.B_TED_CustProbe	%></td>
+								<td><%= enrichment.B_TED_Default_Coll	%></td>
+								<td><%= enrichment.B_TED_Elt_Device	%></td>
+								<td><%= enrichment.B_TED_Elt_IP	%></td>
+								<td><%= enrichment.B_TED_Elt_Model	%></td>
+								<td><%= enrichment.B_TED_Elt_POP_Gov	%></td>
+								<td><%= enrichment.B_TED_Elt_POP_Name	%></td>
+								<td><%= enrichment.B_TED_Elt_Type	%></td>
+								<td><%= enrichment.B_TED_Elt_Vendor	%></td>
+								<td><%= enrichment.B_TED_esp_bw	%></td>
+								<td><%= enrichment.B_TED_esp_conntype	%></td>
+								<td><%= enrichment.B_TED_esp_customer	%></td>
+								<td><%= enrichment.B_TED_esp_if	%></td>
+								<td><%= enrichment.B_TED_esp_order	%></td>
+								<td><%= enrichment.B_TED_esp_pop	%></td>
+								<td><%= enrichment.B_TED_ifDescrSt	%></td>
+								<td><%= enrichment.B_TED_IMA_Flag	%></td>
+								<td><%= enrichment.B_TED_intCID	%></td>
+								<td><%= enrichment.B_TED_interface	%></td>
+								<td><%= enrichment.B_TED_IntProbe	%></td>
+								<td><%= enrichment.B_TED_IP_Pool	%></td>
+								<td><%= enrichment.B_TED_IP_Pool_Name	%></td>
+								<td><%= enrichment.B_TED_IPSLA_COS	%></td>
+								<td><%= enrichment.B_TED_isbundle	%></td>
+								<td><%= enrichment.B_TED_isCPE	%></td>
+								<td><%= enrichment.B_TED_isDeviceUplink	%></td>
+								<td><%= enrichment.B_TED_isPopUplink	%></td>
+								<td><%= enrichment.B_TED_IXIA_IsDestPOP	%></td>
+								<td><%= enrichment.B_TED_IXIA_Mesh	%></td>
+								<td><%= enrichment.B_TED_IXIA_Module	%></td>
+								<td><%= enrichment.B_TED_IXIA_PairName	%></td>
+								<td><%= enrichment.B_TED_IXIA_PhysHost	%></td>
+								<td><%= enrichment.B_TED_IXIA_PhysTarget	%></td>
+								<td><%= enrichment.B_TED_IXIA_Service	%></td>
+								<td><%= enrichment.B_TED_IXIA_Type	%></td>
+								<td><%= enrichment.B_TED_Label	%></td>
+								<td><%= enrichment.B_TED_linkBw	%></td>
+								<td><%= enrichment.B_TED_linkId	%></td>
+								<td><%= enrichment.B_TED_linkIp	%></td>
+								<td><%= enrichment.B_TED_linkNum	%></td>
+								<td><%= enrichment.B_TED_linkType	%></td>
+								<td><%= enrichment.B_TED_MSAN	%></td>
+								<td><%= enrichment.B_TED_ProbeFrom	%></td>
+								<td><%= enrichment.B_TED_ProbeService	%></td>
+								<td><%= enrichment.B_TED_ProbeTo	%></td>
+								<td><%= enrichment.B_TED_provider	%></td>
+								<td><%= enrichment.B_TED_routerName	%></td>
+								<td><%= enrichment.B_TED_service	%></td>
+								<td><%= enrichment.B_TED_ShortLabel	%></td>
+								<td><%= enrichment.B_TED_Site	%></td>
+								<td><%= enrichment.B_TED_subCable	%></td>
+								<td><%= enrichment.B_TED_teCID	%></td>
+								<td><%= enrichment.B_TED_termination	%></td>
+								<td><%= enrichment.B_TED_TestTarget	%></td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+<% include ../partials/footer %>

@@ -8,9 +8,13 @@ var express             = require("express"),
     methodOverride      = require("method-override"),
     dotenv              = require("dotenv"),
     User                = require("./models/user"),
-    winston             = require('winston'),//logging component
+    logger           = require('./middleware/logger'),//logging component
+    // deleteLogger           = require('./middleware/deleteLogger'),//logging component
     seedDB              = require("./seeds");
-var parser      = require("./middleware/parser");
+var winston = require('winston');
+var fileUpload = require('express-fileupload');
+
+var parser              = require("./middleware/parser");
 
 
 var CronJob = require('cron').CronJob;   
@@ -25,6 +29,7 @@ var interfaceRoutes       = require("./routes/interfaces"),
     userRoutes    = require("./routes/users"),  
     validatedUserRoutes    = require("./routes/validatedUsers"),  
     deviceRoutes    = require("./routes/devices"),  
+    enrichmentRoutes    = require("./routes/enrichments"),  
     indexRoutes     = require("./routes/index"); 
 
 var indexBaseURL        = "/",
@@ -35,6 +40,7 @@ var indexBaseURL        = "/",
     userBaseURL   = "/users",
     validatedUserBaseURL   = "/validatedusers",
     deviceBaseURL   = "/devices",
+    enrichmentBaseURL   = "/enrichments",
     interfaceBaseURL      = "/interfaces";
     // interfaceBaseURL      = "/devices/:id/interfaces";
 
@@ -59,6 +65,7 @@ app.use(require("express-session")({
     resave: false,
     saveUninitialized: false
 }));
+app.use(fileUpload());
 app.use(passport.initialize());
 app.use(passport.session());
 //passport.use(new LocalStrategy(User.authenticate()));
@@ -85,6 +92,7 @@ app.use(governorateBaseURL, governorateRoutes);
 app.use(userBaseURL, userRoutes);
 app.use(linkBaseURL, linkRoutes);
 app.use(validatedUserBaseURL, validatedUserRoutes);
+app.use(enrichmentBaseURL, enrichmentRoutes);
 //start server
 process.on('uncaughtException', function (err) {
   console.error(err);
@@ -93,15 +101,20 @@ process.on('uncaughtException', function (err) {
 
 //sec min hour day month weekday
 new CronJob('0 0 0 */2 * *', function() {
-  console.log('You will see this message every second');
+  console.log('Automatic sync for devices runs every 48 hrs');
+  console.log("current syncing time is: "+ new Date());
   deviceRoutes.syncDevices();
 }, null, true, 'Africa/Cairo');
 
-// parser.parseIfAlias("INT-IPT-TINET-ALX-10G-B5-L10-ALX_MRM_10GE_LAN PHY_017_M-SM4_IPT_10G_0007-SMW4");
-console.log(parser.parseIfAlias("INT-IPT-TINET-ALX-10G-B5-L10-ALX_MRM_10GE_LAN PHY_017_M-SM4_IPT_10G_0007-SMW4"));
 
+logger.info('new message');
+// deleteLogger.delete("device deleted");
+
+// parser.parseIfAlias("INT-IPT-TINET-ALX-10G-B5-L10-ALX_MRM_10GE_LAN PHY_017_M-SM4_IPT_10G_0007-SMW4");
+// console.log(parser.parseIfAlias("INT-IPT-TINET-ALX-10G-B5-L10-ALX_MRM_10GE_LAN PHY_017_M-SM4_IPT_10G_0007-SMW4"));
 app.listen(process.env.PORT, process.env.IP, function() {
     console.log("Business Enrichment V"+ applicationVersion +" Server Started on "+process.env.IP+":"+process.env.PORT);
+    console.log("current time is: "+ new Date());
 });
 
 

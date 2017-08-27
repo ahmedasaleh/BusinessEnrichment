@@ -1,4 +1,6 @@
 var mongoose = require("mongoose");
+var mongooseToCsv = require("mongoose-to-csv");
+var importEnrichment 	= require("../middleware/import_enrichment");
 var enrichmentSchema = new mongoose.Schema({
 SE_Name: String,	
 B_TED_2ndHost: String,
@@ -35,16 +37,8 @@ B_TED_IP_Pool_Name: String,
 B_TED_IPSLA_COS: String,
 B_TED_isbundle: Number,
 B_TED_isCPE: String,
-B_TED_isDeviceUplink: {type: Boolean, default: false},,
-B_TED_isPopUplink: {type: Boolean, default: false},,
-B_TED_IXIA_IsDestPOP: String,
-B_TED_IXIA_Mesh: String,
-B_TED_IXIA_Module: String,
-B_TED_IXIA_PairName: String,
-B_TED_IXIA_PhysHost: String,
-B_TED_IXIA_PhysTarget: String,
-B_TED_IXIA_Service: String,
-B_TED_IXIA_Type: String,
+B_TED_isDeviceUplink: {type: Boolean, default: false},
+B_TED_isPopUplink: {type: Boolean, default: false},
 B_TED_Label: String,
 B_TED_linkBw: Number,
 B_TED_linkId: String,
@@ -66,4 +60,5 @@ B_TED_termination: String,
 B_TED_TestTarget: String,
 });
 
+enrichmentSchema.plugin(mongooseToCsv,{headers: importEnrichment.enrichmentFields});
 module.exports = mongoose.model("Enrichment", enrichmentSchema);
