@@ -3,6 +3,31 @@ var express             = require("express"),
     LocalStrategy       = require("passport-local");
 var User                = require("../models/user");
 var ValidatedUser       = require("../models/validatedUser");
+var nodemailer = require('nodemailer'); 
+var smtpConfig = {
+    host: 'tedata.net',
+    port: 25,
+    secure: false, // upgrade later with STARTTLS
+    auth: {
+        user: 'bet@tedata.net.eg',
+        pass: 'yourpassword'
+    }
+};
+var transporter = nodemailer.createTransport(smtpConfig);
+// var transporter = nodemailer.createTransport({
+//   service: 'gmail',
+//   auth: {
+//     user: 'bet@tedata.net.eg',
+//     pass: 'yourpassword'
+//   }
+// });
+
+var mailOptions = {
+  from: 'bet@tedata.net',
+  to: 'myfriend@yahoo.com',
+  subject: 'Activate your BET account'
+};
+
 var router              = express.Router();
 //add routes
 router.get("/home",function(request, response) {
@@ -45,9 +70,17 @@ router.post("/signup",function(request,response){
                 }
                 else{
                         //send email verification
-                        var authenticationURL = 'http://0.0.0.0:8080/verify?authToken=' + user.authToken;
+                        var authenticationURL = "http://"+process.env.IP+":"+process.env.PORT+"/verify?authToken=" + user.authToken;
                         console.log("authenticationURL: "+authenticationURL);
                         console.log("to: "+user.email);
+                        mailOptions.text = "Hi, you have signed for access to Business Enrichment Portal, please activate it by clicking on the following URL:\n"+authenticationURL;
+                        transporter.sendMail(mailOptions, function(error, info){
+                          if (error) {
+                            console.log(error);
+                          } else {
+                            console.log('Email sent: ' + info.response);
+                          }
+                        }); 
                         //sendgrid.send({
                         //to:       account.email,
                         //from:     'emailauth@yourdomain.com',
@@ -104,21 +137,35 @@ router.get("/changepass",function(request,response){
     response.render("changepassword");
 });
 
-router.post('/changepass' , function (req, res, next) {
-     if (newpass !== newpassconfirm) {
+router.post('/changepass' , function (request, res, next) {
+     if (request.body.newpass !== request.body.newpassconfirm) {
         throw new Error('password and confirm password do not match');
      }
 
-     var user = req.user;
+     var useremail = request.body.email;
 
-     user.pass = newpass;
+     var newpass = request.body.newpass;
 
+User.findOne({email: useremail},function(error,foundUser){
+    if(error) {console.log(error);}
+    else{
+        foundUser.email = user;
+        user.save(function(err){
+         if (err) { next(err) }
+         else {
+             res.redirect('/home');
+         }
+     });
+
+    }
+
+});
      user.save(function(err){
          if (err) { next(err) }
          else {
-             res.redirect('/account');
+             res.redirect('/home');
          }
-     })
+     });
 });
 
 //middleware

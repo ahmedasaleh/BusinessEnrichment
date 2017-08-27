@@ -1,7 +1,7 @@
 var winston = require('winston');
 const fs = require('fs');
 const tsFormat = () => (new Date()).toLocaleTimeString();
-const logDir = '/Users/IBM_ADMIN/nodejsWS/BusinessEnrichment/log/';
+const logDir = __dirname+"/.." +"/log/";
 // Create the log directory if it does not exist
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir);
