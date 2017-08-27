@@ -7,8 +7,8 @@ var logger 		     		= require('../middleware/logger');//logging component
 var fs                = require('fs');
 var appendMode         = true;
 
-var fileUploadPath     = "/Users/IBM_ADMIN/nodejsWS/BusinessEnrichment/import/";
-var fileExportPath     = "/Users/IBM_ADMIN/nodejsWS/BusinessEnrichment/export/";
+var fileUploadPath     = __dirname+"/../import/";
+var fileExportPath     = __dirname+"/../export/";
 //INDEX - show all enrichment data
 router.get("/", middleware.isLoggedIn ,function(request, response) {
    
