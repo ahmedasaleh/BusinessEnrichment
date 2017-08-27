@@ -17,6 +17,8 @@ const logger = new winston.Logger({
       new winston.transports.File({
       	name: 'appLogger',
         filename: logDir+'/bet.log',
+        maxsize:'1048576',
+        maxFiles:'10',
         timestamp: new Date(),
         datePattern: 'yyyy-MM-dd'
       })

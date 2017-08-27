@@ -5,7 +5,7 @@ var enrichmentSchema = new mongoose.Schema({
 SE_Name: String,	
 B_TED_2ndHost: String,
 B_TED_2ndPop: String,
-B_TED_BadrRelease: Number,
+B_TED_BadrRelease: {type: Number,default: 1},
 B_TED_badrRelease: String,
 B_TED_bundleId: String,
 B_TED_cardType: String,

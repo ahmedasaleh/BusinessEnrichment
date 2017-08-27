@@ -11,6 +11,10 @@ router.get("/home",function(request, response) {
 router.get("/",function(request, response) {
     response.render("landing");
 });
+//PASS environment parameters
+router.get("/getenv", function(req, res){
+    res.json({ ip: process.env.IP, port: process.env.PORT });
+});
 //======================
 // AUTH ROUTES
 //======================
@@ -95,6 +99,27 @@ router.get("/logout",function(request,response){
     response.redirect("/login");
 });
 
+//show change password form
+router.get("/changepass",function(request,response){
+    response.render("changepassword");
+});
+
+router.post('/changepass' , function (req, res, next) {
+     if (newpass !== newpassconfirm) {
+        throw new Error('password and confirm password do not match');
+     }
+
+     var user = req.user;
+
+     user.pass = newpass;
+
+     user.save(function(err){
+         if (err) { next(err) }
+         else {
+             res.redirect('/account');
+         }
+     })
+});
 
 //middleware
 function isLoggedIn(request,response,next){
