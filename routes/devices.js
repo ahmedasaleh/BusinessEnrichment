@@ -36,7 +36,7 @@ function discoveredDevice(device) {
     self.ifTableRead = false;
     self.ifXTableRead = false;
     self.inSyncMode = false;
-    self.session = snmp.createSession(self.device.ipaddress, self.device.communityString,{ timeout: 5000 });
+    self.session = snmp.createSession(self.device.ipaddress, self.device.communityString,{ timeout: 300000 });
 
     //parse ifAlias
     self.parseInternationalInterfaces = function(ifAlias){
@@ -140,9 +140,9 @@ function discoveredDevice(device) {
                 // 4-NR
                 // 5-FW
                 if(
-                    !S(alias).isEmpty() && !S(alias).contains("interface") &&
+                    // !S(alias).isEmpty() && !S(alias).contains("interface") &&
                         (
-                        S(alias).contains("int") ||
+                        S(alias).startsWith("int-") ||
                         S(alias).contains("bitstream") ||
                         S(alias).contains("esp") ||
                         S(alias).contains("nr") ||
@@ -155,25 +155,26 @@ function discoveredDevice(device) {
                     self.interestInterfacesIndices.push(intf.index);
                 }
                 // check interface is main i.e. doesn't contain '.' and ':'
-                if( !S(name).contains('.') && !S(name).contains(':') && !S(name).isEmpty() && //main interface
-                    ( 
-                        S(name).contains("ae") ||
-                        S(name).contains("at") ||
-                        S(name).contains("e1") ||
-                        S(name).contains("et") ||
-                        S(name).contains("fa") ||
-                        S(name).contains("fe") ||
-                        S(name).contains("ge") ||
-                        S(name).contains("gi") ||
-                        S(name).contains("gr") ||
-                        S(name).contains("mu") ||
-                        S(name).contains("po") ||
-                        S(name).contains("se") ||
-                        S(name).contains("so") ||
-                        S(name).contains("t1") ||
-                        S(name).contains("te") ||
-                        S(name).contains("xe")                    
-                    ) ) 
+                if( !S(name).contains('.') && !S(name).contains(':') && !S(name).isEmpty() && !S(name).contains("vi")  //main interface
+                    // ( 
+                    //     S(name).contains("ae") ||
+                    //     S(name).contains("at") ||
+                    //     S(name).contains("e1") ||
+                    //     S(name).contains("et") ||
+                    //     S(name).contains("fa") ||
+                    //     S(name).contains("fe") ||
+                    //     S(name).contains("ge") ||
+                    //     S(name).contains("gi") ||
+                    //     S(name).contains("gr") ||
+                    //     S(name).contains("mu") ||
+                    //     S(name).contains("po") ||
+                    //     S(name).contains("se") ||
+                    //     S(name).contains("so") ||
+                    //     S(name).contains("t1") ||
+                    //     S(name).contains("te") ||
+                    //     S(name).contains("xe")                    
+                    // ) 
+                    ) 
                 {
                         self.interestInterfaces.push(intf);
                         self.parseInternationalInterfaces(intf.alias);
