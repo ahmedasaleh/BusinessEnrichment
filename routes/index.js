@@ -61,7 +61,6 @@ router.post("/signup",function(request,response){
             return response.render("email-error");
         }
         else{
-            console.log(request.body);
             User.register(newUser,request.body.password,function(error,user){
                 if(error){
                     console.log("========================================= "+error);
@@ -150,6 +149,7 @@ User.findOne({email: useremail},function(error,foundUser){
     if(error) {console.log(error);}
     else{
         foundUser.email = user;
+        foundUser=newpass
         user.save(function(err){
          if (err) { next(err) }
          else {

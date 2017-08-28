@@ -24,12 +24,12 @@
                     <p><em>Added By:  <%= device.author.email %></em></p>
                     <!--/currentUser is setted up application.js middleware/-->
                     <!--<!% console.log("show.ejs currentUser: "+ currentUser) %>-->
-                    <% if(currentUser && device.author.id.equals(currentUser._id)){ %> 
+                    <!--<!% if(currentUser && device.author.id.equals(currentUser._id)){ %>-->
                         <a class="btn btn-warning" href="/devices/<%= device._id %>/edit">Edit</a>
                         <form id="delete-form" action="/devices/<%= device._id %>/?_method=DELETE" method="POST">
                             <button class="btn btn-danger">Delete</button>
                         </form>
-                    <% } %>
+                    <!-- <!% } %>-->
                 </div>
             </div>
 

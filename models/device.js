@@ -104,7 +104,7 @@ deviceSchema.path('hostname').validate(function (value, responseCB) {
             // console.log(err);      
             return responseCB(false);    
         }    
-        console.log('Number found: ' + hostnames.length);    
+        // console.log('Number found: ' + hostnames.length);    
         if (hostnames.length) {      
             responseCB(false); 
             // validation failed    

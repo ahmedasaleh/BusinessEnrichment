@@ -20,7 +20,12 @@ const logger = new winston.Logger({
         maxsize:'1048576',
         maxFiles:'10',
         timestamp: new Date(),
-        datePattern: 'yyyy-MM-dd'
+        datePattern: 'yyyy-MM-dd',
+        formatter: function(options) {
+          // Return string will be passed to logger. 
+          return options.timestamp() +' '+ options.level.toUpperCase() +' '+ (options.message ? options.message : '') +
+            (options.meta && Object.keys(options.meta).length ? '\n\t'+ JSON.stringify(options.meta) : '' );
+        }
       })
     ]
   });

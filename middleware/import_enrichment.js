@@ -1,15 +1,15 @@
 var mongoose    = require('mongoose');
 var fs          = require('fs');
 var Enrichment  = require("../models/enrichment");
+var Device      = require("../models/device");
 var enrichmentData  = require("../lookUps/enrich");
 var logger              = require('../middleware/logger');//logging component
 var S               = require('string');
 var async           = require('async');
 var headerShiftted = false;
 var lineList = "";
-
-
-
+var deviceList = [];
+var deviceData ={B_TED_Elt_Device:12,B_TED_Elt_IP:13,B_TED_Elt_Model:14,B_TED_Elt_POP_Gov:15,B_TED_Elt_POP_Name:16,B_TED_Elt_Type:17,B_TED_Elt_Vendor:18,CommunityString:64};
 
 
 function queryAllEntries () {
@@ -77,7 +77,8 @@ function queryAllEntries () {
                     B_TED_subCable : '$B_TED_subCable',
                     B_TED_teCID : '$B_TED_teCID',
                     B_TED_termination : '$B_TED_termination',
-                    B_TED_TestTarget : '$B_TED_TestTarget'
+                    B_TED_TestTarget : '$B_TED_TestTarget',
+                    CommunityString: '$CommunityString'
             }}
         }}, function(err, qDocList) {
         // console.log(util.inspect(qDocList, false, 10));
@@ -97,13 +98,56 @@ function createDocRecurse (err,filename) {
         async.forEachOf(lineList,function(line,key,callback){
             if(key != 0){//to skip first header line 
                 var doc = new Enrichment();
+                var device = new Device();
                 line.split(',').forEach(function (entry, i) {
-                    doc[enrichmentData.enrichmentFields[i]] = entry;
+                    doc[enrichmentData.extendedEnrichmentFields[i]] = entry;
+                    if((i == deviceData.B_TED_Elt_Device)){//
+                        device.hostname = entry;
+                    }
+                    else if(i == deviceData.B_TED_Elt_IP){//
+                        device.ipaddress = entry;
+                    }
+                    else if(i == deviceData.B_TED_Elt_Model){
+                        device.model = entry;
+                    }
+                    else if(i == deviceData.B_TED_Elt_POP_Gov){
+                        device.governorate.name = entry;
+                    }
+                    else if(i == deviceData.B_TED_Elt_POP_Name){
+                        device.popName.name = entry;
+                    }
+                    else if(i == deviceData.B_TED_Elt_Type){
+                        device.type = entry;
+                    }
+                    else if(i == deviceData.B_TED_Elt_Vendor){
+                        device.vendor = entry;
+                    }
+                    else if(i == deviceData.CommunityString){
+                        device.communityString = S(entry).s;
+                        logger.info(device.communityString);
+                    }
                 });
-                doc.save();       
+                doc.save();  
+                if(!deviceList.includes(device.hostname) && device.hostname) {
+                    Device.findOne({hostname:device.hostname},function(error,foundDevice){
+                        if(error){
+                            logger.error(error);
+                             
+                        }
+                        else if(foundDevice){
+                            logger.info("enriched device already in database");
+                        }
+                        else{
+                            device.save();
+                        }
+                    });
+                }
+                // if(!deviceList.includes(device.hostname) && device.hostname) device.save();     
+                deviceList.push(device.hostname);
             }
         });
     });
+    
 }
 
 module.exports.createDocRecurse = createDocRecurse;
