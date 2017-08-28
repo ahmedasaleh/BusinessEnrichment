@@ -144,9 +144,10 @@ function discoveredDevice(device) {
                         (
                         S(alias).startsWith("int-") ||
                         S(alias).contains("bitstream") ||
-                        S(alias).contains("esp") ||
-                        S(alias).contains("nr") ||
-                        S(alias).contains("fw") 
+                        S(alias).contains("_enb_") ||
+                        S(alias).startsWith("esp-") ||
+                        S(alias).startsWith("nr_") ||
+                        S(alias).contains("-fw") 
                         )
                     )
                 {
