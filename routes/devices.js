@@ -36,7 +36,14 @@ function discoveredDevice(device) {
     self.ifTableRead = false;
     self.ifXTableRead = false;
     self.inSyncMode = false;
+<<<<<<< HEAD
     self.session = snmp.createSession(self.device.ipaddress, S(self.device.communityString).trim().s,{ timeout: 10000 });
+=======
+    // self.session = snmp.createSession(self.device.ipaddress, self.device.communityString,{ timeout: 10000 });
+    logger.info("*******************");
+    logger.info(self.device.communityString);
+self.session = snmp.createSession(self.device.ipaddress, S(self.device.communityString).trim().s,{ timeout: 10000 });
+>>>>>>> b38ba3e346d28aa8051c53e0a80c70dce39f479b
 
     //parse ifAlias
     self.parseInternationalInterfaces = function(ifAlias){
@@ -542,6 +549,7 @@ var syncDevices = function(){
             foundDevices.forEach(function(device){
                 // if(device.discovered){//only handle discovered devices
                     logger.info("device " + device.hostname +" will be synced now");
+                    logger.info("device comm string" + device.communityString +" will be synced now");
                     // perform interface sync
                     var discoDevice = new discoveredDevice(device);
                     discoDevice.syncInterfaces();
@@ -553,6 +561,25 @@ var syncDevices = function(){
 }
 router.get("/sync", middleware.isLoggedIn ,function(request, response) {
     syncDevices();
+    response.redirect("/devices");
+});
+router.get("/sync/:id", middleware.isLoggedIn ,function(request, response) {
+    // syncDevices();
+    logger.info("syncing one device");
+    logger.info(request.params.id);
+
+    Device.findById(request.params.id, function(err, foundDevice) {
+        if (err) {
+            logger.error(err);
+        }
+        else {
+                    logger.info("single sync mode, device " + foundDevice.hostname +" will be synced now");
+                    // perform interface sync
+                    var discoDevice = new discoveredDevice(foundDevice);
+                    discoDevice.syncInterfaces();
+        }
+    });
+
     response.redirect("/devices");
 });
 
