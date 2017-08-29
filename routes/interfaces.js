@@ -8,6 +8,19 @@ var async           = require('async');
 var S               = require('string');
 
 
+//INDEX - show all interfaces
+router.get("/", middleware.isLoggedIn ,function(request, response) {
+    Interface.find({}, function(err, foundInterfaces) {
+        if (err) {
+            logger.error(err);
+        }
+        else {
+            response.render("interfaces/index", { interfaces: foundInterfaces });
+            // response.send("VIEW Interfaces");
+        }
+    });
+});
+
 //Add Route for NEW interface linked with device
 //NEW ROUTE for new interface
 router.get("/new",middleware.isLoggedIn,function(request,response){

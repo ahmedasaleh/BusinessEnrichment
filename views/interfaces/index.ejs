@@ -1,0 +1,84 @@
+<% include ../partials/header %>
+    <!--< the class container will give space around our contents>-->
+
+    <div class="container">
+        <header class="jumbotron">
+            <!--<adding second container to keep spacing around contents when we resize the page>-->
+            <div class="container">
+                <h1>Business Enrichment Portal</h1>
+                <p>View Interfaces Information</p>
+                <div class="btn-group" role="group" aria-label="all">
+                    <a href="/devices/"><button type="button" class="btn btn-default ">All Devices</button></a>
+                    <a href="/pops/"><button type="button" class="btn btn-default ">All POPs</button></a>
+                    <!--<a href="/interfaces/"><button type="button" class="btn btn-default">All Interfaces</button></a>-->
+                    <a href="/sectors/"><button type="button" class="btn btn-default">All Sectors</button></a>
+                    <a href="/governorates/"><button type="button" class="btn btn-default ">All Governorates</button></a>
+                    <a href="/users/"><button type="button" class="btn btn-default">All Users</button></a>
+                    <a href="/links/"><button type="button" class="btn btn-default">All Links</button></a>
+                    <a href="/validatedusers/"><button type="button" class="btn btn-default">All Validated Users</button></a>
+                    <a href="/enrichments/"><button type="button" class="btn btn-default ">All Enrichment Data</button></a>
+                    <a href="/enrichments/"><button type="button" class="btn btn-default active">All Interfaces Data</button></a>
+                </div>        
+            </div>
+        </header>
+
+        <div class="row text-left" >
+            <div class="table-responsive">
+                <table id="eventsTable" data-pagination="true" data-search="true"data-toggle="table" data-height="525" data-pagination="true" 
+                data-maintain-selected="true" data-search="true" data-show-refresh="true" data-show-toggle="true" data-show-columns="true" 
+                data-toolbar="#toolbar" data-single-select="true">
+                    <thead>
+                        <tr>
+                                <th data-field="_id" data-visible="false">ID</th>
+                                <th data-field="index">Index</th>
+                                <th data-field="name" data-sortable="true">Name</th>
+                                <th data-field="alias" data-sortable="true">Alias</th>
+                                <th data-field="description">Description</th>
+                                <th data-field="type" data-sortable="true">Type</th>
+                                <th data-field="speed" data-sortable="true">Speed</th>
+                                <th data-field="adminStatus" data-sortable="true">Admin Status</th>
+                                <th data-field="operStatus" data-sortable="true">Operational Status</th>
+                                <th data-field="actualspeed" data-sortable="true">Actual Speed</th>
+                                <th data-field="isDeviceUpLink" data-sortable="true">is Device UpLink</th>
+                                <th data-field="delete" data-sortable="true">Delete</th>
+                                <th data-field="createdby">Created By</th>
+                                <th data-field="updatedby">Last Updated By</th>
+                                <th data-field="datecreated" data-sortable="true">Date Created</th>
+                                <th data-field="dateupdated" data-sortable="true">Date Updated</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% interfaces.forEach(function(interface){ %>
+                            <tr>
+                                    <td><%= interface._id %></td>
+                                    <td><%= interface.index %></td>
+                                    <td><%= interface.name %></a></td>
+                                    <td><%= interface.alias %></td>
+                                    <td><%= interface.description %></td>
+                                    <td><%= interface.type %></td>
+                                    <td><%= interface.speed %></td>
+                                    <td><%= interface.adminStatus %></td>
+                                    <td><%= interface.operStatus %></td>
+                                    <td><%= interface.actualspeed %></td>
+                                    <td><%= interface.isDeviceUpLink %></td>
+                                    <td><%= interface.delete %></td>
+                                    <td><%= interface.author.email %></td>
+                                    <td><%= interface.lastUpdatedBy.email %></td>
+                                    <td>
+                                        <% if(interface.created) { %>
+                                            <%= interface.created.toDateString() %>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <% if(interface.updated) { %>
+                                            <%= interface.updated.toDateString() %>
+                                        <% } %>
+                                    </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+<% include ../partials/footer %>
