@@ -36,7 +36,7 @@ function discoveredDevice(device) {
     self.ifTableRead = false;
     self.ifXTableRead = false;
     self.inSyncMode = false;
-    self.session = snmp.createSession(self.device.ipaddress, self.device.communityString,{ timeout: 300000 });
+    self.session = snmp.createSession(self.device.ipaddress, S(self.device.communityString).trim().s,{ timeout: 10000 });
 
     //parse ifAlias
     self.parseInternationalInterfaces = function(ifAlias){
@@ -171,7 +171,7 @@ function discoveredDevice(device) {
                         self.interestInterfacesIndices.push(intf.index);
                 }
 
-                if( !S(name).contains('.') && !S(name).contains(':') && !S(name).isEmpty() && 
+                if( !S(name).contains('.') && !S(name).contains(':') && !S(name).isEmpty() && !S(name).startsWith('giza') &&
                     ( 
                         S(name).startsWith("100ge") ||
                         S(name).startsWith("bundle-ether") ||
@@ -268,6 +268,7 @@ function discoveredDevice(device) {
     self.ifXTableResponseCb = function  (error, table) {
         if (error) {
             logger.error (error.toString ());
+            logger.error ("device "+self.name+ " has " +error.toString () + " while reading ifXTable");
             self.ifTableError = true;
             self.ifXTableError = true;
             return;
@@ -350,7 +351,7 @@ function discoveredDevice(device) {
     self.ifTableResponseCb = function  (error, table) {
         if (error) {
             snmpError = error.toString ();
-            logger.error (error.toString ());
+            logger.error ("device "+self.name+ " has " +error.toString () + " while reading ifTable");
             self.ifTableError = true;
             self.ifXTableError = true;
             return;
@@ -367,6 +368,7 @@ function discoveredDevice(device) {
         // if: current interface index not found and updated and syncCyles > threshold, then: let "delete = true" and update interface
         // if: current interface index not found and not updated and syncCyles > threshold, then: delete interface
         // if: new interface index, then create interface 
+        logger.info("in sync mode for: "+self.name+" "+self.device.ipaddress+" "+self.device.communityString);
         self.session.tableColumnsAsync(oids.ifTable.OID, oids.ifTable.Columns, maxRepetitions, self.ifTableResponseCb);
     };
     this.discoverInterfaces = function(){
