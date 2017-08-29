@@ -156,7 +156,9 @@ function discoveredDevice(device) {
                     self.interestInterfacesIndices.push(intf.index);
                 }
                 // check interface is main i.e. doesn't contain '.' and ':'
-                if( !S(name).contains('.') && !S(name).contains(':') && !S(name).isEmpty() && !S(name).contains("vi")  //main interface
+                if( !S(name).contains('.') && !S(name).contains(':') && !S(name).isEmpty() && !S(name).contains("vi")  && !S(name).contains("lo") && //main interface
+                    !S(name).contains("tu") && !S(name).startsWith("nu") && !S(name).contains("atm layer") && !S(name).contains("aal5 layer") &&
+                    !S(name).startsWith("cr") && !S(name).startsWith("vo") && !S(name).startsWith("MgmtEth")
                     // ( 
                     //     S(name).contains("ae") ||
                     //     S(name).contains("at") ||
