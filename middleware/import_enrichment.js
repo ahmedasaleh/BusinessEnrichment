@@ -129,6 +129,7 @@ function createDocRecurse (err,filename) {
                 });
                 doc.save();  
                 if(!deviceList.includes(device.hostname) && device.hostname) {
+                    logger.info("searching for device in enrichment mode");
                     Device.findOne({hostname:device.hostname},function(error,foundDevice){
                         if(error){
                             logger.error(error);

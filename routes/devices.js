@@ -36,7 +36,10 @@ function discoveredDevice(device) {
     self.ifTableRead = false;
     self.ifXTableRead = false;
     self.inSyncMode = false;
-    self.session = snmp.createSession(self.device.ipaddress, self.device.communityString,{ timeout: 300000 });
+    // self.session = snmp.createSession(self.device.ipaddress, self.device.communityString,{ timeout: 10000 });
+    logger.info("*******************");
+    logger.info(self.device.communityString);
+self.session = snmp.createSession(self.device.ipaddress, S(self.device.communityString).trim().s,{ timeout: 10000 });
 
     //parse ifAlias
     self.parseInternationalInterfaces = function(ifAlias){
@@ -268,6 +271,7 @@ function discoveredDevice(device) {
     self.ifXTableResponseCb = function  (error, table) {
         if (error) {
             logger.error (error.toString ());
+            logger.error ("device "+self.name+ " has " +error.toString () + " while reading ifXTable");
             self.ifTableError = true;
             self.ifXTableError = true;
             return;
@@ -350,7 +354,7 @@ function discoveredDevice(device) {
     self.ifTableResponseCb = function  (error, table) {
         if (error) {
             snmpError = error.toString ();
-            logger.error (error.toString ());
+            logger.error ("device "+self.name+ " has " +error.toString () + " while reading ifTable");
             self.ifTableError = true;
             self.ifXTableError = true;
             return;
@@ -367,6 +371,7 @@ function discoveredDevice(device) {
         // if: current interface index not found and updated and syncCyles > threshold, then: let "delete = true" and update interface
         // if: current interface index not found and not updated and syncCyles > threshold, then: delete interface
         // if: new interface index, then create interface 
+        logger.info("in sync mode for: "+self.name+" "+self.device.ipaddress+" "+self.device.communityString);
         self.session.tableColumnsAsync(oids.ifTable.OID, oids.ifTable.Columns, maxRepetitions, self.ifTableResponseCb);
     };
     this.discoverInterfaces = function(){
@@ -540,6 +545,7 @@ var syncDevices = function(){
             foundDevices.forEach(function(device){
                 // if(device.discovered){//only handle discovered devices
                     logger.info("device " + device.hostname +" will be synced now");
+                    logger.info("device comm string" + device.communityString +" will be synced now");
                     // perform interface sync
                     var discoDevice = new discoveredDevice(device);
                     discoDevice.syncInterfaces();
@@ -551,6 +557,25 @@ var syncDevices = function(){
 }
 router.get("/sync", middleware.isLoggedIn ,function(request, response) {
     syncDevices();
+    response.redirect("/devices");
+});
+router.get("/sync/:id", middleware.isLoggedIn ,function(request, response) {
+    // syncDevices();
+    logger.info("syncing one device");
+    logger.info(request.params.id);
+
+    Device.findById(request.params.id, function(err, foundDevice) {
+        if (err) {
+            logger.error(err);
+        }
+        else {
+                    logger.info("single sync mode, device " + foundDevice.hostname +" will be synced now");
+                    // perform interface sync
+                    var discoDevice = new discoveredDevice(foundDevice);
+                    discoDevice.syncInterfaces();
+        }
+    });
+
     response.redirect("/devices");
 });
 
