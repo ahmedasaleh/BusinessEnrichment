@@ -32,6 +32,7 @@
                                 <th data-field="_id" data-visible="false">ID</th>
                                 <th data-field="index">Index</th>
                                 <th data-field="name" data-sortable="true">Name</th>
+                                <th data-field="device">Device</th>
                                 <th data-field="alias" data-sortable="true">Alias</th>
                                 <th data-field="description">Description</th>
                                 <th data-field="type" data-sortable="true">Type</th>
@@ -53,6 +54,7 @@
                                     <td><%= interface._id %></td>
                                     <td><%= interface.index %></td>
                                     <td><%= interface.name %></a></td>
+                                    <td><%= interface.device.hostname %></td>
                                     <td><%= interface.alias %></td>
                                     <td><%= interface.description %></td>
                                     <td><%= interface.type %></td>

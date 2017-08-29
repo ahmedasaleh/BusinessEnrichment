@@ -9,26 +9,36 @@
             <form method="POST" action="/devices">
                 <!--<use form-group to make spacing between components>-->
                 <div class="form-group">
-                    <input class="form-control" type="text" name="device[hostname]" placeholder="hostname">
+                    <label for="hostname">Host Name</label>
+                    <input class="form-control" type="text" name="device[hostname]" >
                 </div>
                 <div class="form-group">
-                    <input class="form-control" type="text" name="device[ipaddress]" placeholder="IP address">
+                    <label for="ipaddress">IP Address</label>
+                    <input class="form-control" type="text" name="device[ipaddress]" >
                 </div>
                 <div class="form-group">
-                    <input class="form-control" type="text" name="device[communityString]" placeholder="community string">
+                    <label for="communityString">Community String</label>
+                    <input class="form-control" type="text" name="device[communityString]" >
                 </div>
                 <div class="form-group">
-                    <input class="form-control" type="text" name="device[popName][name]" placeholder="POP name">
+                    <label for="device-pop-name">POP Name</label>
+                    <select id="new-device-pop-name" class="form-control select2-single" type="text" name="device[popName][name]">
+                    </select>
                 </div>
                 <div class="form-group">
-                    <input class="form-control" type="text" name="device[sector][name]" placeholder="sector">
+                    <label for="device-sector-name">Sector Name</label>
+                    <select id="new-device-sector-name" class="form-control select2-single" type="text" name="device[sector][name]"   >
+                    </select>
                 </div>
                 <div class="form-group">
-                    <input class="form-control" type="text" name="device[governorate][name]" placeholder="governorate">
+                    <label for="device-governorate-name">Governorate Name</label>
+                    <select id="new-device-governorate-name" class="form-control select2-single" type="text" name="device[governorate][name]" >
+                    </select>
                 </div>
                 <div class="form-group">
                     <!-- <input class="form-control" type="text" name="device[type]" placeholder="type"> -->
-                    <select class="form-control selectpicker" name="device[type]" placeholder="type">
+                    <label for="deviceType">Type</label>
+                    <select class="form-control selectpicker" name="device[type]" >
                       <option>Router</option>
                       <option>Switch</option>
                       <option>Access Switch</option>
@@ -37,10 +47,12 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <input class="form-control" type="text" name="device[model]" placeholder="model">
+                    <label for="model">Model</label>
+                    <input class="form-control" type="text" name="device[model]" >
                 </div>
                 <div class="form-group">
-                    <input class="form-control" type="text" name="device[vendor]" placeholder="vendor">
+                    <label for="vendor">Vendor</label>
+                    <input class="form-control" type="text" name="device[vendor]" >
                 </div>
                 <div class="form-group">
                     <!--<btn-block will let the button takes width of the 2 inputs>-->

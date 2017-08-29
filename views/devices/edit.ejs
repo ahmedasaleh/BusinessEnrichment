@@ -31,8 +31,6 @@
                 </div>
                 <div class="form-group">
                     <label for="device-sector-name">Sector Name</label>
-                    <!-- <input class="form-control" type="text" name="device[sector][name]" value="<%= device.sector.name %>"> -->
-                    <!-- data-init-text="<%= device.sector.name %>" -->
                     <% if(device.sector.name === undefined){ %>
                         <select id="device-sector-name" class="form-control select2-single" type="text" name="device[sector][name]"  value="<%= device.sector.name %>"  >
                         </select>

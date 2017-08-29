@@ -9,7 +9,6 @@ var nodesocket;
 		var pops_pagination_url = "";//"http://"+socket+"/pops/pagination";
 		var sectors_pagination_url = "";//"http://"+socket+"/sectors/pagination";
 		var governorates_pagination_url = "";//"http://"+socket+"/governorates/pagination";
-
 	$j.get('/getenv', function(data) {
 	    nodesocket = data;
 	    console.log(nodesocket);
@@ -19,6 +18,7 @@ var nodesocket;
 		 pops_pagination_url = "http://"+socket+"/pops/pagination";
 		 sectors_pagination_url = "http://"+socket+"/sectors/pagination";
 		 governorates_pagination_url = "http://"+socket+"/governorates/pagination";
+
 
 		$j.ajax({
 		  url: pops_pagination_url,//"http://127.0.0.1:8080/pops/pagination",//
@@ -47,6 +47,16 @@ var nodesocket;
 						});
 					}
 				});
+				$j("#new-device-pop-name").select2({
+					placeholder: 'type something...',
+					selectOnClose: true,
+					data: mappedPopsData,
+			        theme: "bootstrap",
+			        width: null,
+			        containerCssClass: ':all:',
+					minimumInputLength: 1
+				});
+
 		    }
 		});
 
@@ -77,7 +87,15 @@ var nodesocket;
 						});
 					}
 				});
-		    // }
+				$j("#new-device-sector-name").select2({
+					placeholder: 'type something...',
+					selectOnClose: true,
+					data: mappedSectorsData,
+			        theme: "bootstrap",
+			        width: null,
+			        containerCssClass: ':all:',
+					minimumInputLength: 1,
+				});
 		});
 
 		$j.ajax({
@@ -106,6 +124,15 @@ var nodesocket;
 						callback({ id: element.val(), text: element.attr('data-init-text') 
 						});
 					}
+				});
+				$j("#new-device-governorate-name").select2({
+					placeholder: 'type something...',
+					selectOnClose: true,
+					data: mappedGovernoratesData,
+			        theme: "bootstrap",
+			        width: null,
+			        containerCssClass: ':all:',
+					minimumInputLength: 1,
 				});
 		    }
 		});

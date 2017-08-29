@@ -156,27 +156,40 @@ function discoveredDevice(device) {
                     self.interestInterfacesIndices.push(intf.index);
                 }
                 // check interface is main i.e. doesn't contain '.' and ':'
-                if( !S(name).contains('.') && !S(name).contains(':') && !S(name).isEmpty() && !S(name).contains("vi")  && !S(name).contains("lo") && //main interface
-                    !S(name).contains("tu") && !S(name).startsWith("nu") && !S(name).contains("atm layer") && !S(name).contains("aal5 layer") &&
-                    !S(name).startsWith("cr") && !S(name).startsWith("vo") && !S(name).startsWith("MgmtEth")
-                    // ( 
-                    //     S(name).contains("ae") ||
-                    //     S(name).contains("at") ||
-                    //     S(name).contains("e1") ||
-                    //     S(name).contains("et") ||
-                    //     S(name).contains("fa") ||
-                    //     S(name).contains("fe") ||
-                    //     S(name).contains("ge") ||
-                    //     S(name).contains("gi") ||
-                    //     S(name).contains("gr") ||
-                    //     S(name).contains("mu") ||
-                    //     S(name).contains("po") ||
-                    //     S(name).contains("se") ||
-                    //     S(name).contains("so") ||
-                    //     S(name).contains("t1") ||
-                    //     S(name).contains("te") ||
-                    //     S(name).contains("xe")                    
-                    // ) 
+                var tempArray, tempField1 = "" ,tempField2 = "",tempField3 = "";
+                if(!S(name).contains('.') && !S(name).contains(':') && !S(name).isEmpty() && S(name).contains("/")){
+                    tempArray = S(name).splitLeft("/");
+                    tempField1 = tempArray[0];
+                    tempField2 = tempArray[1];
+                    tempField3 = tempArray[2];
+                }
+                logger.info(name);
+                if( !S(tempField1).isEmpty() && !S(tempField2).isEmpty() && !S(tempField3).isEmpty() && 
+                    S(tempField1).isNumeric() &&  S(tempField2).isNumeric() && S(tempField3).isNumeric()) {
+                        self.interestInterfaces.push(intf);
+                        self.parseInternationalInterfaces(intf.alias);
+                        self.interestInterfacesIndices.push(intf.index);
+                }
+
+                if( !S(name).contains('.') && !S(name).contains(':') && !S(name).isEmpty() && 
+                    ( 
+                        S(name).startsWith("100ge") ||
+                        S(name).startsWith("bundle-ether") ||
+                        S(name).startsWith("hundredgige") ||
+                        S(name).startsWith("ae") ||
+                        S(name).startsWith("at") ||
+                        S(name).startsWith("e1") ||
+                        S(name).startsWith("et") ||
+                        S(name).startsWith("fa") ||
+                        S(name).startsWith("fe-") ||
+                        S(name).startsWith("ge-") ||
+                        S(name).startsWith("gi") ||
+                        S(name).startsWith("po") ||
+                        S(name).startsWith("se") ||
+                        S(name).startsWith("so-") ||
+                        S(name).startsWith("te") ||
+                        S(name).startsWith("xe-")                    
+                    ) 
                     ) 
                 {
                         self.interestInterfaces.push(intf);
@@ -429,41 +442,82 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
     var type = request.body.device.type;
     var model = request.body.device.model;
     var vendor = request.body.device.vendor;
-    var popName = request.body.device.popName;
-    var sector = request.body.device.sector;
-    var governorate = request.body.device.governorate;
+    // var popName = request.body.device.popName;
+    var popId = request.body.device.popName.name;
+    // var sector = request.body.device.sector;
+    var sectorId = request.body.device.sector.name;
+    // var governorate = request.body.device.governorate;
+    var governorateId = request.body.device.governorate.name;
 
-    aDevice = {
-            hostname: hostname.trim(),
-            ipaddress: ipaddress.trim(),
-            author: {id: request.user._id, email: request.user.email},
-            communityString: communityString.trim(),
-            type: type.trim(),
-            model: model.trim(),
-            vendor: vendor.trim(),
-            popName: popName,
-            sector: sector,
-            governorate: governorate
-    };
-    aDevice.interfaces = [];
-    logger.info("Device discovery started");
-    logger.info(aDevice.hostname + " "+ aDevice.ipaddress + " "+aDevice.communityString);
-    Device.create(aDevice, function(error, device) {
-        if (error) {
-            logger.log(error.errors);
-            for (field in error.errors) {
-                request.flash("error",error.errors[field].message);
+    if(!(popId === undefined)){
+        POP.findById(popId,function(error,foundPOP){
+            if(error){
+                logger.error(error);
             }
-            
-        }
-        else {
-            logger.info("new device created and saved");
-            request.flash("success","Successfully added device, will start device discovery now");
-            var discoDevice = new discoveredDevice(device);
-            discoDevice.discoverInterfaces();
-        }
-        response.redirect("/devices"); //will redirect as a GET request
-    });
+            else{
+                if(!(sectorId === undefined)){
+                    Sector.findById(sectorId,function(error,foundSector){
+                        if(error) {
+                            logger.error(error);
+                        }
+                        else {
+
+                            if(!(governorateId === undefined)){
+                                Governorate.findById(governorateId,function(error,foundGove){
+                                    console.log(foundGove);
+                                    if(error){
+                                        logger.error(error);
+                                        console.log(error);
+
+                                    }else{
+                                        ///here goes correct values
+                                        aDevice = {
+                                                hostname: hostname.trim(),
+                                                ipaddress: ipaddress.trim(),
+                                                author: {id: request.user._id, email: request.user.email},
+                                                communityString: communityString.trim(),
+                                                type: type.trim(),
+                                                model: model.trim(),
+                                                vendor: vendor.trim(),
+                                                popName: foundPOP,
+                                                sector: foundSector,
+                                                governorate: foundGove
+                                        };
+                                        aDevice.interfaces = [];
+                                        logger.info("Device discovery started");
+                                        logger.info(aDevice.hostname + " "+ aDevice.ipaddress + " "+aDevice.communityString);
+                                        Device.create(aDevice, function(error, device) {
+                                            if (error) {
+                                                logger.log(error.errors);
+                                                for (field in error.errors) {
+                                                    request.flash("error",error.errors[field].message);
+                                                }
+                                                
+                                            }
+                                            else {
+                                                logger.info("new device created and saved");
+                                                request.flash("success","Successfully added device, will start device discovery now");
+                                                var discoDevice = new discoveredDevice(device);
+                                                discoDevice.discoverInterfaces();
+                                            }
+                                            response.redirect("/devices"); //will redirect as a GET request
+                                        });
+                                    }
+
+                                });
+
+                            }else{
+
+                            }
+
+                        }
+
+                    });
+                }
+            }
+        });
+    }
+
 });
 
 //NEW - show form to create new device
