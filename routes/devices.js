@@ -36,14 +36,7 @@ function discoveredDevice(device) {
     self.ifTableRead = false;
     self.ifXTableRead = false;
     self.inSyncMode = false;
-<<<<<<< HEAD
     self.session = snmp.createSession(self.device.ipaddress, S(self.device.communityString).trim().s,{ timeout: 10000 });
-=======
-    // self.session = snmp.createSession(self.device.ipaddress, self.device.communityString,{ timeout: 10000 });
-    logger.info("*******************");
-    logger.info(self.device.communityString);
-self.session = snmp.createSession(self.device.ipaddress, S(self.device.communityString).trim().s,{ timeout: 10000 });
->>>>>>> b38ba3e346d28aa8051c53e0a80c70dce39f479b
 
     //parse ifAlias
     self.parseInternationalInterfaces = function(ifAlias){
