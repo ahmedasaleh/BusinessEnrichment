@@ -94,7 +94,8 @@ var nodesocket;
 			        theme: "bootstrap",
 			        width: null,
 			        containerCssClass: ':all:',
-					minimumInputLength: 1,
+					minimumInputLength: 1
+
 				});
 		});
 

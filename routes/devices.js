@@ -16,7 +16,7 @@ var async           = require('async');
 var S               = require('string');
 var mongoose         = require('mongoose');
 var logger          = require("../middleware/logger");
-
+var ObjectId = require('mongodb').ObjectID;
 //create and save a document, handle error if occured
 var aDevice = new Device() ;
 var targets = [];
@@ -450,6 +450,55 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
     var sectorId = request.body.device.sector.name;
     // var governorate = request.body.device.governorate;
     var governorateId = request.body.device.governorate.name;
+    ///
+    var aPOP = new POP();
+    var aSector = new Sector();
+    var aGove = new Governorate();
+    var emptySector = false;
+    var emptyPOP = false;
+    var emptyGove = false;
+
+    if(sectorId === 'NONE') {
+        emptySector = true;
+        logger.info("sector name is: "+ sectorId);
+        Sector.findOne({name : "NONE" }, function(error,foundSector){
+            // sectorId = mongoose.Types.ObjectId( foundSector._id );//foundSector._id;
+            // logger.info("found NONE sector: "+foundSector);
+            // logger.info("found NONE sector with id: "+foundSector._id);
+            aSector = foundSector;
+        });
+    }
+    if(popId === 'NONE') {
+        emptyPOP = true;
+            logger.info("pop name is: "+ popId);
+            POP.findOne({name : "NONE" }, function(error,foundPOP){
+                // popId = foundPOP._id;
+                // popId = mongoose.Types.ObjectId( foundPOP._id );
+                aPOP = foundPOP;
+            });
+    }
+    if(governorateId === 'NONE') {
+        emptyGove = true;
+        logger.info("gove name is: "+ governorateId);
+            Governorate.findOne({name : "NONE" }, function(error,foundGove){
+            // governorateId = foundGove._id;
+            //governorateId = mongoose.Types.ObjectId( foundGove._id );
+            aGove = foundGove;
+        });
+    }
+
+    if(S(emptySector).toBoolean()){
+        sectorId = aSector._id || request.body.device.sector.name  ;
+        logger.info("sector id is: "+ sectorId);
+    }
+    if(S(emptyPOP).toBoolean()){
+        popId = aPOP._id || request.body.device.popName.name  ;
+        logger.info("pop id is: "+ popId);
+    }
+    if(S(emptyGove).toBoolean()){
+        governorateId = aGove._id || request.body.device.governorate.name  ;
+        logger.info("gove id is: "+ governorateId);
+    }
 
     if(!(popId === undefined)){
         POP.findById(popId,function(error,foundPOP){
@@ -457,7 +506,7 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
                 logger.error(error);
             }
             else{
-                if(!(sectorId === undefined)){
+                if(!(sectorId === 'NONE')){
                     Sector.findById(sectorId,function(error,foundSector){
                         if(error) {
                             logger.error(error);
