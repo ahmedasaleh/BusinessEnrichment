@@ -1,7 +1,8 @@
 var mongoose = require("mongoose");
-var mongooseToCsv = require("mongoose-to-csv");
+// var mongooseToCsv = require("mongoose-to-csv");
+var mongoose_csv = require('mongoose-csv');
 var enrichmentData  = require("../lookUps/enrich");
-// var importEnrichment 	= require("../middleware/import_enrichment");
+
 var enrichmentSchema = new mongoose.Schema({
 	SE_Name: String,	
 	B_TED_2ndHost: String,
@@ -61,6 +62,6 @@ var enrichmentSchema = new mongoose.Schema({
 	B_TED_TestTarget: String
 }); 
 
-enrichmentSchema.plugin(mongooseToCsv,{headers: enrichmentData.enrichmentFields});
-
+// enrichmentSchema.plugin(mongooseToCsv,{headers: enrichmentData.enrichmentFields});
+enrichmentSchema.plugin(mongoose_csv);
 module.exports = mongoose.model("Enrichment", enrichmentSchema);

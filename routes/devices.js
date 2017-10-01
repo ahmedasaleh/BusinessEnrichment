@@ -147,6 +147,7 @@ function discoveredDevice(device) {
                         S(alias).contains("_enb_") ||
                         S(alias).startsWith("esp-") ||
                         S(alias).startsWith("nr_") ||
+                        S(alias).startsWith("reserved") ||
                         S(alias).contains("-fw") 
                         )
                     )
