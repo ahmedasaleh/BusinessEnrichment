@@ -101,8 +101,7 @@ function discoveredDevice(device) {
             anInterface.adminStatus = value[ifTableColumns.ifAdminStatus];
             anInterface.operStatus  = value[ifTableColumns.ifOperStatus];
             if( (anInterface.adminStatus == snmpConstants.ifAdminOperStatus.up) && 
-                (anInterface.operStatus == snmpConstants.ifAdminOperStatus.up) &&
-                (!S(anInterface.description).contains("mpls") )) {
+                (anInterface.operStatus == snmpConstants.ifAdminOperStatus.up)) {
                 self.interfaces[key] = anInterface;
                 self.interestKeys.push(key);//push index to be used during ifXTable walk
             } 
@@ -133,63 +132,49 @@ function discoveredDevice(device) {
                 name = name.toLowerCase();
                 var alias = S(intf.alias).toString();
                 alias = alias.toLowerCase();
-                //check if ifAlias contains any of the following:
+                // check if ifAlias contains any of the following:
                 // 1-INT
                 // 2-BITSTREAM
                 // 3-ESP
                 // 4-NR
                 // 5-FW
-                if(
-                    // !S(alias).isEmpty() && !S(alias).contains("interface") &&
-                        (
-                        S(alias).startsWith("int-") ||
-                        S(alias).contains("bitstream") ||
-                        S(alias).contains("_enb_") ||
-                        S(alias).startsWith("esp-") ||
-                        S(alias).startsWith("nr_") ||
-                        S(alias).startsWith("reserved") ||
-                        S(alias).contains("-fw") 
-                        )
-                    )
-                {
-                    self.interestInterfaces.push(intf);
-                    self.parseInternationalInterfaces(intf.alias);
-                    self.interestInterfacesIndices.push(intf.index);
-                }
-                // check interface is main i.e. doesn't contain '.' and ':'
-                var tempArray, tempField1 = "" ,tempField2 = "",tempField3 = "";
-                if(!S(name).contains('.') && !S(name).contains(':') && !S(name).isEmpty() && S(name).contains("/")){
-                    tempArray = S(name).splitLeft("/");
-                    tempField1 = tempArray[0];
-                    tempField2 = tempArray[1];
-                    tempField3 = tempArray[2];
-                }
-                logger.info(name);
-                if( !S(tempField1).isEmpty() && !S(tempField2).isEmpty() && !S(tempField3).isEmpty() && 
-                    S(tempField1).isNumeric() &&  S(tempField2).isNumeric() && S(tempField3).isNumeric()) {
-                        self.interestInterfaces.push(intf);
-                        self.parseInternationalInterfaces(intf.alias);
-                        self.interestInterfacesIndices.push(intf.index);
-                }
+                // if(
+                //     // !S(alias).isEmpty() && !S(alias).contains("interface") &&
+                //         (
+                //         S(alias).startsWith("int-") ||
+                //         S(alias).contains("bitstream") ||
+                //         S(alias).contains("_enb_") ||
+                //         S(alias).startsWith("esp-") ||
+                //         S(alias).startsWith("nr_") ||
+                //         S(alias).startsWith("reserved") ||
+                //         S(alias).contains("-fw") 
+                //         )
+                //     )
+                // {
+                //     self.interestInterfaces.push(intf);
+                //     self.parseInternationalInterfaces(intf.alias);
+                //     self.interestInterfacesIndices.push(intf.index);
+                // }
+                // // check interface is main i.e. doesn't contain '.' and ':'
+                // var tempArray, tempField1 = "" ,tempField2 = "",tempField3 = "";
+                // if(!S(name).contains('.') && !S(name).contains(':') && !S(name).isEmpty() && S(name).contains("/")){
+                //     tempArray = S(name).splitLeft("/");
+                //     tempField1 = tempArray[0];
+                //     tempField2 = tempArray[1];
+                //     tempField3 = tempArray[2];
+                // }
+                // logger.info(name);
+                // if( !S(tempField1).isEmpty() && !S(tempField2).isEmpty() && !S(tempField3).isEmpty() && 
+                //     S(tempField1).isNumeric() &&  S(tempField2).isNumeric() && S(tempField3).isNumeric()) {
+                //         self.interestInterfaces.push(intf);
+                //         self.parseInternationalInterfaces(intf.alias);
+                //         self.interestInterfacesIndices.push(intf.index);
+                // }
 
-                if( !S(name).contains('.') && !S(name).contains(':') && !S(name).isEmpty() && !S(name).startsWith('giza') &&
+                if( !S(name).isEmpty() && 
                     ( 
-                        S(name).startsWith("100ge") ||
-                        S(name).startsWith("bundle-ether") ||
-                        S(name).startsWith("hundredgige") ||
-                        S(name).startsWith("ae") ||
-                        S(name).startsWith("at") ||
-                        S(name).startsWith("e1") ||
-                        S(name).startsWith("et") ||
-                        S(name).startsWith("fa") ||
-                        S(name).startsWith("fe-") ||
-                        S(name).startsWith("ge-") ||
-                        S(name).startsWith("gi") ||
-                        S(name).startsWith("po") ||
-                        S(name).startsWith("se") ||
-                        S(name).startsWith("so-") ||
-                        S(name).startsWith("te") ||
-                        S(name).startsWith("xe-")                    
+                        !S(name).contains('pppoe') ||
+                        !S(name).startsWith("vi") 
                     ) 
                     ) 
                 {
