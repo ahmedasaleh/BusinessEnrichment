@@ -38,6 +38,7 @@ router.get("/",function(request, response) {
 });
 //PASS environment parameters
 router.get("/getenv", function(req, res){
+    console.log("/getenv called inside index.js");
     res.json({ ip: process.env.IP, port: process.env.PORT });
 });
 //======================

@@ -16,6 +16,7 @@ var async           = require('async');
 var S               = require('string');
 var mongoose         = require('mongoose');
 var logger          = require("../middleware/logger");
+var Parser            = require('../middleware/parser');
 var ObjectId = require('mongodb').ObjectID;
 //create and save a document, handle error if occured
 var aDevice = new Device() ;
@@ -132,44 +133,6 @@ function discoveredDevice(device) {
                 name = name.toLowerCase();
                 var alias = S(intf.alias).toString();
                 alias = alias.toLowerCase();
-                // check if ifAlias contains any of the following:
-                // 1-INT
-                // 2-BITSTREAM
-                // 3-ESP
-                // 4-NR
-                // 5-FW
-                // if(
-                //     // !S(alias).isEmpty() && !S(alias).contains("interface") &&
-                //         (
-                //         S(alias).startsWith("int-") ||
-                //         S(alias).contains("bitstream") ||
-                //         S(alias).contains("_enb_") ||
-                //         S(alias).startsWith("esp-") ||
-                //         S(alias).startsWith("nr_") ||
-                //         S(alias).startsWith("reserved") ||
-                //         S(alias).contains("-fw") 
-                //         )
-                //     )
-                // {
-                //     self.interestInterfaces.push(intf);
-                //     self.parseInternationalInterfaces(intf.alias);
-                //     self.interestInterfacesIndices.push(intf.index);
-                // }
-                // // check interface is main i.e. doesn't contain '.' and ':'
-                // var tempArray, tempField1 = "" ,tempField2 = "",tempField3 = "";
-                // if(!S(name).contains('.') && !S(name).contains(':') && !S(name).isEmpty() && S(name).contains("/")){
-                //     tempArray = S(name).splitLeft("/");
-                //     tempField1 = tempArray[0];
-                //     tempField2 = tempArray[1];
-                //     tempField3 = tempArray[2];
-                // }
-                // logger.info(name);
-                // if( !S(tempField1).isEmpty() && !S(tempField2).isEmpty() && !S(tempField3).isEmpty() && 
-                //     S(tempField1).isNumeric() &&  S(tempField2).isNumeric() && S(tempField3).isNumeric()) {
-                //         self.interestInterfaces.push(intf);
-                //         self.parseInternationalInterfaces(intf.alias);
-                //         self.interestInterfacesIndices.push(intf.index);
-                // }
 
                 if( !S(name).isEmpty() && 
                     ( 
@@ -405,19 +368,90 @@ function sortInt (a, b) {
     else
         return 0;
 }
+String.prototype.escapeSpecialChars = function() {
+    return this.replace(/\\n/g, "")
+               .replace(/\\'/g, "\\'")
+               .replace(/\\"/g, '\\"')
+               .replace(/\\&/g, "\\&")
+               .replace(/\\r/g, "")
+               .replace(/\\t/g, "")
+               .replace(/\\b/g, "\\b")
+               .replace(/\\f/g, "\\f");
+};
+router.get("/pagination?",middleware.isLoggedIn ,function(request, response) {
+        // limit is the number of rows per page
+        var limit = parseInt(request.query.limit);
+        // offset is the page number
+        var skip  = parseInt(request.query.offset);
+        // search string
+        var searchQuery = request.query.search ;//: 'xe-'
 
+        if(S(searchQuery).isEmpty()){
+            Device.count({}, function(err, devicesCount) {
+                Device.find({},'hostname ipaddress popName.name sector.name governorate.name type model vendor communityString',{lean:true,skip:skip,limit:limit}, function(err, foundDevices) {
+                    if (err) {
+                        logger.error(err);
+                    }
+                    else {
+                        var data = "{\"total\":"+ devicesCount+",\"rows\":" +  JSON.stringify(foundDevices).escapeSpecialChars()+"}";
+                        console.log(data);
+                        response.setHeader('Content-Type', 'application/json');
+                        // response.send((foundDevices)); 
+                        response.send(data);        
+                    }
 
+                });
+
+            });
+
+        } 
+        else {
+            searchQuery = ".*"+S(searchQuery).s.toLowerCase()+".*";
+            Device.count({'$or' : [{hostname: new RegExp(searchQuery,'i')},
+                {ipaddress: new RegExp(searchQuery,'i')},
+                {"sector.name": new RegExp(searchQuery,'i')},
+                {"governorate.name": new RegExp(searchQuery,'i')},
+                {type: new RegExp(searchQuery,'i')},
+                {model: new RegExp(searchQuery,'i')},
+                {vendor: new RegExp(searchQuery,'i')},
+                {"popName.name": new RegExp(searchQuery,'i')}]}, function(err, m_devicesCount) {
+                console.log("total interfacse match the query: "+m_devicesCount);
+                console.log(searchQuery);
+                Device.find({'$or' : [{hostname: new RegExp(searchQuery,'i')},
+                {ipaddress: new RegExp(searchQuery,'i')},
+                {"sector.name": new RegExp(searchQuery,'i')},
+                {"governorate.name": new RegExp(searchQuery,'i')},
+                {type: new RegExp(searchQuery,'i')},
+                {model: new RegExp(searchQuery,'i')},
+                {vendor: new RegExp(searchQuery,'i')},
+                {"popName.name": new RegExp(searchQuery,'i')}]},'hostname ipaddress popName.name sector.name governorate.name type model vendor communityString',{lean:true,skip:skip,limit:limit}, function(err, foundDevices) {
+                    if (err) {
+                        logger.error(err);
+                    }
+                    else {
+                        var data = "{\"total\":"+ m_devicesCount+",\"rows\":" + JSON.stringify(foundDevices)+"}";
+                        response.setHeader('Content-Type', 'application/json');
+                        // response.send((foundDevices)); 
+                        response.send(data);        
+                    }
+
+                });
+            });
+
+        }
+});
 //INDEX - show all devices
 router.get("/", middleware.isLoggedIn ,function(request, response) {
-    Device.find({}, function(err, foundDevices) {
-        if (err) {
-            logger.error(err);
-        }
-        else {
-            response.render("devices/index", { devices: foundDevices });
-            // response.send("VIEW DEVICES");
-        }
-    });
+    // Device.find({}, function(err, foundDevices) {
+    //     if (err) {
+    //         logger.error(err);
+    //     }
+    //     else {
+    //         response.render("devices/index", { devices: foundDevices });
+    //         // response.send("VIEW DEVICES");
+    //     }
+    // });
+    response.render("devices/index");
 });
 
 
@@ -427,11 +461,11 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
     var hostname = request.body.device.hostname;
     var ipaddress = request.body.device.ipaddress;
     var communityString = request.body.device.communityString || "public";
-    var type = request.body.device.type;
+    var type = request.body.device.type || Parser.parseHostname(S(hostname)).deviceType;
     var model = request.body.device.model;
-    var vendor = request.body.device.vendor;
+    var vendor = request.body.device.vendor || Parser.parseHostname(S(hostname)).deviceVendor;
     // var popName = request.body.device.popName;
-    var popId = request.body.device.popName.name;
+    var popId =  request.body.device.popName.name;
     // var sector = request.body.device.sector;
     var sectorId = request.body.device.sector.name;
     // var governorate = request.body.device.governorate;
@@ -448,28 +482,25 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
         emptySector = true;
         logger.info("sector name is: "+ sectorId);
         Sector.findOne({name : "NONE" }, function(error,foundSector){
-            // sectorId = mongoose.Types.ObjectId( foundSector._id );//foundSector._id;
-            // logger.info("found NONE sector: "+foundSector);
-            // logger.info("found NONE sector with id: "+foundSector._id);
             aSector = foundSector;
         });
     }
     if(popId === 'NONE') {
         emptyPOP = true;
             logger.info("pop name is: "+ popId);
-            POP.findOne({name : "NONE" }, function(error,foundPOP){
-                // popId = foundPOP._id;
-                // popId = mongoose.Types.ObjectId( foundPOP._id );
+            POP.findOne({shortName : Parser.parseHostname(S(hostname)).popName }, function(error,foundPOP){
                 aPOP = foundPOP;
+                emptyPOP = false;
+                popId = foundPOP._id;
             });
     }
     if(governorateId === 'NONE') {
         emptyGove = true;
         logger.info("gove name is: "+ governorateId);
-            Governorate.findOne({name : "NONE" }, function(error,foundGove){
-            // governorateId = foundGove._id;
-            //governorateId = mongoose.Types.ObjectId( foundGove._id );
+            Governorate.findOne({acronym : Parser.parseHostname(S(hostname)).popGove }, function(error,foundGove){
             aGove = foundGove;
+            emptyGove = false;
+            governorateId = foundGove._id;
         });
     }
 
@@ -508,6 +539,7 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
 
                                     }else{
                                         ///here goes correct values
+                                        console.log(foundPOP+"\t" +foundSector+"\t"+foundGove);
                                         aDevice = {
                                                 hostname: hostname.trim(),
                                                 ipaddress: ipaddress.trim(),
@@ -516,10 +548,11 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
                                                 type: type.trim(),
                                                 model: model.trim(),
                                                 vendor: vendor.trim(),
-                                                popName: foundPOP,
-                                                sector: foundSector,
-                                                governorate: foundGove
+                                                "popName.name":  Parser.parseHostname(S(hostname)).popName || foundPOP.name,
+                                                "sector.name": foundSector,
+                                                "governorate.name":  foundGove.name
                                         };
+                                        console.log(aDevice.popName+"\t" +aDevice.sector+"\t"+aDevice.governorate);
                                         aDevice.interfaces = [];
                                         logger.info("Device discovery started");
                                         logger.info(aDevice.hostname + " "+ aDevice.ipaddress + " "+aDevice.communityString);

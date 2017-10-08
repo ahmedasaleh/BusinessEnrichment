@@ -21,21 +21,18 @@
                 </div>        
             </div>
         </header>
-
+<!-- data-response-handler="responseHandler" -->
         <div class="row text-left" >
             <div class="table-responsive">
-                <table id="eventsTable" data-pagination="true" data-search="true"data-toggle="table" data-height="525" data-pagination="true" 
-                data-maintain-selected="true" data-search="true" data-show-refresh="true" data-show-toggle="true" data-show-columns="true" 
-                data-toolbar="#toolbar" data-single-select="true">
+                <table id="interfacetable" data-pagination="true" data-height="525" data-side-pagination="server" data-url="/interfaces/pagination" data-toggle="table" data-search="true" data-flat="true" data-show-columns="true" data-show-toggle="true" data-show-refresh="true">
                     <thead>
                         <tr>
                                 <th data-field="_id" data-visible="false">ID</th>
                                 <th data-field="index">Index</th>
                                 <th data-field="name" data-sortable="true">Name</th>
-                                <th data-field="device">Device</th>
+                                <th data-field="device.hostname">Device</th>
                                 <th data-field="alias" data-sortable="true">Alias</th>
                                 <th data-field="description">Description</th>
-                                <th data-field="type" data-sortable="true">Type</th>
                                 <th data-field="speed" data-sortable="true">Speed</th>
                                 <th data-field="adminStatus" data-sortable="true">Admin Status</th>
                                 <th data-field="operStatus" data-sortable="true">Operational Status</th>
@@ -46,41 +43,12 @@
                                 <th data-field="updatedby">Last Updated By</th>
                                 <th data-field="datecreated" data-sortable="true">Date Created</th>
                                 <th data-field="dateupdated" data-sortable="true">Date Updated</th>
+                                <th data-field="type" data-sortable="true">Type</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <% interfaces.forEach(function(interface){ %>
-                            <tr>
-                                    <td><%= interface._id %></td>
-                                    <td><%= interface.index %></td>
-                                    <td><%= interface.name %></a></td>
-                                    <td><%= interface.device.hostname %></td>
-                                    <td><%= interface.alias %></td>
-                                    <td><%= interface.description %></td>
-                                    <td><%= interface.type %></td>
-                                    <td><%= interface.speed %></td>
-                                    <td><%= interface.adminStatus %></td>
-                                    <td><%= interface.operStatus %></td>
-                                    <td><%= interface.actualspeed %></td>
-                                    <td><%= interface.isDeviceUpLink %></td>
-                                    <td><%= interface.delete %></td>
-                                    <td><%= interface.author.email %></td>
-                                    <td><%= interface.lastUpdatedBy.email %></td>
-                                    <td>
-                                        <% if(interface.created) { %>
-                                            <%= interface.created.toDateString() %>
-                                        <% } %>
-                                    </td>
-                                    <td>
-                                        <% if(interface.updated) { %>
-                                            <%= interface.updated.toDateString() %>
-                                        <% } %>
-                                    </td>
-                            </tr>
-                        <% }); %>
-                    </tbody>
                 </table>
             </div>
         </div>
     </div>
+
 <% include ../partials/footer %>

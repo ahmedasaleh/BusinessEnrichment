@@ -4,9 +4,10 @@ var POP        = require("../models/pop");
 var logger            = require('../middleware/logger');//logging component
 
 	var link= {
-			linkType : "", service : "", provider : "", termination : "", connType : "", bundelID : "", 
+			linkType : "", linkSpeed : "",service : "", provider : "", termination : "", connType : "", bundelID : "", 
 			linkID : "", intCID : "", teCID : "", subCable : "", secondHost : "", secondPOP : "", linkNum : "",
-			customer: "", isESP : "", espCustomer : "", espConnType : "", espEmsOrder : "", espBW : "", espPop : ""
+			customer: "", isESP : "", espCustomer : "", espConnType : "", espEmsOrder : "", espBW : "", espPop : "", fwPOP : "", 
+			fwServiceType : "", fwIPType : "" , fwVendor : ""
 	}
 	var device={
 		vendor: "", type: "", model: "", governorate: "", parentPOP: ""
@@ -60,9 +61,37 @@ parserObj.parseIfAlias = function(alias){
 			subCable = "NA";
 		}
 		link= {
-				linkType : linkType, service : service, provider : provider, termination : termination, connType : connType, bundelID : bundelID, 
+				linkType : linkType, linkSpeed:linkSpeed, service : service, provider : provider, termination : termination, connType : connType, bundelID : bundelID, 
 				linkID : linkID, intCID : intCID, teCID : teCID, subCable : subCable, secondHost : secondHost, secondPOP : secondPOP, linkNum : linkNum,
-				customer: customer, isESP : isESP, espCustomer : espCustomer, espConnType : espConnType, espEmsOrder : espEmsOrder, espBW : espBW, espPop : espPop
+				customer: customer, isESP : isESP, espCustomer : espCustomer, espConnType : espConnType, espEmsOrder : espEmsOrder, espBW : espBW, espPop : espPop, fwPOP : fwPOP
+		}
+	}
+	else if(S(alias).contains("ALPHA-BITSTREAM")){
+		// Alpha Bit Stream interfaces 
+		// Example: VODA-ALPHA-BITSTREAM L1 GIG
+		var enrichmentFields = S(S(alias).trim().s).splitLeft('-');
+		linkType="AlphaBitstream";
+		customer=enrichmentFields[0];
+		linkNum=S(enrichmentFields[2]).splitLeft(' ')[1];//L1
+		linkSpeed=S(enrichmentFields[2]).splitLeft(' ')[2];//GIG
+		link= {
+				linkType : linkType, linkSpeed:linkSpeed, service : service, provider : provider, termination : termination, connType : connType, bundelID : bundelID, 
+				linkID : linkID, intCID : intCID, teCID : teCID, subCable : subCable, secondHost : secondHost, secondPOP : secondPOP, linkNum : linkNum,
+				customer: customer, isESP : isESP, espCustomer : espCustomer, espConnType : espConnType, espEmsOrder : espEmsOrder, espBW : espBW, espPop : espPop, fwPOP : fwPOP
+		}
+	}
+	else if(S(alias).contains("ESP-BITSTREAM")){
+		// ESP Bit Stream interfaces 
+		// Example:ETISALAT-ESP-BITSTREAM B1 2GIG
+		var enrichmentFields = S(S(alias).trim().s).splitLeft('-');
+		linkType="ESPBitstream";
+		customer=enrichmentFields[0];
+		linkNum=S(enrichmentFields[2]).splitLeft(' ')[1];//B1
+		linkSpeed=S(enrichmentFields[2]).splitLeft(' ')[2];//2GIG
+		link= {
+				linkType : linkType, linkSpeed:linkSpeed, service : service, provider : provider, termination : termination, connType : connType, bundelID : bundelID, 
+				linkID : linkID, intCID : intCID, teCID : teCID, subCable : subCable, secondHost : secondHost, secondPOP : secondPOP, linkNum : linkNum,
+				customer: customer, isESP : isESP, espCustomer : espCustomer, espConnType : espConnType, espEmsOrder : espEmsOrder, espBW : espBW, espPop : espPop, fwPOP : fwPOP
 		}
 	}
 	else if(S(alias).contains("BITSTREAM")){
@@ -71,10 +100,12 @@ parserObj.parseIfAlias = function(alias){
 		var enrichmentFields = S(S(alias).trim().s).splitLeft('-');
 		linkType="Bitstream";
 		customer=enrichmentFields[0];
+		linkNum=S(enrichmentFields[1]).splitLeft(' ')[1];//B4
+		linkSpeed=S(enrichmentFields[1]).splitLeft(' ')[2];//2GIG
 		link= {
-				linkType : linkType, service : service, provider : provider, termination : termination, connType : connType, bundelID : bundelID, 
+				linkType : linkType, linkSpeed:linkSpeed, service : service, provider : provider, termination : termination, connType : connType, bundelID : bundelID, 
 				linkID : linkID, intCID : intCID, teCID : teCID, subCable : subCable, secondHost : secondHost, secondPOP : secondPOP, linkNum : linkNum,
-				customer: customer, isESP : isESP, espCustomer : espCustomer, espConnType : espConnType, espEmsOrder : espEmsOrder, espBW : espBW, espPop : espPop
+				customer: customer, isESP : isESP, espCustomer : espCustomer, espConnType : espConnType, espEmsOrder : espEmsOrder, espBW : espBW, espPop : espPop, fwPOP : fwPOP
 		}
 	}
 	else if(S(alias).startsWith("ESP")){
@@ -97,15 +128,42 @@ parserObj.parseIfAlias = function(alias){
 			espBW= enrichmentFields[4];
 			espPop= enrichmentFields[1];
 			link= {
-					linkType : linkType, service : service, provider : provider, termination : termination, connType : connType, bundelID : bundelID, 
+					linkType : linkType, linkSpeed:linkSpeed, service : service, provider : provider, termination : termination, connType : connType, bundelID : bundelID, 
 					linkID : linkID, intCID : intCID, teCID : teCID, subCable : subCable, secondHost : secondHost, secondPOP : secondPOP, linkNum : linkNum,
-					customer: customer, isESP : isESP, espCustomer : espCustomer, espConnType : espConnType, espEmsOrder : espEmsOrder, espBW : espBW, espPop : espPop
+					customer: customer, isESP : isESP, espCustomer : espCustomer, espConnType : espConnType, espEmsOrder : espEmsOrder, espBW : espBW, espPop : espPop, fwPOP : fwPOP
 			}
 			logger.error(link);
 		}
 		else{
 			link = null;
 		}
+	}
+	else if(S(alias).contains("FW") && S(alias).contains("EG")){
+		// Firewall interfaces 
+		// Example: ALMAZA_GI_Trust_IPv4-FW02E-C-EG
+		var enrichmentFields = S(S(alias).trim().s).splitLeft('_');
+		linkType="FW";
+		fwPOP=enrichmentFields[0];//fwServiceType : "", fwIPType : ""
+		if(!S(enrichmentFields[1]).s == "GI" ){
+			logger.error("Firewall interface " + alias+" doesn't adhere to rules");
+			return null;
+		}
+		fwServiceType=enrichmentFields[2];//Trust
+		var otherEnrichmentFields = [];
+		otherEnrichmentFields = S(enrichmentFields[3]).splitLeft('-');
+		fwIPType=otherEnrichmentFields[0];//IPv4
+		if(!S(otherEnrichmentFields[1]).isAlphaNumeric()){
+			logger.error("Firewall interface " + alias+" doesn't adhere to rules");
+			return null;
+		}
+		fwVendor = S(otherEnrichmentFields).right(1).s;//single char 
+		link= {
+				linkType : linkType, linkSpeed:linkSpeed, service : service, provider : provider, termination : termination, connType : connType, bundelID : bundelID, 
+				linkID : linkID, intCID : intCID, teCID : teCID, subCable : subCable, secondHost : secondHost, secondPOP : secondPOP, linkNum : linkNum,
+				customer: customer, isESP : isESP, espCustomer : espCustomer, espConnType : espConnType, espEmsOrder : espEmsOrder, espBW : espBW, espPop : espPop, 
+				fwPOP : fwPOP, fwVendor : fwVendor
+		}
+
 	}
 	else{
 		link = null;
@@ -130,22 +188,23 @@ parserObj.parseHostname = function(hostname){
 			deviceType = enrichmentData.deviceType[S(nameFields[1]).left(1).s] ;
 			deviceVendor = enrichmentData.deviceVendor[S(nameFields[1]).right(1).s] ;
 			deviceDetails = {popName:popName,popGove:popGove,deviceType:deviceType,deviceVendor:deviceVendor};
+			console.log(deviceDetails);
 		}
 		else{
 			deviceDetails = null;
 			logger.error("device "+hostname+" name doesn't adhere to naming rules");		
 		}
-		POP.findOne({governorateAcro: popGove},function(error,foundPOP){
-			if(error){
-				logger.error(error);
-			}
-			else if(foundPOP != null){
-				deviceDetails = {popName:foundPOP.name,popGove:popGove,deviceType:deviceType,deviceVendor:deviceVendor};
-			}
-			else{
-				logger.error("Can't find POP "+popGove+" while exporting enrichment data");
-			}
-		});
+		// POP.findOne({shortName: popName},function(error,foundPOP){
+		// 	if(error){
+		// 		logger.error(error);
+		// 	}
+		// 	else if(foundPOP != null){
+		// 		deviceDetails = {popName:foundPOP.name,popGove:popGove,deviceType:deviceType,deviceVendor:deviceVendor};
+		// 	}
+		// 	else{
+		// 		logger.error("Can't find POP "+popGove+" while exporting enrichment data");
+		// 	}
+		// });
 	}
 	else{
 		deviceDetails = null;

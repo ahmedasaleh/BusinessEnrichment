@@ -38,57 +38,28 @@
         <!--<adding flex style to fix issue related to left alignment>-->
         <div class="row text-left">
             <div class="table-responsive">
-                <table id="eventsTable" data-pagination="true" data-search="true"data-toggle="table" data-height="525" data-pagination="true" 
-                data-maintain-selected="true" data-search="true" data-show-refresh="true" data-show-toggle="true" data-show-columns="true" 
-                data-toolbar="#toolbar" data-single-select="true">
+                <table id="eventsTable" data-pagination="true" data-height="525" data-side-pagination="server" data-url="/devices/pagination" data-toggle="table" data-search="true" data-flat="true" data-show-columns="true" data-show-toggle="true" data-show-refresh="true">
                     <thead>
                         <tr>
                             <th data-field="state" data-checkbox="true"> </th>
                             <th data-field="_id" data-visible="false">ID</th>
-                            <th data-field="name" data-sortable="true">Name</th>
+                            <th data-field="hostname" data-sortable="true">Name</th>
                             <th data-field="ipaddress">IP Address</th>
-                            <th data-field="communitystring">Community String</th>
-                            <th data-field="datecreated" data-sortable="true">Date Created</th>
-                            <th data-field="dateupdated" data-sortable="true">Date Updated</th>
+                            <th data-field="communityString">Community String</th>
+                            <th data-field="createdAt" data-sortable="true">Date Created</th>
+                            <th data-field="updatedAt" data-sortable="true">Date Updated</th>
                             <th data-field="description">Description</th>
-                            <th data-field="popname" data-sortable="true">POP Name</th>
-                            <th data-field="sectorname" data-sortable="true">Sector Name</th>
-                            <th data-field="governorate" data-sortable="true">Governorate</th>
+                            <th data-field="popName.name" data-sortable="true">POP Name</th>
+                            <th data-field="sectorname.name" data-sortable="true">Sector Name</th>
+                            <th data-field="governorate.name" data-sortable="true">Governorate</th>
                             <th data-field="type" data-sortable="true">Type</th>
                             <th data-field="model" data-sortable="true">Model</th>
                             <th data-field="vendor" data-sortable="true">Vendor</th>
                             <th data-field="defaultCollector" data-sortable="true">Default Collector</th>
-                            <th data-field="createdby">Created By</th>
-                            <th data-field="updatedby">Last Updated By</th>
+                            <th data-field="author.email">Created By</th>
+                            <th data-field="lastUpdatedBy.email">Last Updated By</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <% devices.forEach(function(device){ %>
-                            <tr>
-                                <td><% %></td>
-                                <td><%= device._id %></td>
-                                <td><a href="/devices/<%= device._id %>"><%= device.hostname %></a></td>
-                                <td><%= device.ipaddress %></td>
-                                <td><%= device.communityString %></td>
-                                <td><%= device.createdAt.toDateString() %></td>
-                                <td>
-                                    <% if(device.updatedAt) { %>
-                                    <%= device.updatedAt.toDateString() %>
-                                    <% } %>
-                                </td>
-                                <td><%= device.description %></td>
-                                <td><%= device.popName.name %></td>
-                                <td><%= device.sector.name %></td>
-                                <td><%= device.governorate.name %></td>
-                                <td><%= device.type %></td>
-                                <td><%= device.model %></td>
-                                <td><%= device.vendor %></td>
-                                <td><%= device.defaultCollector %></td>
-                                <td><%= device.author.email %></td>
-                                <td><%= device.lastUpdatedBy.email %></td>
-                            </tr>
-                        <% }); %>
-                    </tbody>
                 </table>
             </div>
         </div>

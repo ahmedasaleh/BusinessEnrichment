@@ -6,19 +6,92 @@ var Interface  = require("../models/interface");
 var middleware  = require("../middleware");
 var async           = require('async');
 var S               = require('string');
+var responseHandler = require('express-response-handler');
+var logger          = require("../middleware/logger");
+
+//Mongoose PAGINATION
+
+// var responseHandler = function(response) {
+//   var data = '';
+
+//   // keep track of the data you receive
+//   response.on('data', function(chunk) {
+//     data += chunk + "\n";
+//   });
+
+//   // finished? ok, send the data to the client in JSON format
+//   response.on('end', function() {
+//         res.header("Content-Type:","application/json");
+//         res.end(data);
+//   });
+// };
+router.get("/pagination?",middleware.isLoggedIn ,function(request, response) {
+        // limit is the number of rows per page
+        var limit = parseInt(request.query.limit);
+        // offset is the page number
+        var skip  = parseInt(request.query.offset);
+        // search string
+        var searchQuery = request.query.search ;//: 'xe-'
+
+        if(S(searchQuery).isEmpty()){
+            Interface.count({}, function(err, interfacesCount) {
+                Interface.find({},'index name device alias description speed adminStatus operStatus actualspeed delete type createdby updatedby datecreated dateupdated',{lean:true,skip:skip,limit:limit}, function(err, foundInterfaces) {
+                    if (err) {
+                        logger.error(err);
+                    }
+                    else {
+                        var data = "{\"total\":"+ interfacesCount+",\"rows\":" + JSON.stringify(foundInterfaces)+"}";
+                        response.setHeader('Content-Type', 'application/json');
+                        // response.send((foundInterfaces)); 
+                        response.send(data);        
+                    }
+
+                });
+
+            });
+
+        } 
+        else {
+            searchQuery = ".*"+S(searchQuery).s.toLowerCase()+".*";
+            Interface.count({'$or' : [{name: new RegExp(searchQuery,'i')},
+                {alias: new RegExp(searchQuery,'i')},
+                {description: new RegExp(searchQuery,'i')},
+                {"device.hostname": new RegExp(searchQuery,'i')}]}, function(err, m_interfacesCount) {
+                console.log("total interfacse match the query: "+m_interfacesCount);
+                console.log(searchQuery);
+                Interface.find({'$or' : [{name: new RegExp(searchQuery,'i')},
+                    {alias: new RegExp(searchQuery,'i')},
+                    {description: new RegExp(searchQuery,'i')},
+                    {"device.hostname": new RegExp(searchQuery,'i')}]},'index name device.hostname alias description speed adminStatus operStatus actualspeed delete type  createdby updatedby datecreated dateupdated',{lean:true,skip:skip,limit:limit}, function(err, foundInterfaces) {
+                    if (err) {
+                        logger.error(err);
+                    }
+                    else {
+                        var data = "{\"total\":"+ m_interfacesCount+",\"rows\":" + JSON.stringify(foundInterfaces)+"}";
+                        response.setHeader('Content-Type', 'application/json');
+                        // response.send((foundInterfaces)); 
+                        response.send(data);        
+                    }
+
+                });
+            });
+
+        }
+});
 
 
 //INDEX - show all interfaces
 router.get("/", middleware.isLoggedIn ,function(request, response) {
-    Interface.find({}, function(err, foundInterfaces) {
-        if (err) {
-            logger.error(err);
-        }
-        else {
-            response.render("interfaces/index", { interfaces: foundInterfaces });
-            // response.send("VIEW Interfaces");
-        }
-    });
+    // Interface.find({},null,{limit:size}, function(err, foundInterfaces) {
+    //     if (err) {
+    //         logger.error(err);
+    //     }
+    //     else {
+    //         response.render("interfaces/index", { interfaces: foundInterfaces });
+    //         // response.send("VIEW Interfaces");
+    //     }
+    // });
+    response.render("interfaces/index");
 });
 
 //Add Route for NEW interface linked with device

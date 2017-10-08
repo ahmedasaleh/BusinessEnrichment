@@ -14,6 +14,7 @@ var express             = require("express"),
 var winston = require('winston');
 var fileUpload = require('express-fileupload');
 var parser              = require("./middleware/parser");
+var responseHandler = require('express-response-handler');
 
 var CronJob = require('cron').CronJob;   
 
@@ -45,6 +46,7 @@ var indexBaseURL        = "/",
 var applicationVersion  = 1;
 
 //inistantiate app
+customCodes = [['Unauthorized', 'error', 401]];
 dotenv.config();
 var app = express();
 app.set("view engine", "ejs");
@@ -57,6 +59,19 @@ mongoose.Promise = global.Promise; //to vercome the warning about Mongoose mprom
 mongoose.connect("mongodb://localhost/"+process.env.DEV_DB, {useMongoClient: true});
 //seedDB();
 
+app.use(responseHandler(customCodes)).get('/', (req, res) => {
+        let data = {
+            errors: []
+        };
+ 
+        // Recommended way 
+        res.error.Unauthorized('permission.error.unauthorized', data);
+ 
+        // Also available with the same result 
+        res.error('Unauthorized', 'permission.error.unauthorized', data);
+        res.error(401, 'permission.error.unauthorized', data);
+        res.error[401]('permission.error.unauthorized', data);
+});
 //Passport configuration
 app.use(require("express-session")({
     secret: "should_ContainZ__nUMber851 PsUWtooN lenovo Targus w500 pM YouroPtions LImited",
@@ -113,6 +128,7 @@ logger.info('new message');
 app.listen(process.env.PORT, process.env.IP, function() {
     console.log("Business Enrichment V"+ applicationVersion +" Server Started on "+process.env.IP+":"+process.env.PORT);
     console.log("current time is: "+ new Date());
+    console.log(process.env.UV_THREADPOOL_SIZE);
 });
 
 

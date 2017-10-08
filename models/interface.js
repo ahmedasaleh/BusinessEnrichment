@@ -1,4 +1,5 @@
 var mongoose = require("mongoose");
+var mongoosePaginate = require('mongoose-paginate');
 //Database template setup
 var interfaceSchema = new mongoose.Schema({
     name: String,
@@ -55,4 +56,7 @@ var interfaceSchema = new mongoose.Schema({
     
 });
 
-module.exports = mongoose.model("Interface", interfaceSchema);
+interfaceSchema.index({'$**': 'text'});
+interfaceSchema.plugin(mongoosePaginate);
+var Interface = mongoose.model("Interface", interfaceSchema);
+module.exports = Interface; //mongoose.model("Interface", interfaceSchema);

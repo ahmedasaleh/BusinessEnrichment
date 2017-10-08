@@ -2,24 +2,30 @@ var $j = jQuery.noConflict();
 
 
 $j(document).ready(function() {
-var nodesocket;
+	var nodesocket;
 	var IP = "" ;//= nodesocket.ip;//"127.0.0.1";
 	var PORT = "";// = nodesocket.port;//"8080";
 	var socket = "";
-		var pops_pagination_url = "";//"http://"+socket+"/pops/pagination";
-		var sectors_pagination_url = "";//"http://"+socket+"/sectors/pagination";
-		var governorates_pagination_url = "";//"http://"+socket+"/governorates/pagination";
-	$j.get('/getenv', function(data) {
-	    nodesocket = data;
+	var pops_pagination_url = "";//"http://"+socket+"/pops/pagination";
+	var sectors_pagination_url = "";//"http://"+socket+"/sectors/pagination";
+	var governorates_pagination_url = "";//"http://"+socket+"/governorates/pagination";
+	var interfaces_pagination_url = "";//"http://"+socket+"/interfaces/pagination";
+
+
+
+	var getting = $j.get('/getenv', function(data) {
+		nodesocket = data;
 	    console.log(nodesocket);
-		 IP = nodesocket.ip;//"127.0.0.1";
-		 PORT = nodesocket.port;//"8080";
-		 socket = IP +":"+ PORT;
-		 pops_pagination_url = "http://"+socket+"/pops/pagination";
-		 sectors_pagination_url = "http://"+socket+"/sectors/pagination";
-		 governorates_pagination_url = "http://"+socket+"/governorates/pagination";
-
-
+		IP = nodesocket.ip;//"127.0.0.1";
+		PORT = nodesocket.port;//"8080";
+		if(IP == "127.0.0.1"){
+			IP = "localhost";
+		}
+		socket = IP +":"+ PORT;
+		pops_pagination_url = "http://"+socket+"/pops/pagination";
+		sectors_pagination_url = "http://"+socket+"/sectors/pagination";
+		governorates_pagination_url = "http://"+socket+"/governorates/pagination";
+		
 		$j.ajax({
 		  url: pops_pagination_url,//"http://127.0.0.1:8080/pops/pagination",//
 		  beforeSend: function( xhr ) {
@@ -28,7 +34,7 @@ var nodesocket;
 		}).done(function( data ) {
 		    if ( console && console.log ) {
 		        popsData = JSON.parse(data)["docs"];
-		        console.log(popsData);
+		        // console.log(popsData);
 				mappedPopsData = $j.map(popsData, function (obj) {
 				obj.text = obj.text || obj.name; // replace name with the property used for the text
 				return obj;
@@ -68,7 +74,7 @@ var nodesocket;
 		}).done(function( data ) {
 		    // if ( console && console.log ) {
 		        sectorsData = JSON.parse(data)["docs"];
-		        console.log(sectorsData);
+		        // console.log(sectorsData);
 				mappedSectorsData = $j.map(sectorsData, function (obj) {
 				obj.text = obj.text || obj.name; // replace name with the property used for the text
 				return obj;
@@ -107,7 +113,7 @@ var nodesocket;
 		}).done(function( data ) {
 		    if ( console && console.log ) {
 		        governoratesData = JSON.parse(data)["docs"];
-		        console.log(governoratesData);
+		        // console.log(governoratesData);
 				mappedGovernoratesData = $j.map(governoratesData, function (obj) {
 				obj.text = obj.text || obj.name; // replace name with the property used for the text
 				return obj;
@@ -141,7 +147,7 @@ var nodesocket;
 
 	});
 
-		 
+	 
 		// var pops_pagination_url = "http://"+socket+"/pops/pagination";
 		// var sectors_pagination_url = "http://"+socket+"/sectors/pagination";
 		// var governorates_pagination_url = "http://"+socket+"/governorates/pagination";
@@ -198,8 +204,10 @@ var nodesocket;
 		}
 	});
 
+$j('#interfacetable').on('page-change.bs.table', function (e, pageNumber, perPageRecords) {
+    console.log(pageNumber+" "+perPageRecords);
 
-
+});
 
 
 });
