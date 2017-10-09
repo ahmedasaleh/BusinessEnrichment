@@ -50,7 +50,7 @@ function discoveredDevice(device) {
                 logger.error(error);
             }
             else{
-                logger.info("finished with device "+self.name);
+                logger.info(self.name+" done");
             }
         });
     };
@@ -159,34 +159,34 @@ function discoveredDevice(device) {
                 if(error){
                     logger.error(error);
                 }
-                else{
-                    //populate some enrichment information automatically
-                    Link.findOne({ device1: S(self.device.hostname), interface1: S(interface.name) }, function (error, foundLink){
-                    if(error){
-                        logger.error(error);
-                    }
-                    else if(foundLink){
-                        interface.secondHost = foundLink.device2
-                        Device.findOne({ hostname: S(foundLink.device2).trim()}, function(error, foundDevice){
-                            if(error){
-                                logger.error(error);
-                            }
-                            else if(foundDevice){
-                                interface.secondPOP = foundDevice.popName.name;
-                                interface.save();
-                            }
-                            else{
-                                logger.info("device2 from Link collection was not found!");
-                            }
-                        });
-                    }
-                    else{
-                        logger.info("link not found!");
-                    }
+                // else{
+                //     //populate some enrichment information automatically
+                //     Link.findOne({ device1: S(self.device.hostname), interface1: S(interface.name) }, function (error, foundLink){
+                //     if(error){
+                //         logger.error(error);
+                //     }
+                //     else if(foundLink){
+                //         interface.secondHost = foundLink.device2
+                //         Device.findOne({ hostname: S(foundLink.device2).trim()}, function(error, foundDevice){
+                //             if(error){
+                //                 logger.error(error);
+                //             }
+                //             else if(foundDevice){
+                //                 interface.secondPOP = foundDevice.popName.name;
+                //                 interface.save();
+                //             }
+                //             else{
+                //                 // logger.info("device2 from Link collection was not found!");
+                //             }
+                //         });
+                //     }
+                //     else{
+                //         // logger.info("link not found!");
+                //     }
                     
-                  });
+                //   });
 
-                }
+                // }
             });
             
         }
