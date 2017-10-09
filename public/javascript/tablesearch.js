@@ -24,6 +24,7 @@ var $jtable = $j('#eventsTable');
         $j('#device-delete-form').attr('action', '/devices/'+value.id+'/?_method=DELETE');
         $j('#device-update-form').attr('action', '/devices/'+value.id+'/edit');
         $j('#device-sync-form').attr('action', '/devices/sync/'+value.id);
+        $j('#device-interfaces-form').attr('action', '/devices/'+value.id);
         $j('#pop-delete-form').attr('action', '/pops/'+value.id+'/?_method=DELETE');
         $j('#pop-update-form').attr('action', '/pops/'+value.id+'/edit');
         $j('#governorate-delete-form').attr('action', '/governorates/'+value.id+'/?_method=DELETE');

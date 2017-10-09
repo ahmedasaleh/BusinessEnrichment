@@ -1,7 +1,7 @@
 var S 	= require('string');
-var enrichmentData  = require("../lookUps/enrich");
-var POP        = require("../models/pop");
-var logger            = require('../middleware/logger');//logging component
+var enrichmentData  = require("../../lookUps/enrich");
+var POP        = require("../../models/pop");
+var logger            = require('../../middleware/logger');//logging component
 
 	var link= {
 			linkType : "", linkSpeed : "",service : "", provider : "", termination : "", connType : "", bundelID : "", 
@@ -143,7 +143,7 @@ parserObj.parseIfAlias = function(alias){
 		// Example: ALMAZA_GI_Trust_IPv4-FW02E-C-EG
 		var enrichmentFields = S(S(alias).trim().s).splitLeft('_');
 		linkType="FW";
-		fwPOP=enrichmentFields[0];//fwServiceType : "", fwIPType : ""
+		fwPOP=enrichmentFields[0];
 		if(!S(enrichmentFields[1]).s == "GI" ){
 			logger.error("Firewall interface " + alias+" doesn't adhere to rules");
 			return null;
@@ -163,7 +163,22 @@ parserObj.parseIfAlias = function(alias){
 				customer: customer, isESP : isESP, espCustomer : espCustomer, espConnType : espConnType, espEmsOrder : espEmsOrder, espBW : espBW, espPop : espPop, 
 				fwPOP : fwPOP, fwVendor : fwVendor
 		}
+	}
+	else if(S(alias).startsWith("NR") ){
+		// National Roaming 
+		// Example: NR_Etisalat_Data_ALZ_AUTO-N01E-DSR-EG L1 GIG
+		// Example: NR_Orange_RTP_ALZ_OBR-N01O-R-EG L1 GIG
+		var enrichmentFields = S(S(alias).trim().s).splitLeft('_');
+		linkType="NR";
+		provider=enrichmentFields[1];
+		service=enrichmentFields[2];
 
+		link= {
+				linkType : linkType, linkSpeed:linkSpeed, service : service, provider : provider, termination : termination, connType : connType, bundelID : bundelID, 
+				linkID : linkID, intCID : intCID, teCID : teCID, subCable : subCable, secondHost : secondHost, secondPOP : secondPOP, linkNum : linkNum,
+				customer: customer, isESP : isESP, espCustomer : espCustomer, espConnType : espConnType, espEmsOrder : espEmsOrder, espBW : espBW, espPop : espPop, 
+				fwPOP : fwPOP, fwVendor : fwVendor
+		}
 	}
 	else{
 		link = null;

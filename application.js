@@ -13,7 +13,7 @@ var express             = require("express"),
     seedDB              = require("./seeds");
 var winston = require('winston');
 var fileUpload = require('express-fileupload');
-var parser              = require("./middleware/parser");
+var parser              = require("./middleware/parser/parser");
 var responseHandler = require('express-response-handler');
 
 var CronJob = require('cron').CronJob;   

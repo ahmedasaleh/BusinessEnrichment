@@ -16,7 +16,7 @@ var async           = require('async');
 var S               = require('string');
 var mongoose         = require('mongoose');
 var logger          = require("../middleware/logger");
-var Parser            = require('../middleware/parser');
+var Parser            = require('../middleware/parser/parser');
 var ObjectId = require('mongodb').ObjectID;
 //create and save a document, handle error if occured
 var aDevice = new Device() ;
@@ -45,7 +45,7 @@ function discoveredDevice(device) {
     }
 
     self.saveDevice = function(device){
-        Device.findByIdAndUpdate(device._id,{interfaces: self.interestInterfaces, discovered: true},function(error,updatedDevice){
+        Device.findByIdAndUpdate(device._id,{interfaces: self.interestInterfaces, discovered: true, updatedAt: new Date()},function(error,updatedDevice){
             if(error){
                 logger.error(error);
             }
@@ -388,7 +388,7 @@ router.get("/pagination?",middleware.isLoggedIn ,function(request, response) {
 
         if(S(searchQuery).isEmpty()){
             Device.count({}, function(err, devicesCount) {
-                Device.find({},'hostname ipaddress popName.name sector.name governorate.name type model vendor communityString',{lean:true,skip:skip,limit:limit}, function(err, foundDevices) {
+                Device.find({},'hostname ipaddress popName.name sector.name governorate.name type model vendor communityString createdAt updatedAt author lastUpdatedBy',{lean:true,skip:skip,limit:limit}, function(err, foundDevices) {
                     if (err) {
                         logger.error(err);
                     }
@@ -424,7 +424,7 @@ router.get("/pagination?",middleware.isLoggedIn ,function(request, response) {
                 {type: new RegExp(searchQuery,'i')},
                 {model: new RegExp(searchQuery,'i')},
                 {vendor: new RegExp(searchQuery,'i')},
-                {"popName.name": new RegExp(searchQuery,'i')}]},'hostname ipaddress popName.name sector.name governorate.name type model vendor communityString',{lean:true,skip:skip,limit:limit}, function(err, foundDevices) {
+                {"popName.name": new RegExp(searchQuery,'i')}]},'hostname ipaddress popName.name sector.name governorate.name type model vendor communityString createdAt updatedAt author lastUpdatedBy',{lean:true,skip:skip,limit:limit}, function(err, foundDevices) {
                     if (err) {
                         logger.error(err);
                     }

@@ -33,12 +33,15 @@
             <form id="device-sync-form"  class="btn-group" action="" method="GET">
                 <button type="button " class="btn  btn-info">Sync Device</button>
             </form>
+            <form id="device-interfaces-form"  class="btn-group" action="" method="GET">
+                <button type="button " class="btn  btn-success">Show Interfaces</button>
+            </form>
         </div>        
 
         <!--<adding flex style to fix issue related to left alignment>-->
         <div class="row text-left">
             <div class="table-responsive">
-                <table id="eventsTable" data-pagination="true" data-height="525" data-side-pagination="server" data-url="/devices/pagination" data-toggle="table" data-search="true" data-flat="true" data-show-columns="true" data-show-toggle="true" data-show-refresh="true">
+                <table id="eventsTable" data-pagination="true" data-height="525" data-side-pagination="server" data-url="/devices/pagination" data-toggle="table" data-search="true" data-flat="true" data-show-columns="true" data-show-toggle="true" data-show-refresh="true" data-single-select="true">
                     <thead>
                         <tr>
                             <th data-field="state" data-checkbox="true"> </th>
@@ -51,7 +54,7 @@
                             <th data-field="description">Description</th>
                             <th data-field="popName.name" data-sortable="true">POP Name</th>
                             <th data-field="sectorname.name" data-sortable="true">Sector Name</th>
-                            <th data-field="governorate.name" data-sortable="true">Governorate</th>
+                            <th data-field="governorate.acronym" data-sortable="true">Governorate</th>
                             <th data-field="type" data-sortable="true">Type</th>
                             <th data-field="model" data-sortable="true">Model</th>
                             <th data-field="vendor" data-sortable="true">Vendor</th>
