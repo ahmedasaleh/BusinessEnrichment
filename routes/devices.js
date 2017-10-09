@@ -37,7 +37,7 @@ function discoveredDevice(device) {
     self.ifTableRead = false;
     self.ifXTableRead = false;
     self.inSyncMode = false;
-    self.session = snmp.createSession(self.device.ipaddress, S(self.device.communityString).trim().s,{ timeout: 10000 });
+    self.session = snmp.createSession(self.device.ipaddress, S(self.device.communityString).trim().s,{ timeout: 10000, version: snmp.Version2c ,retries: 1});
 
     //parse ifAlias
     self.parseInternationalInterfaces = function(ifAlias){
@@ -68,7 +68,6 @@ function discoveredDevice(device) {
         return intf;
     };    
     self.removeInterfaceFromInterestList = function(interfaceIndex){
-        logger.info("removing Interface with ifIndex = "+ interfaceIndex+ " From InterestList");
         for(var i=0; i<self.interestInterfaces.length;i++){
             if(self.interestInterfaces[i].index ==  interfaceIndex){
                 //remove interface from the list
@@ -129,9 +128,9 @@ function discoveredDevice(device) {
                 var intf= self.interfaces[key];
                 intf.name = value[ifXTableColumns.ifName];
                 intf.alias = value[ifXTableColumns.ifAlias];
-                var name = S(intf.name).toString();
+                var name = S(intf.name).trim().s;
                 name = name.toLowerCase();
-                var alias = S(intf.alias).toString();
+                var alias = S(intf.alias).trim().s;
                 alias = alias.toLowerCase();
 
                 if( !S(name).isEmpty() && 
@@ -207,17 +206,13 @@ function discoveredDevice(device) {
             if(error){
                 logger.error(error);
             }
-            else{
-                logger.info("successfully removed interface");
-            }
         });
 
         }
     };
     self.ifXTableResponseCb = function  (error, table) {
         if (error) {
-            logger.error (error.toString ());
-            logger.error ("device "+self.name+ " has " +error.toString () + " while reading ifXTable");
+            // logger.error ("device "+self.name+ " has " +error.toString () + " while reading ifXTable");
             self.ifTableError = true;
             self.ifXTableError = true;
             return;
@@ -227,7 +222,7 @@ function discoveredDevice(device) {
             async.forEachOf(self.device.interfaces,function(interface,key,callback){
             var syncCycles = S(interface.syncCycles).toInt();
             interface.syncCycles = syncCycles + 1;
-                logger.info(interface.index+": "+interface.name+" , "+interface.updated +" , syncCycles "+interface.syncCycles);
+                // logger.info(interface.index+": "+interface.name+" , "+interface.updated +" , syncCycles "+interface.syncCycles);
                 //content of interestInterfaces are the found interfaces in the current sync cycles
                 // if: current interface index found in interestInterfaces and interface not updated, then: update interface
                 if(self.interestInterfacesIndices.includes(interface.index) && (interface.updated === undefined)){
@@ -240,7 +235,7 @@ function discoveredDevice(device) {
                     interface.delete = false;
                     interface.syncCycles = 0;
                     self.interfaceUpdateList.push(interface);
-                    logger.info("found interface "+interface.name +" with index "+interface.index+", with update state "+interface.updated);
+                    // logger.info("found interface "+interface.name +" with index "+interface.index+", with update state "+interface.updated);
                     //remove interface from list of interest interfaces as it is already exists
                     self.removeInterfaceFromInterestList(interface.index);
                 }
@@ -267,11 +262,11 @@ function discoveredDevice(device) {
                     (interface.updated === undefined) && 
                     (interface.syncCycles > syncCyclesThreshold)){
                     self.interfaceRemoveList.push(interface);
-                    logger.warn("interface: \n\n\n"+ interface.name + " will be deleted automatically, it's syncCycle= "+interface.syncCycles);
+                    // logger.warn("interface:"+ interface.name + " will be deleted automatically, it's syncCycle= "+interface.syncCycles);
                 }else if((!self.interestInterfacesIndices.includes(interface.index)) && 
                     (interface.updated === undefined) && 
                     (interface.syncCycles <= syncCyclesThreshold)){
-                    logger.warn("interface: \n\n\n"+ interface.name + " wasn't found during this sync cycle, it's syncCycle= "+interface.syncCycles);
+                    // logger.warn("interface:"+ interface.name + " wasn't found during this sync cycle, it's syncCycle= "+interface.syncCycles);
                     self.interfaceUpdateList.push(interface);
                 }
                 // if: current interface index found in interestInterfaces and interface updated, then: skip
@@ -300,7 +295,7 @@ function discoveredDevice(device) {
     self.ifTableResponseCb = function  (error, table) {
         if (error) {
             snmpError = error.toString ();
-            logger.error ("device "+self.name+ " has " +error.toString () + " while reading ifTable");
+            // logger.error ("device "+self.name+ " has " +error.toString () + " while reading ifTable");
             self.ifTableError = true;
             self.ifXTableError = true;
             return;
@@ -310,7 +305,7 @@ function discoveredDevice(device) {
     };
     this.syncInterfaces = function(){
         self.inSyncMode = true;
-        logger.info("starting "+self.name+" sync process");
+
         // discover new list of filtered interface indices
         // if: current interface index found in list and interface updated, then: skip
         // if: current interface index found in list and interface not updated, then: update interface
@@ -394,7 +389,6 @@ router.get("/pagination?",middleware.isLoggedIn ,function(request, response) {
                     }
                     else {
                         var data = "{\"total\":"+ devicesCount+",\"rows\":" +  JSON.stringify(foundDevices).escapeSpecialChars()+"}";
-                        console.log(data);
                         response.setHeader('Content-Type', 'application/json');
                         // response.send((foundDevices)); 
                         response.send(data);        
@@ -415,8 +409,6 @@ router.get("/pagination?",middleware.isLoggedIn ,function(request, response) {
                 {model: new RegExp(searchQuery,'i')},
                 {vendor: new RegExp(searchQuery,'i')},
                 {"popName.name": new RegExp(searchQuery,'i')}]}, function(err, m_devicesCount) {
-                console.log("total interfacse match the query: "+m_devicesCount);
-                console.log(searchQuery);
                 Device.find({'$or' : [{hostname: new RegExp(searchQuery,'i')},
                 {ipaddress: new RegExp(searchQuery,'i')},
                 {"sector.name": new RegExp(searchQuery,'i')},
@@ -480,14 +472,12 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
 
     if(sectorId === 'NONE') {
         emptySector = true;
-        logger.info("sector name is: "+ sectorId);
         Sector.findOne({name : "NONE" }, function(error,foundSector){
             aSector = foundSector;
         });
     }
     if(popId === 'NONE') {
         emptyPOP = true;
-            logger.info("pop name is: "+ popId);
             POP.findOne({shortName : Parser.parseHostname(S(hostname)).popName }, function(error,foundPOP){
                 aPOP = foundPOP;
                 emptyPOP = false;
@@ -496,7 +486,6 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
     }
     if(governorateId === 'NONE') {
         emptyGove = true;
-        logger.info("gove name is: "+ governorateId);
             Governorate.findOne({acronym : Parser.parseHostname(S(hostname)).popGove }, function(error,foundGove){
             aGove = foundGove;
             emptyGove = false;
@@ -506,7 +495,6 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
 
     if(S(emptySector).toBoolean()){
         sectorId = aSector._id || request.body.device.sector.name  ;
-        logger.info("sector id is: "+ sectorId);
     }
     if(S(emptyPOP).toBoolean()){
         popId = aPOP._id || request.body.device.popName.name  ;
@@ -532,14 +520,11 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
 
                             if(!(governorateId === undefined)){
                                 Governorate.findById(governorateId,function(error,foundGove){
-                                    console.log(foundGove);
                                     if(error){
                                         logger.error(error);
-                                        console.log(error);
 
                                     }else{
                                         ///here goes correct values
-                                        console.log(foundPOP+"\t" +foundSector+"\t"+foundGove);
                                         aDevice = {
                                                 hostname: hostname.trim(),
                                                 ipaddress: ipaddress.trim(),
@@ -552,7 +537,7 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
                                                 "sector.name": foundSector,
                                                 "governorate.name":  foundGove.name
                                         };
-                                        console.log(aDevice.popName+"\t" +aDevice.sector+"\t"+aDevice.governorate);
+
                                         aDevice.interfaces = [];
                                         logger.info("Device discovery started");
                                         logger.info(aDevice.hostname + " "+ aDevice.ipaddress + " "+aDevice.communityString);
@@ -601,7 +586,7 @@ router.get("/new",middleware.isLoggedIn ,function(request, response) {
 
 //Sync devices
 var syncDevices = function(){
-    logger.warn("Checking if devices ready for sync!!!!!!!!!!!");
+    logger.warn("Starting bulk devices sync");
     Device.find({}, function(err, foundDevices) {
         if (err) {
             logger.error(err);
@@ -609,8 +594,8 @@ var syncDevices = function(){
         else {
             foundDevices.forEach(function(device){
                 // if(device.discovered){//only handle discovered devices
-                    logger.info("device " + device.hostname +" will be synced now");
-                    logger.info("device comm string" + device.communityString +" will be synced now");
+                    // logger.info("device " + device.hostname +" will be synced now");
+                    // logger.info("device comm string" + device.communityString +" will be synced now");
                     // perform interface sync
                     var discoDevice = new discoveredDevice(device);
                     discoDevice.syncInterfaces();
@@ -626,9 +611,6 @@ router.get("/sync", middleware.isLoggedIn ,function(request, response) {
 });
 router.get("/sync/:id", middleware.isLoggedIn ,function(request, response) {
     // syncDevices();
-    logger.info("syncing one device");
-    logger.info(request.params.id);
-
     Device.findById(request.params.id, function(err, foundDevice) {
         if (err) {
             logger.error(err);
