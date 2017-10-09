@@ -49,6 +49,9 @@ function discoveredDevice(device) {
             if(error){
                 logger.error(error);
             }
+            else{
+                logger.info("finished with device "+self.name);
+            }
         });
     };
     self.getInterfaceFromInterestList = function(interfaceIndex){
