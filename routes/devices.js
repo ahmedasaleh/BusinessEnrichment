@@ -5,7 +5,8 @@ var Interface       = require("../models/interface");
 var POP             = require("../models/pop");
 var Sector          = require("../models/sector");
 var Governorate     = require("../models/governorate");
-var Link     = require("../models/link");
+var Link            = require("../models/link");
+var DeviceModel     = require("../models/devicemodel");
 var middleware      = require("../middleware");
 var Promise         = require('bluebird');
 var snmp            = Promise.promisifyAll(require ("net-snmp"));
@@ -40,9 +41,9 @@ function discoveredDevice(device) {
     self.session = snmp.createSession(self.device.ipaddress, S(self.device.communityString).trim().s,{ timeout: 10000, version: snmp.Version2c ,retries: 1});
 
     //parse ifAlias
-    self.parseInternationalInterfaces = function(ifAlias){
-        var choppedAlias = S(ifAlias).trim().splitLeft('-');
-    }
+    // self.parseInternationalInterfaces = function(ifAlias){
+    //     var choppedAlias = S(ifAlias).trim().splitLeft('-');
+    // }
 
     self.saveDevice = function(device){
         Device.findByIdAndUpdate(device._id,{interfaces: self.interestInterfaces, discovered: true, updatedAt: new Date()},function(error,updatedDevice){
@@ -138,13 +139,13 @@ function discoveredDevice(device) {
 
                 if( !S(name).isEmpty() && 
                     ( 
-                        !S(name).contains('pppoe') ||
+                        !S(name).contains('pppoe') &&
                         !S(name).startsWith("vi") 
                     ) 
                     ) 
                 {
                         self.interestInterfaces.push(intf);
-                        self.parseInternationalInterfaces(intf.alias);
+                        // self.parseInternationalInterfaces(intf.alias);
                         self.interestInterfacesIndices.push(intf.index);
                 }
             }
@@ -223,8 +224,8 @@ function discoveredDevice(device) {
         if(self.inSyncMode){
             self.retrieveIfXTable(table,function(){});
             async.forEachOf(self.device.interfaces,function(interface,key,callback){
-            var syncCycles = S(interface.syncCycles).toInt();
-            interface.syncCycles = syncCycles + 1;
+                var syncCycles = S(interface.syncCycles).toInt();
+                interface.syncCycles = syncCycles + 1;
                 // logger.info(interface.index+": "+interface.name+" , "+interface.updated +" , syncCycles "+interface.syncCycles);
                 //content of interestInterfaces are the found interfaces in the current sync cycles
                 // if: current interface index found in interestInterfaces and interface not updated, then: update interface
@@ -337,6 +338,7 @@ var ifXTableColumns ={ifName:1 , ifAlias:18};
 var deviceInterfaces = [Interface];
 var anInterface = new Interface();
 var discoveryFinished = false;
+var sysOID = ["1.3.6.1.2.1.1.2.0"];//retrieve sysObjectID to lookup model
 var oids = {
     ifTable: {
         OID: "1.3.6.1.2.1.2.2",
@@ -366,6 +368,8 @@ function sortInt (a, b) {
     else
         return 0;
 }
+var theGetSession = 
+
 String.prototype.escapeSpecialChars = function() {
     return this.replace(/\\n/g, "")
                .replace(/\\'/g, "\\'")
@@ -456,9 +460,11 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
     var hostname = request.body.device.hostname;
     var ipaddress = request.body.device.ipaddress;
     var communityString = request.body.device.communityString || "public";
-    var type = request.body.device.type || Parser.parseHostname(S(hostname)).deviceType;
+    var parsedHostName = Parser.parseHostname(S(hostname));
+    var type = request.body.device.type || parsedHostName.deviceType;
     var model = request.body.device.model;
-    var vendor = request.body.device.vendor || Parser.parseHostname(S(hostname)).deviceVendor;
+    var modelOID = "";
+    var vendor = request.body.device.vendor || parsedHostName.deviceVendor;
     // var popName = request.body.device.popName;
     var popId =  request.body.device.popName.name;
     // var sector = request.body.device.sector;
@@ -475,13 +481,15 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
 
     if(sectorId === 'NONE') {
         emptySector = true;
-        Sector.findOne({name : "NONE" }, function(error,foundSector){
+        Sector.findOne({name : parsedHostName.sector }, function(error,foundSector){
             aSector = foundSector;
+            emptySector = false;
+            sectorId = foundSector._id;
         });
     }
     if(popId === 'NONE') {
         emptyPOP = true;
-            POP.findOne({shortName : Parser.parseHostname(S(hostname)).popName }, function(error,foundPOP){
+            POP.findOne({shortName : parsedHostName.popName }, function(error,foundPOP){
                 aPOP = foundPOP;
                 emptyPOP = false;
                 popId = foundPOP._id;
@@ -489,7 +497,7 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
     }
     if(governorateId === 'NONE') {
         emptyGove = true;
-            Governorate.findOne({acronym : Parser.parseHostname(S(hostname)).popGove }, function(error,foundGove){
+            Governorate.findOne({acronym : parsedHostName.popGove }, function(error,foundGove){
             aGove = foundGove;
             emptyGove = false;
             governorateId = foundGove._id;
@@ -501,13 +509,38 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
     }
     if(S(emptyPOP).toBoolean()){
         popId = aPOP._id || request.body.device.popName.name  ;
-        logger.info("pop id is: "+ popId);
+        // logger.info("pop id is: "+ popId);
     }
     if(S(emptyGove).toBoolean()){
         governorateId = aGove._id || request.body.device.governorate.name  ;
-        logger.info("gove id is: "+ governorateId);
+        // logger.info("gove id is: "+ governorateId);
     }
 
+    session.get (sysOID, function (error, varbinds) {
+        if (error) {
+            console.error (error.toString ());
+        } else {
+            for (var i = 0; i < varbinds.length; i++) {
+                // for version 1 we can assume all OIDs were successful
+                modelOID = varbinds[i].value;
+            
+                // for version 2c we must check each OID for an error condition
+                if (snmp.isVarbindError (varbinds[i]))
+                    console.error (snmp.varbindError (varbinds[i]));
+                else
+                    modelOID = varbinds[i].value;
+            }
+        }
+    });
+    DeviceModel.findOne({oid: modelOID},function(error,foundModel){
+        if(error){
+            logger.error(error);
+        }
+        else{
+            model = model || foundModel.model;
+        }
+
+    });
     if(!(popId === undefined)){
         POP.findById(popId,function(error,foundPOP){
             if(error){
@@ -536,8 +569,8 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
                                                 type: type.trim(),
                                                 model: model.trim(),
                                                 vendor: vendor.trim(),
-                                                "popName.name":  Parser.parseHostname(S(hostname)).popName || foundPOP.name,
-                                                "sector.name": foundSector,
+                                                "popName.name":  parsedHostName.popName || foundPOP.name,
+                                                "sector.name": foundSector.name,
                                                 "governorate.name":  foundGove.name
                                         };
 

@@ -192,34 +192,35 @@ parserObj.parseHostname = function(hostname){
 	if(S(hostname).isEmpty()) return null;
 	var nameFields = S(hostname).trim().splitLeft('-');
 	var deviceDetails = null;
-	var popName = null;
+	var popShortName = null;
 	var popGove = null;
 	var deviceType = null;
 	var deviceVendor = null;
 	if(nameFields.length == 4){
-		popName = nameFields[0];
+		popShortName = nameFields[0];
 		popGove = nameFields[2];
 		if(S(nameFields[1]).isAlphaNumeric() && S(nameFields[1]).length == 4){
 			deviceType = enrichmentData.deviceType[S(nameFields[1]).left(1).s] ;
 			deviceVendor = enrichmentData.deviceVendor[S(nameFields[1]).right(1).s] ;
-			deviceDetails = {popName:popName,popGove:popGove,deviceType:deviceType,deviceVendor:deviceVendor};
-			console.log(deviceDetails);
+			// deviceDetails = {popName:popShortName,popGove:popGove,deviceType:deviceType,deviceVendor:deviceVendor};
+			// console.log(deviceDetails);
 		}
 		else{
 			deviceDetails = null;
 			logger.error("device "+hostname+" name doesn't adhere to naming rules");		
 		}
-		// POP.findOne({shortName: popName},function(error,foundPOP){
-		// 	if(error){
-		// 		logger.error(error);
-		// 	}
-		// 	else if(foundPOP != null){
-		// 		deviceDetails = {popName:foundPOP.name,popGove:popGove,deviceType:deviceType,deviceVendor:deviceVendor};
-		// 	}
-		// 	else{
-		// 		logger.error("Can't find POP "+popGove+" while exporting enrichment data");
-		// 	}
-		// });
+		POP.findOne({shortName: popShortName},function(error,foundPOP){
+			if(error){
+				logger.error(error);
+			}
+			else if(foundPOP != null){
+				deviceDetails = {popName:foundPOP.name,popGove:popGove,deviceType:deviceType,deviceVendor:deviceVendor,sector:foundPOP.sector.name};
+			}
+			else{
+				deviceDetails = {popName:popShortName,popGove:popGove,deviceType:deviceType,deviceVendor:deviceVendor,sector:foundPOP.sector.name};
+				logger.error("Can't find POP "+popGove+" while exporting enrichment data");
+			}
+		});
 	}
 	else{
 		deviceDetails = null;
