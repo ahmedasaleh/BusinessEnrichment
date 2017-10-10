@@ -196,31 +196,33 @@ parserObj.parseHostname = function(hostname){
 	var popGove = null;
 	var deviceType = null;
 	var deviceVendor = null;
+
 	if(nameFields.length == 4){
 		popShortName = nameFields[0];
 		popGove = nameFields[2];
 		if(S(nameFields[1]).isAlphaNumeric() && S(nameFields[1]).length == 4){
 			deviceType = enrichmentData.deviceType[S(nameFields[1]).left(1).s] ;
 			deviceVendor = enrichmentData.deviceVendor[S(nameFields[1]).right(1).s] ;
-			// deviceDetails = {popName:popShortName,popGove:popGove,deviceType:deviceType,deviceVendor:deviceVendor};
+			deviceDetails = {popName:popShortName,popGove:popGove,deviceType:deviceType,deviceVendor:deviceVendor};
 			// console.log(deviceDetails);
+			// POP.findOne({shortName: popShortName},function(error,foundPOP){
+			// 	if(error){
+			// 		logger.error(error);
+			// 	}
+			// 	else if(foundPOP != null){
+			// 		deviceDetails = {popName:foundPOP.name,popGove:popGove,deviceType:deviceType,deviceVendor:deviceVendor,sector:foundPOP.sector.name};
+			// 	}
+			// 	else{
+			// 		deviceDetails = {popName:popShortName,popGove:popGove,deviceType:deviceType,deviceVendor:deviceVendor,sector:foundPOP.sector.name};
+			// 		logger.error("Can't find POP "+popGove+" while exporting enrichment data");
+			// 	}
+			// 	console.log("pop: "+foundPOP);
+			// });
 		}
 		else{
 			deviceDetails = null;
 			logger.error("device "+hostname+" name doesn't adhere to naming rules");		
 		}
-		POP.findOne({shortName: popShortName},function(error,foundPOP){
-			if(error){
-				logger.error(error);
-			}
-			else if(foundPOP != null){
-				deviceDetails = {popName:foundPOP.name,popGove:popGove,deviceType:deviceType,deviceVendor:deviceVendor,sector:foundPOP.sector.name};
-			}
-			else{
-				deviceDetails = {popName:popShortName,popGove:popGove,deviceType:deviceType,deviceVendor:deviceVendor,sector:foundPOP.sector.name};
-				logger.error("Can't find POP "+popGove+" while exporting enrichment data");
-			}
-		});
 	}
 	else{
 		deviceDetails = null;

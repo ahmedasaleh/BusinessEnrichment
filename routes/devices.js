@@ -93,7 +93,6 @@ function discoveredDevice(device) {
         var i = indexes.length
         var columns = [];
         var columnSorted = false;
-
         async.forEachOf(table,function (value, key, callback){
             anInterface = new Interface();
             anInterface.device = self.device;
@@ -132,10 +131,18 @@ function discoveredDevice(device) {
                 var intf= self.interfaces[key];
                 intf.name = value[ifXTableColumns.ifName];
                 intf.alias = value[ifXTableColumns.ifAlias];
-                var name = S(intf.name).trim().s;
-                name = name.toLowerCase();
-                var alias = S(intf.alias).trim().s;
-                alias = alias.toLowerCase();
+                var highSpeed = value[ifXTableColumns.ifHighSpeed];
+                if(S(highSpeed).isNumeric() && (S(highSpeed).toInt() > 0)) intf.speed = S(highSpeed).toInt() * 1000000 ;
+                var name="";
+                if(!S(intf.name).isEmpty()) {
+                    name = S(intf.name).trim().s;
+                    name = name.toLowerCase();
+                }
+                var alias="";
+                if(!S(intf.alias).isEmpty()){
+                    alias = S(intf.alias).trim().s;
+                    alias = alias.toLowerCase();                   
+                }
 
                 if( !S(name).isEmpty() && 
                     ( 
@@ -331,10 +338,10 @@ function discoveredDevice(device) {
 // SNMP verison 2c
 var syncCyclesThreshold = 3;
 var snmpError = "";
-var maxRepetitions = 20;
+var maxRepetitions = 200000;
 var theWalkSession, theTableSession, theTableColumnsSession; 
 var ifTableColumns ={ifIndex:1 , ifDescr:2,ifType:3,ifSpeed:5,ifAdminStatus:7,ifOperStatus:8};
-var ifXTableColumns ={ifName:1 , ifAlias:18};
+var ifXTableColumns ={ifName:1 , ifAlias:18, ifHighSpeed:15};
 var deviceInterfaces = [Interface];
 var anInterface = new Interface();
 var discoveryFinished = false;
@@ -355,7 +362,8 @@ var oids = {
         OID: "1.3.6.1.2.1.31.1.1",
         Columns: [
             ifXTableColumns.ifName,
-            ifXTableColumns.ifAlias
+            ifXTableColumns.ifAlias,
+            ifXTableColumns.ifHighSpeed
         ]
     }
 };
@@ -481,10 +489,8 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
 
     if(sectorId === 'NONE') {
         emptySector = true;
-        Sector.findOne({name : parsedHostName.sector }, function(error,foundSector){
+        Sector.findOne({name : "NONE" }, function(error,foundSector){
             aSector = foundSector;
-            emptySector = false;
-            sectorId = foundSector._id;
         });
     }
     if(popId === 'NONE') {
@@ -515,10 +521,10 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
         governorateId = aGove._id || request.body.device.governorate.name  ;
         // logger.info("gove id is: "+ governorateId);
     }
-
+    session = snmp.createSession(ipaddress, S(communityString).trim().s,{ timeout: 10000, retries: 1});
     session.get (sysOID, function (error, varbinds) {
         if (error) {
-            console.error (error.toString ());
+            logger.error (error.toString ());
         } else {
             for (var i = 0; i < varbinds.length; i++) {
                 // for version 1 we can assume all OIDs were successful
@@ -526,88 +532,90 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
             
                 // for version 2c we must check each OID for an error condition
                 if (snmp.isVarbindError (varbinds[i]))
-                    console.error (snmp.varbindError (varbinds[i]));
+                    logger.error (snmp.varbindError (varbinds[i]));
                 else
                     modelOID = varbinds[i].value;
             }
-        }
-    });
-    DeviceModel.findOne({oid: modelOID},function(error,foundModel){
-        if(error){
-            logger.error(error);
-        }
-        else{
-            model = model || foundModel.model;
-        }
-
-    });
-    if(!(popId === undefined)){
-        POP.findById(popId,function(error,foundPOP){
-            if(error){
-                logger.error(error);
-            }
-            else{
-                if(!(sectorId === 'NONE')){
-                    Sector.findById(sectorId,function(error,foundSector){
-                        if(error) {
+            DeviceModel.findOne({oid: modelOID},function(error,foundModel){
+                if(error){
+                    logger.error(error);
+                }
+                else if(foundModel != null){
+                    model = foundModel.model ;
+                }
+                else{
+                    model = model ;
+                }
+                if(!(popId === undefined)){
+                    POP.findById(popId,function(error,foundPOP){
+                        if(error){
                             logger.error(error);
                         }
-                        else {
-
-                            if(!(governorateId === undefined)){
-                                Governorate.findById(governorateId,function(error,foundGove){
-                                    if(error){
+                        else{
+                            if(!(sectorId === 'NONE')){
+                                Sector.findById(sectorId,function(error,foundSector){
+                                    if(error) {
                                         logger.error(error);
+                                    }
+                                    else {
 
-                                    }else{
-                                        ///here goes correct values
-                                        aDevice = {
-                                                hostname: hostname.trim(),
-                                                ipaddress: ipaddress.trim(),
-                                                author: {id: request.user._id, email: request.user.email},
-                                                communityString: communityString.trim(),
-                                                type: type.trim(),
-                                                model: model.trim(),
-                                                vendor: vendor.trim(),
-                                                "popName.name":  parsedHostName.popName || foundPOP.name,
-                                                "sector.name": foundSector.name,
-                                                "governorate.name":  foundGove.name
-                                        };
+                                        if(!(governorateId === undefined)){
+                                            Governorate.findById(governorateId,function(error,foundGove){
+                                                if(error){
+                                                    logger.error(error);
 
-                                        aDevice.interfaces = [];
-                                        logger.info("Device discovery started");
-                                        logger.info(aDevice.hostname + " "+ aDevice.ipaddress + " "+aDevice.communityString);
-                                        Device.create(aDevice, function(error, device) {
-                                            if (error) {
-                                                logger.log(error.errors);
-                                                for (field in error.errors) {
-                                                    request.flash("error",error.errors[field].message);
+                                                }else{
+                                                    ///here goes correct values
+                                                    aDevice = {
+                                                            hostname: hostname.trim(),
+                                                            ipaddress: ipaddress.trim(),
+                                                            author: {id: request.user._id, email: request.user.email},
+                                                            communityString: communityString.trim(),
+                                                            type: type.trim(),
+                                                            model: model.trim(),
+                                                            vendor: vendor.trim(),
+                                                            "popName.name":  parsedHostName.popName || foundPOP.name,
+                                                            "sector.name": foundPOP.sector,
+                                                            "governorate.name":  foundGove.name
+                                                    };
+                                                    aDevice.interfaces = [];
+                                                    logger.info("Device discovery started");
+                                                    logger.info(aDevice.hostname + " "+ aDevice.ipaddress + " "+aDevice.communityString);
+                                                    Device.create(aDevice, function(error, device) {
+                                                        if (error) {
+                                                            logger.log(error.errors);
+                                                            for (field in error.errors) {
+                                                                request.flash("error",error.errors[field].message);
+                                                            }
+                                                            
+                                                        }
+                                                        else {
+                                                            logger.info("new device created and saved");
+                                                            request.flash("success","Successfully added device, will start device discovery now");
+                                                            var discoDevice = new discoveredDevice(device);
+                                                            discoDevice.discoverInterfaces();
+                                                        }
+                                                        response.redirect("/devices"); //will redirect as a GET request
+                                                    });
                                                 }
-                                                
-                                            }
-                                            else {
-                                                logger.info("new device created and saved");
-                                                request.flash("success","Successfully added device, will start device discovery now");
-                                                var discoDevice = new discoveredDevice(device);
-                                                discoDevice.discoverInterfaces();
-                                            }
-                                            response.redirect("/devices"); //will redirect as a GET request
-                                        });
+
+                                            });
+
+                                        }else{
+
+                                        }
+
                                     }
 
                                 });
-
-                            }else{
-
                             }
-
                         }
-
                     });
-                }
-            }
-        });
-    }
+                }//<-------
+
+            });
+        }
+    });////---
 
 });
 
