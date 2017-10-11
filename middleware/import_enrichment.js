@@ -6,6 +6,8 @@ var enrichmentData  = require("../lookUps/enrich");
 var logger              = require('../middleware/logger');//logging component
 var S               = require('string');
 var async           = require('async');
+var Parser            = require('../middleware/parser/parser');
+
 var headerShiftted = false;
 var lineList = "";
 var deviceList = [];
@@ -95,6 +97,7 @@ function createDocRecurse (err,filename) {
     fs.readFile(S(filename).s, 'utf8', function(err, contents) {
         logger.info("reading enrichment file "+S(filename).s);
         lineList = contents.toString().split('\n');
+        var parsedHostName;
         async.forEachOf(lineList,function(line,key,callback){
             if(key != 0){//to skip first header line 
                 var doc = new Enrichment();
@@ -103,6 +106,7 @@ function createDocRecurse (err,filename) {
                     doc[enrichmentData.extendedEnrichmentFields[i]] = entry;
                     if((i == deviceData.B_TED_Elt_Device)){//
                         device.hostname = entry;
+                        parsedHostName = Parser.parseHostname(S(device.hostname));
                     }
                     else if(i == deviceData.B_TED_Elt_IP){//
                         device.ipaddress = entry;
@@ -127,28 +131,35 @@ function createDocRecurse (err,filename) {
                         logger.info(device.communityString);
                     }
                 });
+                if(parsedHostName != null) device.governorate.name = parsedHostName.popGove;
+                if(parsedHostName != null) device.popName.name = parsedHostName.popName;
+                if(parsedHostName != null) device.type = parsedHostName.deviceType;
+                if(parsedHostName != null) device.vendor = parsedHostName.deviceVendor;
                 doc.save();  
                 if(!deviceList.includes(device.hostname) && device.hostname) {
-                    logger.info("searching for device in enrichment mode");
-                    Device.findOne({hostname:device.hostname},function(error,foundDevice){
-                        if(error){
-                            logger.error(error);
-                             
-                        }
-                        else if(foundDevice){
-                            logger.info("enriched device already in database");
-                        }
-                        else{
+                    // logger.info("searching for device in enrichment mode");
                             device.save();
-                        }
-                    });
+                            logger.info("device "+device.hostname+" saved");
+                    // Device.findOne({hostname:device.hostname},function(error,foundDevice){
+                    //     if(error){
+                    //         logger.error(error);
+                             
+                    //     }
+                    //     else if(foundDevice){
+                    //         logger.info("enriched device already in database");
+                    //     }
+                    //     else{
+                    //         device.save();
+                    //         logger.info("device "+device.hostname+" saved");
+                    //     }
+                    // });
                 }
                 // if(!deviceList.includes(device.hostname) && device.hostname) device.save();     
                 deviceList.push(device.hostname);
             }
         });
     });
-    
+    logger.info("deviceList length: "+deviceList.length);
 }
 
 module.exports.createDocRecurse = createDocRecurse;

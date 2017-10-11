@@ -39,7 +39,8 @@ function discoveredDevice(device) {
     self.ifXTableRead = false;
     self.inSyncMode = false;
     self.session = snmp.createSession(self.device.ipaddress, S(self.device.communityString).trim().s,{ timeout: 10000, version: snmp.Version2c ,retries: 1});
-
+    // self.deviceType = S(self.device.type).s.toLowerCase();
+    // self.vendor = S(self.device.vendor).s.toLowerCase();
     //parse ifAlias
     // self.parseInternationalInterfaces = function(ifAlias){
     //     var choppedAlias = S(ifAlias).trim().splitLeft('-');
@@ -125,7 +126,7 @@ function discoveredDevice(device) {
         var i = indexes.length
         var columns = [];
         var columnSorted = false;
-
+        
         async.forEachOf(table,function (value, key, callback){
             if(self.interestKeys.includes(key)){
                 var intf= self.interfaces[key];
@@ -144,12 +145,7 @@ function discoveredDevice(device) {
                     alias = alias.toLowerCase();                   
                 }
 
-                if( !S(name).isEmpty() && 
-                    ( 
-                        !S(name).contains('pppoe') &&
-                        !S(name).startsWith("vi") 
-                    ) 
-                    ) 
+                if(  !S(name).isEmpty() && !S(name).contains('pppoe') && !S(name).startsWith("vi")) 
                 {
                         self.interestInterfaces.push(intf);
                         // self.parseInternationalInterfaces(intf.alias);
@@ -638,7 +634,7 @@ var syncDevices = function(){
         else {
             foundDevices.forEach(function(device){
                 // if(device.discovered){//only handle discovered devices
-                    // logger.info("device " + device.hostname +" will be synced now");
+                    logger.info("device " + device.hostname +" will be synced now");
                     // logger.info("device comm string" + device.communityString +" will be synced now");
                     // perform interface sync
                     var discoDevice = new discoveredDevice(device);
