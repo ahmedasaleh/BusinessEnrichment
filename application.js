@@ -8,7 +8,7 @@ var express             = require("express"),
     methodOverride      = require("method-override"),
     dotenv              = require("dotenv"),
     User                = require("./models/user"),
-    logger           = require('./middleware/logger'),//logging component
+    logger              = require('./middleware/logger'),//logging component
     // deleteLogger           = require('./middleware/deleteLogger'),//logging component
     seedDB              = require("./seeds");
 var winston = require('winston');
@@ -56,22 +56,23 @@ app.use(flash());
 
 app.use(bodyParser.urlencoded({extended: true}));
 mongoose.Promise = global.Promise; //to vercome the warning about Mongoose mpromise
-mongoose.connect("mongodb://localhost/"+process.env.DEV_DB, {useMongoClient: true});
+// mongoose.connect("mongodb://localhost/"+process.env.DEV_DB, {useMongoClient: true});
+mongoose.connect("mongodb://localhost/auth_demo_app", {useMongoClient: true});
 //seedDB();
 
-app.use(responseHandler(customCodes)).get('/', (req, res) => {
-        let data = {
-            errors: []
-        };
+// app.use(responseHandler(customCodes)).get('/', (req, res) => {
+//         let data = {
+//             errors: []
+//         };
  
-        // Recommended way 
-        res.error.Unauthorized('permission.error.unauthorized', data);
+//         // Recommended way 
+//         res.error.Unauthorized('permission.error.unauthorized', data);
  
-        // Also available with the same result 
-        res.error('Unauthorized', 'permission.error.unauthorized', data);
-        res.error(401, 'permission.error.unauthorized', data);
-        res.error[401]('permission.error.unauthorized', data);
-});
+//         // Also available with the same result 
+//         res.error('Unauthorized', 'permission.error.unauthorized', data);
+//         res.error(401, 'permission.error.unauthorized', data);
+//         res.error[401]('permission.error.unauthorized', data);
+// });
 //Passport configuration
 app.use(require("express-session")({
     secret: "should_ContainZ__nUMber851 PsUWtooN lenovo Targus w500 pM YouroPtions LImited",
@@ -119,9 +120,6 @@ new CronJob('0 0 0 */2 * *', function() {
   deviceRoutes.syncDevices();
 }, null, true, 'Africa/Cairo');
 
-
-logger.info('new message');
-// deleteLogger.delete("device deleted");
 
 // parser.parseIfAlias("INT-IPT-TINET-ALX-10G-B5-L10-ALX_MRM_10GE_LAN PHY_017_M-SM4_IPT_10G_0007-SMW4");
 // console.log(parser.parseIfAlias("INT-IPT-TINET-ALX-10G-B5-L10-ALX_MRM_10GE_LAN PHY_017_M-SM4_IPT_10G_0007-SMW4"));

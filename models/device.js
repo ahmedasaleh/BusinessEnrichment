@@ -79,6 +79,8 @@ var deviceSchema = new mongoose.Schema({
     type: String,
     model: String,
     vendor: String,
+    sysObjectID: String,
+    sysName: String,
     interfaces: [Interface.schema]
     // interfaces: [
     //         {
@@ -104,7 +106,6 @@ deviceSchema.path('hostname').validate(function (value, responseCB) {
             // console.log(err);      
             return responseCB(false);    
         }    
-        // console.log('Number found: ' + hostnames.length);    
         if (hostnames.length) {      
             responseCB(false); 
             // validation failed    
@@ -121,7 +122,6 @@ deviceSchema.path('ipaddress').validate(function (value, responseCB) {
             // console.log(err);      
             return responseCB(false);    
         }    
-        console.log('Number found: ' + ipaddresses.length);    
         if (ipaddresses.length) {      
             responseCB(false); 
             // validation failed    

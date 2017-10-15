@@ -1,26 +1,25 @@
 var express     	   	= require("express");
 var router      	   	= express.Router({mergeParams: true});
 var Enrichment        = require("../models/enrichment");
-var Link        = require("../models/link");
-var Device        = require("../models/device");
-var Interface        = require("../models/interface");
+var Link              = require("../models/link");
+var Device            = require("../models/device");
+var Interface         = require("../models/interface");
 var middleware  		  = require("../middleware");
 var importEnrichment 	= require("../middleware/import_enrichment");
 var logger            = require('../middleware/logger');//logging component
-var linkParser            = require('../middleware/parser/parser');
-var enrichmentData  = require("../lookUps/enrich");
+var linkParser        = require('../middleware/parser/parser');
+var enrichmentData    = require("../lookUps/enrich");
 var fs                = require('fs');
-var async           = require('async');
-var S               = require('string');
-var through = require('through');
-var csv = enrichmentData.enrichmentFields+"\n";
+var async             = require('async');
+var S                 = require('string');
+var through           = require('through');
+var csv               = enrichmentData.enrichmentFields+"\n";
 
 var appendMode         = true;
 var fileUploadPath;     
 var fileExportPath;     
-var parsedInterfaces = [];
+var parsedInterfaces   = [];
 var maxCollectorLoad = 30000;
-var collectorsLoad = {"1":0 ,"2":0 ,"3":0 ,"4":0 ,"5":0 ,"6":0 , "7":0 ,"8":0 ,"9":0 };
 
 if(process.env.OS == "WIN"){
   fileUploadPath     = __dirname+"\\..\\import\\";
@@ -100,14 +99,6 @@ router.get("/export", middleware.isLoggedIn ,function(request, response) {
                 //start with the device itself then iterate over its interfaces
                 var deviceDoc = new Enrichment();
                 deviceDoc.B_TED_Elt_Device = S(device.hostname).s;
-                //distribute resources on different collectors
-                for (var i = 0; i < 9; i++) {
-                  if(collectorsLoad[i] < maxCollectorLoad){
-                    deviceDoc.B_TED_Default_Coll = i;
-                    collectorsLoad[i] = collectorsLoad[i] + 1;
-                    break;
-                  }
-                }
                 
                 var deviceDetails = linkParser.parseHostname(deviceDoc.B_TED_Elt_Device);
                 if(deviceDetails != null){

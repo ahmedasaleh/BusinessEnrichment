@@ -2,6 +2,7 @@ var express             = require("express"),
     passport            = require("passport"),
     LocalStrategy       = require("passport-local");
 var User                = require("../models/user");
+var S                   = require('string');
 var ValidatedUser       = require("../models/validatedUser");
 var nodemailer = require('nodemailer'); 
 var smtpConfig = {
@@ -38,7 +39,6 @@ router.get("/",function(request, response) {
 });
 //PASS environment parameters
 router.get("/getenv", function(req, res){
-    console.log("/getenv called inside index.js");
     res.json({ ip: process.env.IP, port: process.env.PORT });
 });
 //======================
@@ -50,8 +50,10 @@ router.get("/signup",function(request,response){
 });
 //handle signup logic
 router.post("/signup",function(request,response){
+    console.log(request.body.name);
+    console.log(request.body.email);
     var newUser =new User({name: request.body.name, email: request.body.email});
-    ValidatedUser.findOne({email: request.body.email},function(error,foundUser){
+    ValidatedUser.findOne({email: S(request.body.email).s},function(error,foundUser){
         console.log(foundUser);
         if(error){
             request.flash("error",error);

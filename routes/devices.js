@@ -15,9 +15,9 @@ var seedDB          = require("../seeds");
 var snmpConstants   = require("../lookUps");
 var async           = require('async');
 var S               = require('string');
-var mongoose         = require('mongoose');
+var mongoose        = require('mongoose');
 var logger          = require("../middleware/logger");
-var Parser            = require('../middleware/parser/parser');
+var Parser          = require('../middleware/parser/parser');
 var ObjectId = require('mongodb').ObjectID;
 //create and save a document, handle error if occured
 var aDevice = new Device() ;
@@ -163,34 +163,6 @@ function discoveredDevice(device) {
                 if(error){
                     logger.error(error);
                 }
-                // else{
-                //     //populate some enrichment information automatically
-                //     Link.findOne({ device1: S(self.device.hostname), interface1: S(interface.name) }, function (error, foundLink){
-                //     if(error){
-                //         logger.error(error);
-                //     }
-                //     else if(foundLink){
-                //         interface.secondHost = foundLink.device2
-                //         Device.findOne({ hostname: S(foundLink.device2).trim()}, function(error, foundDevice){
-                //             if(error){
-                //                 logger.error(error);
-                //             }
-                //             else if(foundDevice){
-                //                 interface.secondPOP = foundDevice.popName.name;
-                //                 interface.save();
-                //             }
-                //             else{
-                //                 // logger.info("device2 from Link collection was not found!");
-                //             }
-                //         });
-                //     }
-                //     else{
-                //         // logger.info("link not found!");
-                //     }
-                    
-                //   });
-
-                // }
             });
             
         }
@@ -376,13 +348,13 @@ var theGetSession =
 
 String.prototype.escapeSpecialChars = function() {
     return this.replace(/\\n/g, "")
-               .replace(/\\'/g, "\\'")
-               .replace(/\\"/g, '\\"')
-               .replace(/\\&/g, "\\&")
+               .replace(/\\'/g, "")
+               .replace(/\\"/g, '')
+               .replace(/\\&/g, "")
                .replace(/\\r/g, "")
                .replace(/\\t/g, "")
-               .replace(/\\b/g, "\\b")
-               .replace(/\\f/g, "\\f");
+               .replace(/\\b/g, "")
+               .replace(/\\f/g, "");
 };
 router.get("/pagination?",middleware.isLoggedIn ,function(request, response) {
         // limit is the number of rows per page
@@ -394,7 +366,7 @@ router.get("/pagination?",middleware.isLoggedIn ,function(request, response) {
 
         if(S(searchQuery).isEmpty()){
             Device.count({}, function(err, devicesCount) {
-                Device.find({},'hostname ipaddress popName.name sector.name governorate.name type model vendor communityString createdAt updatedAt author lastUpdatedBy',{lean:true,skip:skip,limit:limit}, function(err, foundDevices) {
+                Device.find({},'hostname ipaddress popName.name sector.name governorate.name type model vendor communityString createdAt updatedAt author lastUpdatedBy sysObjectID sysName',{lean:true,skip:skip,limit:limit}, function(err, foundDevices) {
                     if (err) {
                         logger.error(err);
                     }
@@ -427,7 +399,7 @@ router.get("/pagination?",middleware.isLoggedIn ,function(request, response) {
                 {type: new RegExp(searchQuery,'i')},
                 {model: new RegExp(searchQuery,'i')},
                 {vendor: new RegExp(searchQuery,'i')},
-                {"popName.name": new RegExp(searchQuery,'i')}]},'hostname ipaddress popName.name sector.name governorate.name type model vendor communityString createdAt updatedAt author lastUpdatedBy',{lean:true,skip:skip,limit:limit}, function(err, foundDevices) {
+                {"popName.name": new RegExp(searchQuery,'i')}]},'hostname ipaddress popName.name sector.name governorate.name type model vendor communityString createdAt updatedAt author lastUpdatedBy sysObjectID sysName',{lean:true,skip:skip,limit:limit}, function(err, foundDevices) {
                     if (err) {
                         logger.error(err);
                     }
