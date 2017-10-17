@@ -32,10 +32,10 @@ var deviceSchema = new mongoose.Schema({
     // hostname: {type: String, required: [true, 'Hostname is required'], validate: hostnameValidator},
     hostname: {type: String, isAsync: true},//set `isAsync` option to `true` to make deprecation warnings go away.
     ipaddress: {type: String, isAsync: true},
-    communityString: { type: String, default: 'public' },
+    community: { type: String, default: 'public' },
     createdAt: { type: Date, default: Date.now },
     updatedAt: Date,
-    description: String,
+    sysDescr: String,
     discovered: {type: Boolean, default: false},//used to mark device as discovered, useful during sync process
     defaultCollector: {type: Number, default: 1},
     popName: {

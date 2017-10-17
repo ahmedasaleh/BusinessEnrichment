@@ -7,7 +7,8 @@ var async           = require('async');
 
 var lineList = "";
 var deviceList = [];
-var deviceData ={ipaddress:0,hostname:1,community:2,type:3,vendor:4,model:5,sysObjectID:6,sysName:7,sysDescr:8};
+// var deviceData ={ipaddress:0,hostname:1,community:2,type:3,vendor:4,model:5,sysObjectID:6,sysName:7,sysDescr:8};
+var deviceData ={ipaddress:0,hostname:1,community:2,type:3,vendor:4,model:5,sysObjectID:6,sysName:7};
 String.prototype.escapeSpecialChars = function() {
     return this.replace(/\\/g, "")
                 .replace(/\\n/g, "")
@@ -30,6 +31,7 @@ function createDocRecurse (err,filename) {
         logger.info("reading enrichment file "+S(filename).s);
         lineList = contents.toString().trim().split('\n');
         async.forEachOf(lineList,function(line,key,callback){
+            console.log(line);
             if(key != 0){//to skip first header line 
                 var device = new Device();
                 line.split(',').forEach(function (entry, i) {
@@ -58,9 +60,9 @@ function createDocRecurse (err,filename) {
                     else if(i == deviceData.sysName){
                         device.sysName = S(entry).trim().s.escapeSpecialChars();
                     }
-                    else if(i == deviceData.sysDescr){
-                        device.description = S(entry).trim().s.escapeSpecialChars();
-                    }
+                    // else if(i == deviceData.sysDescr){
+                    //     device.description = S(entry).trim().s.escapeSpecialChars();
+                    // }
                 });
                 if(device.hostname && !deviceList.includes(device.hostname)) {
                             device.save();

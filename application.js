@@ -9,8 +9,10 @@ var express             = require("express"),
     dotenv              = require("dotenv"),
     User                = require("./models/user"),
     logger              = require('./middleware/logger'),//logging component
+    S                   = require("string");
     // deleteLogger           = require('./middleware/deleteLogger'),//logging component
     seedDB              = require("./seeds");
+
 var winston = require('winston');
 var fileUpload = require('express-fileupload');
 var parser              = require("./middleware/parser/parser");
@@ -44,7 +46,22 @@ var indexBaseURL        = "/",
     // interfaceBaseURL      = "/devices/:id/interfaces";
 
 var applicationVersion  = 1;
-
+var option = {
+    server: {
+        socketOptions: {
+            keepAlive: 300000,
+            connectTimeoutMS: 60000
+        }
+    },
+    replset: {
+        socketOptions: {
+            keepAlive: 300000,
+            connectTimeoutMS: 60000
+        }
+    }
+};
+// var mongoURI = S("mongodb://localhost/"+process.env.DEV_DB).s;
+// var mongoURI = "mongodb://localhost/auth_demo_app";
 //inistantiate app
 customCodes = [['Unauthorized', 'error', 401]];
 dotenv.config();
@@ -56,8 +73,14 @@ app.use(flash());
 
 app.use(bodyParser.urlencoded({extended: true}));
 mongoose.Promise = global.Promise; //to vercome the warning about Mongoose mpromise
-// mongoose.connect("mongodb://localhost/"+process.env.DEV_DB, {useMongoClient: true});
-mongoose.connect("mongodb://localhost/auth_demo_app", {useMongoClient: true});
+
+mongoose.connect("mongodb://localhost/"+process.env.DEV_DB, {useMongoClient: true});
+// mongoose.connect("mongodb://localhost/auth_demo_app", {useMongoClient: true});
+// mongoose.connect(mongoURI, option).then(function(){
+//     logger.info("connected successfully to mongo server");
+// }, function(err) {
+//     logger.error("failed to connect to mongo server");
+// });
 //seedDB();
 
 // app.use(responseHandler(customCodes)).get('/', (req, res) => {
@@ -121,8 +144,6 @@ new CronJob('0 0 0 */2 * *', function() {
 }, null, true, 'Africa/Cairo');
 
 
-// parser.parseIfAlias("INT-IPT-TINET-ALX-10G-B5-L10-ALX_MRM_10GE_LAN PHY_017_M-SM4_IPT_10G_0007-SMW4");
-// console.log(parser.parseIfAlias("INT-IPT-TINET-ALX-10G-B5-L10-ALX_MRM_10GE_LAN PHY_017_M-SM4_IPT_10G_0007-SMW4"));
 app.listen(process.env.PORT, process.env.IP, function() {
     console.log("Business Enrichment V"+ applicationVersion +" Server Started on "+process.env.IP+":"+process.env.PORT);
     console.log("current time is: "+ new Date());
