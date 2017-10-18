@@ -18,7 +18,8 @@ var S               = require('string');
 var mongoose        = require('mongoose');
 var logger          = require("../middleware/logger");
 var Parser          = require('../middleware/parser/parser');
-var ObjectId = require('mongodb').ObjectID;
+var ObjectId        = require('mongodb').ObjectID;
+
 //create and save a document, handle error if occured
 var aDevice = new Device() ;
 var targets = [];
@@ -38,13 +39,11 @@ function discoveredDevice(device) {
     self.ifTableRead = false;
     self.ifXTableRead = false;
     self.inSyncMode = false;
-    self.session = snmp.createSession(self.device.ipaddress, S(self.device.communityString).trim().s,{ timeout: 10000, version: snmp.Version2c ,retries: 1});
-        self.link= {
-            specialService : '', provisoFlag : '', sp_service : '', sp_provider : '', sp_termination : '', sp_connType : '', sp_bundleId : '', sp_linkNumber : '', 
-            sp_CID : '', sp_TECID : '', sp_subCable : '', unknownFlag : '' , label : '' , sp_customer : '', sp_speed : '' , sp_pop : '' , sp_connType : '' , 
-            sp_emsOrder : '' , sp_connectedBW : '', sp_fwType : '' , sp_serviceType : '' , sp_ipType : '' , sp_vendor : '', sp_sourceCore : '', sp_destCore : '', 
-            label : '', sp_siteCode: '', sp_preNumber: '', sp_portID: ''
-    }
+    self.deviceType = S(self.device.type).s.toLowerCase();
+    self.deviceVendor = S(self.device.vendor).s.toLowerCase();
+    self.deviceModel = S(self.device.model).s.toLowerCase();
+
+    self.session = snmp.createSession(self.device.ipaddress, S(self.device.community).trim().s,{ timeout: 10000, version: snmp.Version2c ,retries: 1});
 
     // self.deviceType = S(self.device.type).s.toLowerCase();
     // self.vendor = S(self.device.vendor).s.toLowerCase();
@@ -52,9 +51,31 @@ function discoveredDevice(device) {
     // self.parseInternationalInterfaces = function(ifAlias){
     //     var choppedAlias = S(ifAlias).trim().splitLeft('-');
     // }
+    self.parseSpeed = function(speed){
 
+    };
+    self.getDateDifference = function(date2,date1){
+        //Get 1 day in milliseconds
+          var one_day=1000*60*60*24;
+
+          // Convert both dates to milliseconds
+          var date1_ms = date1.getTime();
+          var date2_ms = date2.getTime();
+
+          // Calculate the difference in milliseconds
+          var difference_ms = date2_ms - date1_ms;
+            
+          // Convert back to days and return
+          return Math.floor(difference_ms/one_day); 
+    };
     self.parseIfAlias = function(ifAlias,hostname,ifName,ifIndex,ipaddress){
         if(S(ifAlias).isEmpty()) return null;
+        var anErichment= {
+            specialService : '', provisoFlag : '', sp_service : '', sp_provider : '', sp_termination : '', sp_connType : '', sp_bundleId : '', sp_linkNumber : '', 
+            sp_CID : '', sp_TECID : '', sp_subCable : '', unknownFlag : '' , label : '' , sp_customer : '', sp_speed : '' , sp_pop : '' , sp_connType : '' , 
+            sp_emsOrder : '' , sp_connectedBW : '', sp_fwType : '' , sp_serviceType : '' , sp_ipType : '' , sp_vendor : '', sp_sourceCore : '', sp_destCore : '', 
+            sp_siteCode: '', sp_preNumber: '', sp_portID: '', noEnrichFlag: ''
+        }
         var interfaceName = S(ifName).trim().s;
         if(S(interfaceName)){
             interfaceName = S(interfaceName).s.toLowerCase();
@@ -63,6 +84,7 @@ function discoveredDevice(device) {
         var provisoFlag=1;
         var unknownFlag = 0;
         var noEnrichFlag=0;         
+        var label = hostname+" "+ifName+" "+ifAlias;        
 
         if(S(alias).startsWith("INT-")){
             // # Patterns   INT-P1-P2-P3-P4-P5-P6-P7-P8-P9
@@ -98,12 +120,12 @@ function discoveredDevice(device) {
                 unknownFlag = 1;
             }
                     
-            var label=hostname+" "+ifName;
+            label=hostname+" "+ifName;
 
-            link= {
+            anErichment= {
                         specialService : specialService, provisoFlag : provisoFlag,sp_service : sp_service, sp_provider : sp_provider, sp_termination : sp_termination, 
                         sp_connType : sp_connType, sp_bundleId : sp_bundleId, sp_linkNumber : sp_linkNumber, sp_CID : sp_CID, sp_TECID : sp_TECID, 
-                        sp_subCable : sp_subCable, unknownFlag : unknownFlag, label : label
+                        sp_subCable : sp_subCable, unknownFlag : unknownFlag, label : label,noEnrichFlag:noEnrichFlag
             }
         }
         else if(S(alias).contains("ALPHA-BITSTREAM")){
@@ -130,9 +152,9 @@ function discoveredDevice(device) {
             else{
                 unknownFlag = 1;
             }
-            link= {
+            anErichment= {
                     specialService:specialService,provisoFlag:provisoFlag,unknownFlag:unknownFlag,sp_customer : sp_customer, sp_linkNumber:sp_linkNumber, 
-                    sp_speed : sp_speed
+                    sp_speed : sp_speed,noEnrichFlag:noEnrichFlag,label : label
             }
         }
         else if(S(alias).contains("ESP-BITSTREAM")){
@@ -154,11 +176,10 @@ function discoveredDevice(device) {
             else{
                 unknownFlag = 1;
             }
-            link= {
+            anErichment= {
                     specialService:specialService,provisoFlag:provisoFlag,unknownFlag:unknownFlag,sp_customer:sp_customer, sp_linkNumber:sp_linkNumber, 
-                    sp_speed : sp_speed
+                    sp_speed : sp_speed,noEnrichFlag:noEnrichFlag,label : label
             }
-
         }
         else if(S(alias).contains("BITSTREAM")){
             // # Condition  Contain (-BITSTREAM)
@@ -183,9 +204,9 @@ function discoveredDevice(device) {
             else{
                 unknownFlag = 1;
             }
-            link= {
+            anErichment= {
                     specialService:specialService,provisoFlag:provisoFlag,unknownFlag:unknownFlag,sp_customer : sp_customer, sp_linkNumber:sp_linkNumber, 
-                    sp_speed:sp_speed
+                    sp_speed:sp_speed,noEnrichFlag:noEnrichFlag,label : label
             }
         }
         else if(S(alias).startsWith("ESP")){
@@ -212,11 +233,10 @@ function discoveredDevice(device) {
             else{
                 unknownFlag = 1;
             }
-            link= {
+            anErichment= {
                     specialService : specialService, provisoFlag:provisoFlag, unknownFlag : unknownFlag, sp_customer : sp_customer, sp_pop : sp_pop, 
-                    sp_connType : sp_connType, sp_emsOrder : sp_emsOrder, sp_connectedBW : sp_connectedBW
+                    sp_connType : sp_connType, sp_emsOrder : sp_emsOrder, sp_connectedBW : sp_connectedBW,noEnrichFlag:noEnrichFlag,label : label
             }
-
         }
         else if(S(alias).contains("FW") && S(alias).contains("EG")){
             // #Condition   Contain (*-FW*-*-EG)
@@ -244,9 +264,9 @@ function discoveredDevice(device) {
                 unknownFlag = 1;
             }
 
-            link= {
+            anErichment= {
                     specialService : specialService, provisoFlag:provisoFlag, unknownFlag : unknownFlag, sp_pop : sp_pop, sp_fwType : sp_fwType, 
-                    sp_serviceType : sp_serviceType, sp_ipType : sp_ipType, sp_vendor : sp_vendor
+                    sp_serviceType : sp_serviceType, sp_ipType : sp_ipType, sp_vendor : sp_vendor,noEnrichFlag:noEnrichFlag,label : label
             }
         }
         else if(S(alias).startsWith("NR") ){
@@ -281,11 +301,11 @@ function discoveredDevice(device) {
             else{
                 unknownFlag = 1;
             }
-            var label = hostname+" "+ifName;
-
-            link= {
+            label = hostname+" "+ifName;
+            anErichment= {
                     specialService:specialService,provisoFlag : provisoFlag, unknownFlag:unknownFlag, sp_provider : sp_provider, sp_service : sp_service, 
-                    sp_sourceCore : sp_sourceCore, sp_destCore : sp_destCore, sp_vendor : sp_vendor, sp_linkNumber : sp_linkNumber, sp_speed : sp_speed, label : label
+                    sp_sourceCore : sp_sourceCore, sp_destCore : sp_destCore, sp_vendor : sp_vendor, sp_linkNumber : sp_linkNumber, sp_speed : sp_speed, label : label,
+                    noEnrichFlag:noEnrichFlag,label : label
             }
         }
         // # LTE Interfaces
@@ -316,9 +336,9 @@ function discoveredDevice(device) {
             else{
                 unknownFlag=1;
             }
-            link= {
+            anErichment= {
                     specialService:specialService,provisoFlag : provisoFlag, unknownFlag:unknownFlag, sp_pop:sp_pop,sp_siteCode:sp_siteCode,sp_vendor:sp_vendor,
-                    sp_linkNumber:sp_linkNumber,sp_speed:sp_speed
+                    sp_linkNumber:sp_linkNumber,sp_speed:sp_speed,noEnrichFlag:noEnrichFlag,label : label
             }
         }
         // # EPC
@@ -344,9 +364,9 @@ function discoveredDevice(device) {
                 unknownFlag=1;
             }
 
-            link= {
+            anErichment= {
                     specialService:specialService,provisoFlag : provisoFlag, unknownFlag:unknownFlag, sp_provider:sp_provider,sp_linkNumber:sp_linkNumber,
-                    sp_speed:sp_speed
+                    sp_speed:sp_speed,noEnrichFlag:noEnrichFlag,label : label
             }
         }
         // # DPI
@@ -371,9 +391,9 @@ function discoveredDevice(device) {
             else{
                 unknownFlag = 1;
             }
-            link= {
+            anErichment= {
                     specialService:specialService,provisoFlag : provisoFlag, unknownFlag:unknownFlag, sp_pop:sp_pop,sp_preNumber:sp_preNumber,
-                    sp_portID:sp_portID
+                    sp_portID:sp_portID,noEnrichFlag:noEnrichFlag,label : label
             }
         }
         else if(
@@ -401,10 +421,15 @@ function discoveredDevice(device) {
             !S(alias).contains("internet") && 
             !S(alias).contains("mpls") ){
                 provisoFlag=1;
-                noEnrichFlag=1;         
+                noEnrichFlag=1; 
+                unknownFlag=0;
+                var label = hostname+" "+ifName+" "+ifAlias;        
+                anErichment= {
+                    provisoFlag : provisoFlag, unknownFlag : unknownFlag , label : label , noEnrichFlag:noEnrichFlag
+                }
         }
         else{
-            link = null;
+            anErichment = null;
         }
         if(unknownFlag==1){
             logger.warn(hostname+" "+ipaddress+" : special services interface with invalid description - Service: "+specialService+" - ifAlias: "+ifAlias+" - ifName: "+ifName+" - ifIndex: "+ifIndex);
@@ -412,8 +437,8 @@ function discoveredDevice(device) {
         if(noEnrichFlag==1){
             logger.warn(hostname+" "+ipaddress+" : Interface with no enrichment has been marked to import into proviso - ifAlias: "+ifAlias+" - ifName: "+ifName+" - ifIndex: "+ifIndex);
         }
-
-        return link;
+        // console.log(anErichment);
+        return anErichment;
     }
 
     self.saveDevice = function(device){
@@ -429,24 +454,30 @@ function discoveredDevice(device) {
     self.getInterfaceFromInterestList = function(interfaceIndex){
         var intf = new Interface();
         async.forEachOf(self.interestInterfaces,function(interface,key,callback){
-            if(interface.index == interfaceIndex){
-                intf = {
-                    index: interface.index,
-                    speed: interface.speed,
-                    name: interface.name,
-                    alias: interface.alias,
-                    description: interface.description,
-                    type: interface.type
-                };
+            if(interface.ifIndex == interfaceIndex){
+                intf = Object.assign(intf,interface);
+                // intf = {
+                //     ifIndex: interface.ifIndex,
+                //     ifSpeed: interface.ifSpeed,
+                //     ifName: interface.ifName,
+                //     ifAlias: interface.ifAlias,
+                //     ifDescr: interface.ifDescr,
+                //     ifType: interface.ifType,
+                //     ifHighSpeed: interface.ifHighSpeed,
+                //     counters: interface.counters,
+                //     syncCycles: interface.syncCycles,
+
+                // };
             }
         }); 
         return intf;
     };    
     self.removeInterfaceFromInterestList = function(interfaceIndex){
         for(var i=0; i<self.interestInterfaces.length;i++){
-            if(self.interestInterfaces[i].index ==  interfaceIndex){
+            if(self.interestInterfaces[i].ifIndex ==  interfaceIndex){
                 //remove interface from the list
                 self.interestInterfaces.splice(i,1);
+                self.interestInterfacesIndices.splice(i,1);
                 break;
             }
         }
@@ -466,19 +497,41 @@ function discoveredDevice(device) {
         var columnSorted = false;
         async.forEachOf(table,function (value, key, callback){
             anInterface = new Interface();
-            anInterface.device = self.device;
+            anInterface.hostname = self.device.hostname;
+            anInterface.ipaddress = self.device.ipaddress;
+            anInterface.pop = self.device.popName.name;
             anInterface.author = {id: self.device.author.id, email: self.device.author.email};
-            anInterface.index = value[ifTableColumns.ifIndex];
-            anInterface.description = value[ifTableColumns.ifDescr];
-            anInterface.type = value[ifTableColumns.ifType];
-            anInterface.speed = value[ifTableColumns.ifSpeed];
+            anInterface.ifIndex = value[ifTableColumns.ifIndex];
+            anInterface.ifDescr = value[ifTableColumns.ifDescr];
+            anInterface.ifType = value[ifTableColumns.ifType];
+            anInterface.ifSpeed = value[ifTableColumns.ifSpeed];
             anInterface.adminStatus = value[ifTableColumns.ifAdminStatus];
             anInterface.operStatus  = value[ifTableColumns.ifOperStatus];
-            if( (anInterface.adminStatus == snmpConstants.ifAdminOperStatus.up) && 
+            anInterface.ifInOctets  = value[ifTableColumns.ifInOctets];
+            anInterface.ifOutOctets  = value[ifTableColumns.ifOutOctets];
+            var interfaceType = S(anInterface.ifType).toInt();
+            if( ((self.deviceType =="router") || (self.deviceType =="switch")) && 
+                (anInterface.adminStatus == snmpConstants.ifAdminOperStatus.up) && 
                 (anInterface.operStatus == snmpConstants.ifAdminOperStatus.up)) {
                 self.interfaces[key] = anInterface;
                 self.interestKeys.push(key);//push index to be used during ifXTable walk
             } 
+            else if((self.deviceVendor == "huawei") && ((self.deviceType =="msan") || (self.deviceType =="gpon") || (self.deviceType =="dslam"))  ){
+                if((anInterface.adminStatus == snmpConstants.ifAdminOperStatus.up) &&
+                    (anInterface.operStatus == snmpConstants.ifAdminOperStatus.up) &&
+                    ((interfaceType == 6) || (interfaceType == 117))){
+                    self.interfaces[key] = anInterface;
+                    self.interestKeys.push(key);//push index to be used during ifXTable walk
+                }
+            }
+            else if((self.deviceVendor == "alcatel") && (self.deviceModel =="isam")   ){
+                if((anInterface.adminStatus == snmpConstants.ifAdminOperStatus.up) &&
+                    (anInterface.operStatus == snmpConstants.ifAdminOperStatus.up) &&
+                    (interfaceType == 6)){
+                    self.interfaces[key] = anInterface;
+                    self.interestKeys.push(key);//push index to be used during ifXTable walk
+                }
+            }
         }); 
         self.ifTableError = false;
         self.ifXTableError = false;
@@ -490,7 +543,6 @@ function discoveredDevice(device) {
             indexes.push (parseInt (index));
         }
         indexes.sort (sortInt);
-
         // Use the sorted indexes we've calculated to walk through each
         // row in order
         var i = indexes.length
@@ -500,26 +552,53 @@ function discoveredDevice(device) {
         async.forEachOf(table,function (value, key, callback){
             if(self.interestKeys.includes(key)){
                 var intf= self.interfaces[key];
-                intf.name = value[ifXTableColumns.ifName];
-                intf.alias = value[ifXTableColumns.ifAlias];
-                var highSpeed = value[ifXTableColumns.ifHighSpeed];
-                if(S(highSpeed).isNumeric() && (S(highSpeed).toInt() > 0)) intf.speed = S(highSpeed).toInt() * 1000000 ;
-                var name="";
-                if(!S(intf.name).isEmpty()) {
-                    name = S(intf.name).trim().s;
-                    name = name.toLowerCase();
-                }
-                var alias="";
-                if(!S(intf.alias).isEmpty()){
-                    alias = S(intf.alias).trim().s;
-                    alias = alias.toLowerCase();                   
-                }
-
-                if(  !S(name).isEmpty() && !S(name).contains('pppoe') && !S(name).startsWith("vi")) 
-                {
+                var hcInOctets = value[ifXTableColumns.ifHCInOctets];
+                var hcOutOctets = value[ifXTableColumns.ifHCOutOctets];
+                var hcInOctetsLarge;
+                if(hcInOctets) hcInOctetsLarge=hcInOctets.toString("hex").length > 2;//has traffic 
+                var hcOutOctetsLarge;
+                if(hcOutOctets) hcOutOctetsLarge= hcOutOctets.toString("hex").length > 2;//has traffic 
+                // console.log(hcInOctetsLarge);
+                // console.log(hcOutOctetsLarge);
+                // console.log(intf.ifInOctets);
+                // console.log(intf.ifOutOctets);
+                if(hcInOctets && hcOutOctets && (hcInOctetsLarge || hcOutOctetsLarge || (intf.ifInOctets > 0) || (intf.ifOutOctets > 0))){
+                    intf.ifName = value[ifXTableColumns.ifName];
+                    intf.ifAlias = value[ifXTableColumns.ifAlias];
+                    intf.ifHighSpeed = value[ifXTableColumns.ifHighSpeed];
+                    intf.counters = 32;
+                    // var hcInOctet = value[ifXTableColumns.ifHCInOctets];ifHCOutOctets
+                    if(hcInOctetsLarge || hcOutOctetsLarge) intf.counters = 64;
+                    var name="";
+                    if(!S(intf.ifName).isEmpty()) {
+                        name = S(intf.ifName).trim().s;
+                        name = name.toLowerCase();
+                    }
+                    var alias="";
+                    if(!S(intf.ifAlias).isEmpty()){
+                        alias = S(intf.ifAlias).trim().s;
+                        alias = alias.toLowerCase();                   
+                    }
+                    if( ((self.deviceType =="router") || (self.deviceType =="switch")) && !S(name).isEmpty() && !S(name).contains('pppoe') && !S(name).startsWith("vi")) 
+                    {
+                        // logger.info("retrieveIfXTable 1");
+                        var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress);
+                        // console.log(enrichment);
+                        // console.log(intf);
+                        // logger.info("retrieveIfXTable 2");
+                        if(enrichment) intf = Object.assign(intf,enrichment);
+                        // console.log(intf);
                         self.interestInterfaces.push(intf);
-                        // self.parseInternationalInterfaces(intf.alias);
-                        self.interestInterfacesIndices.push(intf.index);
+                        self.interestInterfacesIndices.push(intf.ifIndex);
+                    }
+                    else{//no more filtering is required, so add interface
+                        logger.info("retrieveIfXTable 3");
+                        var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress);
+                        logger.info("retrieveIfXTable 4");
+                        if(enrichment) Object.assign(intf,enrichment);
+                        self.interestInterfaces.push(intf);
+                        self.interestInterfacesIndices.push(intf.ifIndex);                        
+                    }
                 }
             }
         }); 
@@ -574,56 +653,73 @@ function discoveredDevice(device) {
                 // logger.info(interface.index+": "+interface.name+" , "+interface.updated +" , syncCycles "+interface.syncCycles);
                 //content of interestInterfaces are the found interfaces in the current sync cycles
                 // if: current interface index found in interestInterfaces and interface not updated, then: update interface
-                if(self.interestInterfacesIndices.includes(interface.index) && (interface.updated === undefined)){
-                    var intf = self.getInterfaceFromInterestList(interface.index);
-                    interface.name = intf.name;
-                    interface.alias = intf.alias;
-                    interface.description = intf.description;
-                    interface.type = intf.type;
-                    interface.speed = intf.speed;
-                    interface.delete = false;
+                if(self.interestInterfacesIndices.includes(interface.ifIndex) && (interface.lastUpdate === undefined)){
+                    var intf = self.getInterfaceFromInterestList(interface.ifIndex);
+                    interface.ifName = intf.ifName;
+                    interface.ifAlias = intf.ifAlias;
+                    interface.ifDescr = intf.ifDescr;
+                    interface.ifType = intf.ifType;
+                    interface.ifSpeed = intf.ifSpeed;
+                    interface.ifHighSpeed = intf.ifHighSpeed;
+                    interface.counters = intf.counters;
+                    interface.lastUpdate = new Date();
+                    // interface.delete = false;
                     interface.syncCycles = 0;
                     self.interfaceUpdateList.push(interface);
+                    // self.parseIfAlias(interface.ifAlias,self.name,interface.ifName,interface.ifIndex,self.device.ipaddress);
                     // logger.info("found interface "+interface.name +" with index "+interface.index+", with update state "+interface.updated);
                     //remove interface from list of interest interfaces as it is already exists
-                    self.removeInterfaceFromInterestList(interface.index);
+                    self.removeInterfaceFromInterestList(interface.ifIndex);
                 }
                 // if: current interface index not found and updated and syncCyles > threshold, then: let "delete = true" and update interface
-                if((!self.interestInterfacesIndices.includes(interface.index)) && 
-                    (interface.updated instanceof Date) && 
+                else if((!self.interestInterfacesIndices.includes(interface.ifIndex)) && 
+                    (interface.lastUpdate instanceof Date) && 
+                    (getDateDifference(new Date(),interface.lastUpdate) > 7) &&
                     (interface.syncCycles > syncCyclesThreshold)){
-                    var intf = self.getInterfaceFromInterestList(interface.index);
-                    interface.name = intf.name;
-                    interface.alias = intf.alias;
-                    interface.description = intf.description;
-                    interface.type = intf.type;
-                    interface.speed = intf.speed;
-                    // interface.syncCycles = syncCycles + 1;
-                    interface.delete = true;
-                    self.interfaceUpdateList.push(interface);
-                }else if((!self.interestInterfacesIndices.includes(interface.index)) && 
+                    // interface.delete = true;
+                    // self.interfaceUpdateList.push(interface);
+                    self.interfaceRemoveList.push(interface);//we will remove directly
+                }else if((!self.interestInterfacesIndices.includes(interface.ifIndex)) && 
                     (interface.updated instanceof Date) && 
+                    (getDateDifference(new Date(),interface.lastUpdate) <= 7) &&
                     (interface.syncCycles <= syncCyclesThreshold)){
+                    interface.lastUpdate = new Date();
                     self.interfaceUpdateList.push(interface);
                 }
                 // if: current interface index not found and not updated and syncCyles > threshold, then: delete interface
-                if((!self.interestInterfacesIndices.includes(interface.index)) && 
-                    (interface.updated === undefined) && 
+                else if((!self.interestInterfacesIndices.includes(interface.ifIndex)) && 
+                    (interface.lastUpdate === undefined) && 
                     (interface.syncCycles > syncCyclesThreshold)){
                     self.interfaceRemoveList.push(interface);
                     // logger.warn("interface:"+ interface.name + " will be deleted automatically, it's syncCycle= "+interface.syncCycles);
-                }else if((!self.interestInterfacesIndices.includes(interface.index)) && 
-                    (interface.updated === undefined) && 
+                }else if((!self.interestInterfacesIndices.includes(interface.ifIndex)) && 
+                    (interface.lastUpdate === undefined) && 
                     (interface.syncCycles <= syncCyclesThreshold)){
                     // logger.warn("interface:"+ interface.name + " wasn't found during this sync cycle, it's syncCycle= "+interface.syncCycles);
+                    interface.lastUpdate = new Date();
                     self.interfaceUpdateList.push(interface);
                 }
                 // if: current interface index found in interestInterfaces and interface updated, then: skip
-                if(self.interestInterfacesIndices.includes(interface.index) && (interface.updated instanceof Date)){
+                else if(self.interestInterfacesIndices.includes(interface.ifIndex) && (interface.lastUpdate instanceof Date)){
                     //remove interface from list of interest interfaces as it is already exists
+                    var intf = self.getInterfaceFromInterestList(interface.ifIndex);
+                    interface.ifName = intf.ifName;
+                    interface.ifAlias = intf.ifAlias;
+                    interface.ifDescr = intf.ifDescr;
+                    interface.ifType = intf.ifType;
+                    interface.ifSpeed = intf.ifSpeed;
+                    interface.ifHighSpeed = intf.ifHighSpeed;
+                    interface.counters = intf.counters;
+                    interface.lastUpdate = new Date();
                     interface.syncCycles = 0;
+                    console.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+                    console.log(intf);
+                    interface = Object.assign(interface,intf);
+                    console.log(interface);
+                    console.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+                    // self.parseIfAlias(interface.ifAlias,self.name,interface.ifName,interface.ifIndex,self.device.ipaddress);
                     self.interfaceUpdateList.push(interface);
-                    self.removeInterfaceFromInterestList(interface.index);
+                    self.removeInterfaceFromInterestList(interface.ifIndex);
                 }
                 // if: new interface index, then create interface 
                 else {
@@ -661,11 +757,11 @@ function discoveredDevice(device) {
         // if: current interface index not found and updated and syncCyles > threshold, then: let "delete = true" and update interface
         // if: current interface index not found and not updated and syncCyles > threshold, then: delete interface
         // if: new interface index, then create interface 
-        logger.info("in sync mode for: "+self.name+" "+self.device.ipaddress+" "+self.device.communityString);
+        logger.info("in sync mode for: "+self.name+" "+self.device.ipaddress+" "+self.device.community);
         self.session.tableColumnsAsync(oids.ifTable.OID, oids.ifTable.Columns, maxRepetitions, self.ifTableResponseCb);
     };
     this.discoverInterfaces = function(){
-        logger.info(self.name+" "+self.device.ipaddress+" "+self.device.communityString);
+        logger.info(self.name+" "+self.device.ipaddress+" "+self.device.community);
         self.session.tableColumnsAsync(oids.ifTable.OID, oids.ifTable.Columns, maxRepetitions, self.ifTableResponseCb);
     };
 }
@@ -678,8 +774,8 @@ var syncCyclesThreshold = 3;
 var snmpError = "";
 var maxRepetitions = 200000;
 var theWalkSession, theTableSession, theTableColumnsSession; 
-var ifTableColumns ={ifIndex:1 , ifDescr:2,ifType:3,ifSpeed:5,ifAdminStatus:7,ifOperStatus:8};
-var ifXTableColumns ={ifName:1 , ifAlias:18, ifHighSpeed:15};
+var ifTableColumns ={ifIndex:1,ifDescr:2,ifType:3,ifSpeed:5,ifAdminStatus:7,ifOperStatus:8,ifInOctets:10,ifOutOctets:16};
+var ifXTableColumns ={ifName:1,ifAlias:18,ifHighSpeed:15,ifHCInOctets:6,ifHCOutOctets:10};
 var deviceInterfaces = [Interface];
 var anInterface = new Interface();
 var discoveryFinished = false;
@@ -693,7 +789,9 @@ var oids = {
             ifTableColumns.ifType,
             ifTableColumns.ifSpeed,
             ifTableColumns.ifAdminStatus,
-            ifTableColumns.ifOperStatus
+            ifTableColumns.ifOperStatus,
+            ifTableColumns.ifInOctets,
+            ifTableColumns.ifOutOctets
         ]
     },
     ifXTable: {
@@ -701,7 +799,9 @@ var oids = {
         Columns: [
             ifXTableColumns.ifName,
             ifXTableColumns.ifAlias,
-            ifXTableColumns.ifHighSpeed
+            ifXTableColumns.ifHighSpeed,
+            ifXTableColumns.ifHCInOctets,
+            ifXTableColumns.ifHCOutOctets
         ]
     }
 };
@@ -805,7 +905,7 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
     //get data from a form and add to devices array
     var hostname = request.body.device.hostname;
     var ipaddress = request.body.device.ipaddress;
-    var communityString = request.body.device.communityString || "public";
+    var communityString = request.body.device.community || "public";
     var parsedHostName = Parser.parseHostname(S(hostname));
     var type = request.body.device.type;
     if(S(type).isEmpty() && parsedHostName){
@@ -878,7 +978,6 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
             for (var i = 0; i < varbinds.length; i++) {
                 // for version 1 we can assume all OIDs were successful
                 modelOID = varbinds[i].value;
-                console.log("modelOID: "+modelOID);
             
                 // for version 2c we must check each OID for an error condition
                 if (snmp.isVarbindError (varbinds[i]))
@@ -886,21 +985,16 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
                 else
                     modelOID = varbinds[i].value;
             }
-            console.log("finding model");
             DeviceModel.findOne({oid: modelOID},function(error,foundModel){
                 if(error){
-                    console.log("error");
                     logger.error(error);
                 }
                 else if(foundModel != null){
-                    console.log("foundModel != null");
                     model = foundModel.model ;
                 }
                 else{
-                    console.log("model");
                     model = model ;
                 }
-                console.log("model: "+model);
                 if(!(popId === undefined)){
                     POP.findById(popId,function(error,foundPOP){
                         if(error){
@@ -925,17 +1019,18 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
                                                             hostname: hostname.trim(),
                                                             ipaddress: ipaddress.trim(),
                                                             author: {id: request.user._id, email: request.user.email},
-                                                            communityString: communityString.trim(),
+                                                            community: communityString.trim(),
                                                             type: type.trim(),
                                                             model: model.trim(),
                                                             vendor: vendor.trim(),
+                                                            sysObjectID: modelOID,
                                                             "popName.name":  parsedHostName.popName || foundPOP.name,
                                                             "sector.name": foundPOP.sector,
                                                             "governorate.name":  foundGove.name
                                                     };
                                                     aDevice.interfaces = [];
                                                     logger.info("Device discovery started");
-                                                    logger.info(aDevice.hostname + " "+ aDevice.ipaddress + " "+aDevice.communityString);
+                                                    logger.info(aDevice.hostname + " "+ aDevice.ipaddress + " "+aDevice.community);
                                                     Device.create(aDevice, function(error, device) {
                                                         if (error) {
                                                             logger.log(error.errors);
@@ -971,7 +1066,7 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
                                     hostname: hostname.trim(),
                                     ipaddress: ipaddress.trim(),
                                     author: {id: request.user._id, email: request.user.email},
-                                    communityString: communityString.trim(),
+                                    community: communityString.trim(),
                                     type: type.trim(),
                                     model: model.trim(),
                                     vendor: vendor.trim(),
@@ -981,7 +1076,7 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
                             };
                             aDevice.interfaces = [];
                             logger.info("Device discovery started");
-                            logger.info(aDevice.hostname + " "+ aDevice.ipaddress + " "+aDevice.communityString);
+                            logger.info(aDevice.hostname + " "+ aDevice.ipaddress + " "+aDevice.community);
                             Device.create(aDevice, function(error, device) {
                                 if (error) {
                                     logger.log(error.errors);
@@ -1007,7 +1102,7 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
                             hostname: hostname.trim(),
                             ipaddress: ipaddress.trim(),
                             author: {id: request.user._id, email: request.user.email},
-                            communityString: communityString.trim(),
+                            community: communityString.trim(),
                             type: type.trim(),
                             model: model.trim(),
                             vendor: vendor.trim(),
@@ -1017,7 +1112,7 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
                     };
                     aDevice.interfaces = [];
                     logger.info("Device discovery started");
-                    logger.info(aDevice.hostname + " "+ aDevice.ipaddress + " "+aDevice.communityString);
+                    logger.info(aDevice.hostname + " "+ aDevice.ipaddress + " "+aDevice.community);
                     Device.create(aDevice, function(error, device) {
                         if (error) {
                             logger.log(error.errors);
@@ -1063,7 +1158,7 @@ var syncDevices = function(){
             foundDevices.forEach(function(device){
                 // if(device.discovered){//only handle discovered devices
                     logger.info("device " + device.hostname +" will be synced now");
-                    // logger.info("device comm string" + device.communityString +" will be synced now");
+                    // logger.info("device comm string" + device.community +" will be synced now");
                     // perform interface sync
                     var discoDevice = new discoveredDevice(device);
                     discoDevice.syncInterfaces();
@@ -1163,7 +1258,7 @@ router.delete("/:id", middleware.isLoggedIn, function(request,response){
         if(error){
             logger.error(error);
         }
-        else{
+        else if(foundDevice != null){
             var interfaceList = foundDevice.interfaces;
             //iterate over them and delete
             async.forEachOf(interfaceList,function(interface,key, callback ){

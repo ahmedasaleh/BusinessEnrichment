@@ -17,6 +17,7 @@ var interfaceSchema = new mongoose.Schema({
     secondInterface: String,
     label: String,
     provisoFlag: Number,
+    noEnrichFlag: Number,
 sp_service: String,
 sp_provider: String,
 sp_termination: String,
