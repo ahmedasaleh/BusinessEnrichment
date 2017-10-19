@@ -43,7 +43,7 @@ function createDocRecurse (err,filename) {
                         device.hostname = S(entry).trim().s.escapeSpecialChars();
                     }
                     else if(i == deviceData.community){
-                        device.communityString = S(entry).trim().s.escapeSpecialChars();
+                        device.community = S(entry).trim().s.escapeSpecialChars();
                     }
                     else if(i == deviceData.type){
                         device.type = S(entry).trim().s.escapeSpecialChars();

@@ -35,7 +35,7 @@ router.get("/pagination?",middleware.isLoggedIn ,function(request, response) {
 
         if(S(searchQuery).isEmpty()){
             Interface.count({}, function(err, interfacesCount) {
-                Interface.find({},'ifIndex ifName device ifAlias ifDescr ifSpeed actualspeed ifType createdAt lastUpdate',{lean:true,skip:skip,limit:limit}, function(err, foundInterfaces) {
+                Interface.find({},'ifIndex ifName hostname ipaddress ifAlias ifDescr ifSpeed actualspeed ifType createdAt lastUpdate',{lean:true,skip:skip,limit:limit}, function(err, foundInterfaces) {
                     if (err) {
                         logger.error(err);
                     }
@@ -62,7 +62,7 @@ router.get("/pagination?",middleware.isLoggedIn ,function(request, response) {
                 Interface.find({'$or' : [{name: new RegExp(searchQuery,'i')},
                     {alias: new RegExp(searchQuery,'i')},
                     {description: new RegExp(searchQuery,'i')},
-                    {"device.hostname": new RegExp(searchQuery,'i')}]},'ifIndex ifName device ifAlias ifDescr ifSpeed actualspeed ifType createdAt lastUpdate',{lean:true,skip:skip,limit:limit}, function(err, foundInterfaces) {
+                    {"device.hostname": new RegExp(searchQuery,'i')}]},'ifIndex ifName hostname ipaddress ifAlias ifDescr ifSpeed actualspeed ifType createdAt lastUpdate',{lean:true,skip:skip,limit:limit}, function(err, foundInterfaces) {
                     if (err) {
                         logger.error(err);
                     }
