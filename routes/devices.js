@@ -16,6 +16,7 @@ var __async__       = require('asyncawait/async');
 var __await__       = require('asyncawait/await');
 var S               = require('string');
 var mongoose        = require('mongoose');
+var middleware      = require("../middleware");
 var logger          = require("../middleware/logger");
 var Parser          = require('../middleware/parser/parser');
 var sleep           = require('thread-sleep');
@@ -23,6 +24,21 @@ var sleep           = require('thread-sleep');
 var ObjectId        = require('mongodb').ObjectID;
 
 //create and save a document, handle error if occured
+var ifOIDs = {
+ifDescr:"1.3.6.1.2.1.2.2.1.2",
+ifType:"1.3.6.1.2.1.2.2.1.3",
+ifSpeed:"1.3.6.1.2.1.2.2.1.5",
+ifAdminStatus:"1.3.6.1.2.1.2.2.1.7",
+ifOperStatus:"1.3.6.1.2.1.2.2.1.8",
+ifInOctets:"1.3.6.1.2.1.2.2.1.10",
+ifOutOctets:"1.3.6.1.2.1.2.2.1.16",
+ifName:"1.3.6.1.2.1.31.1.1.1.1",
+ifHCInOctets:"1.3.6.1.2.1.31.1.1.1.6",
+ifHCOutOctets:"1.3.6.1.2.1.31.1.1.1.10",
+ifHighSpeed:"1.3.6.1.2.1.31.1.1.1.15",
+ifAlias:"1.3.6.1.2.1.31.1.1.1.16",
+}
+
 var aDevice = new Device() ;
 var targets = [];
 
@@ -44,11 +60,11 @@ function discoveredDevice(device,linkEnrichmentData) {
     self.deviceType = S(self.device.type).s.toLowerCase();
     self.deviceVendor = S(self.device.vendor).s.toLowerCase();
     self.deviceModel = S(self.device.model).s.toLowerCase();
-    self.maxRepetitions = 1000;
+    self.maxRepetitions = 20;
 
     self.allowedFields = ['ifName','ifAlias','ifIndex','ifDescr','ifType','ifSpeed','ifHighSpeed','counters','type',' specialService','secondPOP','secondHost','secondInterface','label','provisoFlag','noEnrichFlag','sp_service','sp_provider','sp_termination','sp_bundleId','sp_linkNumber','sp_CID','sp_TECID','sp_subCable','sp_customer','sp_sourceCore','sp_destCore','sp_vendor','sp_speed','sp_pop','sp_fwType','sp_serviceType','sp_ipType','sp_siteCode','sp_connType','sp_emsOrder','sp_connectedBW','sp_dpiName','sp_portID','unknownFlag','adminStatus','operStatus','actualspeed','syncCycles','lastUpdate','hostname','ipaddress','pop'];
 
-    self.session = snmp.createSession(self.device.ipaddress, S(self.device.community).trim().s,{ timeout: 10000, version: snmp.Version2c ,retries: 1});
+    self.session = snmp.createSession(self.device.ipaddress, S(self.device.community).trim().s,{ sourceAddress: "213.158.183.140",timeout: 10000, version: snmp.Version2c ,retries: 1});
 
     // self.deviceType = S(self.device.type).s.toLowerCase();
     // self.vendor = S(self.device.vendor).s.toLowerCase();
@@ -75,407 +91,424 @@ function discoveredDevice(device,linkEnrichmentData) {
           return Math.floor(difference_ms/one_day); 
     };
     self.parseIfAlias = function(ifAlias,hostname,ifName,ifIndex,ipaddress){
-        if(S(ifAlias).isEmpty()) return null;
+        // if(S(ifAlias).isEmpty()) return null;
         var anErichment= {
             specialService : '', provisoFlag : '', sp_service : '', sp_provider : '', sp_termination : '', sp_connType : '', sp_bundleId : '', sp_linkNumber : '', 
             sp_CID : '', sp_TECID : '', sp_subCable : '', unknownFlag : '' , label : '' , sp_customer : '', sp_speed : '' , sp_pop : '' , sp_connType : '' , 
             sp_emsOrder : '' , sp_connectedBW : '', sp_fwType : '' , sp_serviceType : '' , sp_ipType : '' , sp_vendor : '', sp_sourceCore : '', sp_destCore : '', 
             sp_siteCode: '', sp_preNumber: '', sp_portID: '', noEnrichFlag: ''
         }
+        var skip = false;
         var interfaceName = S(ifName).trim().s;
         if(S(interfaceName)){
-            interfaceName = S(interfaceName).s.toLowerCase();
+            interfaceName = S(interfaceName).s;//.toLowerCase();
         }
-        var alias = S(ifAlias).trim().s;
+        var alias;
+        if(!S(ifAlias).isEmpty()) alias = S(ifAlias).trim().s;
         var provisoFlag=1;
         var unknownFlag = 0;
         var noEnrichFlag=0;         
-        var label = hostname+" "+ifName+" "+ifAlias;        
+        var label = hostname+" "+interfaceName+" "+alias;        
+        if(!S(ifAlias).isEmpty()){
+            if(S(alias).startsWith("INT-")){
+                // # Patterns   INT-P1-P2-P3-P4-P5-P6-P7-P8-P9
+                // # Patterns description   P1: Service
+                // # P2: Provider Name
+                // # P3: Termination
+                // # P4: Connection Type
+                // # P5: Bundle ID
+                // # P6: Link Number
+                // # P7: INT CID
+                // # P8: TE CID
+                // # P9: Sub Cable
+                // # Examples   INT-IPT-Cogent-ALX-10GIG-B2-NB-L22-1_300050661-EIG_IPT_10G_0019-EIG
+                // # INT-IPT-AIRTEL-ALX-10G-NB-L2-ALX_MBB_10GbE_002_M-IMW_IPT_10G_0013-IMWE
+                var specialService="International";
+                var enrichmentString = S(alias).strip("INT-").s;
+                var enrichmentFields = S(enrichmentString).splitLeft('-');
+                var sp_service="Unknown",sp_provider="Unknown",sp_termination="Unknown",sp_connType="Unknown",sp_bundleId="Unknown",sp_linkNumber="Unknown",
+                sp_CID="Unknown",sp_TECID="Unknown",sp_subCable="Unknown";
 
-        if(S(alias).startsWith("INT-")){
-            // # Patterns   INT-P1-P2-P3-P4-P5-P6-P7-P8-P9
-            // # Patterns description   P1: Service
-            // # P2: Provider Name
-            // # P3: Termination
-            // # P4: Connection Type
-            // # P5: Bundle ID
-            // # P6: Link Number
-            // # P7: INT CID
-            // # P8: TE CID
-            // # P9: Sub Cable
-            // # Examples   INT-IPT-Cogent-ALX-10GIG-B2-NB-L22-1_300050661-EIG_IPT_10G_0019-EIG
-            // # INT-IPT-AIRTEL-ALX-10G-NB-L2-ALX_MBB_10GbE_002_M-IMW_IPT_10G_0013-IMWE
-            var specialService="International";
-            var enrichmentString = S(alias).strip("INT-").s;
-            var enrichmentFields = S(enrichmentString).splitLeft('-');
-            var sp_service="Unknown",sp_provider="Unknown",sp_termination="Unknown",sp_connType="Unknown",sp_bundleId="Unknown",sp_linkNumber="Unknown",
-            sp_CID="Unknown",sp_TECID="Unknown",sp_subCable="Unknown";
+                if(enrichmentFields.length == 9){
+                    sp_service=enrichmentFields[1] || "Unknown";
+                    sp_provider=enrichmentFields[2] || "Unknown";
+                    sp_termination=enrichmentFields[3] || "Unknown";
+                    sp_connType=enrichmentFields[4] || "Unknown";
+                    sp_bundleId=enrichmentFields[5] || "Unknown";
+                    sp_linkNumber=enrichmentFields[6] || "Unknown";
+                    sp_CID=enrichmentFields[7] || "Unknown";
+                    sp_TECID=enrichmentFields[8] || "Unknown";
+                    sp_subCable=enrichmentFields[9] || "Unknown";
+                }
+                else if(enrichmentFields.length != 9 ){
+                    unknownFlag = 1;
+                }
+                        
+                label=hostname+" "+interfaceName;
 
-            if(enrichmentFields.length == 9){
-                sp_service=enrichmentFields[1] || "Unknown";
-                sp_provider=enrichmentFields[2] || "Unknown";
-                sp_termination=enrichmentFields[3] || "Unknown";
-                sp_connType=enrichmentFields[4] || "Unknown";
-                sp_bundleId=enrichmentFields[5] || "Unknown";
-                sp_linkNumber=enrichmentFields[6] || "Unknown";
-                sp_CID=enrichmentFields[7] || "Unknown";
-                sp_TECID=enrichmentFields[8] || "Unknown";
-                sp_subCable=enrichmentFields[9] || "Unknown";
+                anErichment= {
+                            specialService : specialService, provisoFlag : provisoFlag,sp_service : sp_service, sp_provider : sp_provider, sp_termination : sp_termination, 
+                            sp_connType : sp_connType, sp_bundleId : sp_bundleId, sp_linkNumber : sp_linkNumber, sp_CID : sp_CID, sp_TECID : sp_TECID, 
+                            sp_subCable : sp_subCable, unknownFlag : unknownFlag, label : label,noEnrichFlag:noEnrichFlag
+                }
             }
-            else if(enrichmentFields.length != 9 ){
-                unknownFlag = 1;
-            }
-                    
-            label=hostname+" "+ifName;
+            else if(S(alias).contains("ALPHA-BITSTREAM")){
+                // # Condition  Contain (_ALPHA-BITSTREAM)
+                // # Patterns   P1-ALPHA-BITSTREAM P2 P3
+                // # Patterns description   
+                // # P1: Customer
+                // # P2: Link Number
+                // # P3: Speed
+                // # Examples   VODA-ALPHA-BITSTREAM L1 GIG
+                // # LDN-ALPHA-BITSTREAM L1 GIG
+                // # ETISALAT-ALPHA-BITSTREAM L1 GIG
 
-            anErichment= {
-                        specialService : specialService, provisoFlag : provisoFlag,sp_service : sp_service, sp_provider : sp_provider, sp_termination : sp_termination, 
-                        sp_connType : sp_connType, sp_bundleId : sp_bundleId, sp_linkNumber : sp_linkNumber, sp_CID : sp_CID, sp_TECID : sp_TECID, 
-                        sp_subCable : sp_subCable, unknownFlag : unknownFlag, label : label,noEnrichFlag:noEnrichFlag
+                var specialService="Alpha-Bitstream";
+                var enrichmentString = S(alias).replaceAll(' ','-');//trying to unify byremoving spaces
+                var enrichmentFields = S(enrichmentString).splitLeft('-');
+                var sp_customer="Unknown",sp_linkNumber="Unknown",sp_speed="Unknown";
+
+                if(enrichmentFields.length == 5){
+                    sp_customer=enrichmentFields[0] || "Unknown";
+                    sp_linkNumber=enrichmentFields[3] || "Unknown";
+                    sp_speed=enrichmentFields[4] || "Unknown";
+                }
+                else{
+                    unknownFlag = 1;
+                }
+                anErichment= {
+                        specialService:specialService,provisoFlag:provisoFlag,unknownFlag:unknownFlag,sp_customer : sp_customer, sp_linkNumber:sp_linkNumber, 
+                        sp_speed : sp_speed,noEnrichFlag:noEnrichFlag,label : label
+                }
             }
+            else if(S(alias).contains("ESP-BITSTREAM")){
+                // # Condition  Contain (-ESP-BITSTREAM)
+                // # Patterns   P1-ESP-BITSTREAM P2 P3
+                // # Patterns description   P1: Customer
+                // # P2: Link Number
+                // # P3: Speed
+                // # Examples   ETISALAT-ESP-BITSTREAM B1 2GIG
+                var specialService = "SH-Bitstream";
+                var enrichmentString = S(alias).replaceAll(' ','-');//trying to unify byremoving spaces
+                var enrichmentFields = S(enrichmentString).splitLeft('-');
+                var sp_customer="Unknown",sp_linkNumber="Unknown",sp_speed="Unknown";
+                if(enrichmentFields.length == 5){
+                    sp_customer=enrichmentFields[0] || "Unknown";
+                    sp_linkNumber=enrichmentFields[3] || "Unknown";
+                    sp_speed=enrichmentFields[4] || "Unknown";
+                }
+                else{
+                    unknownFlag = 1;
+                }
+                anErichment= {
+                        specialService:specialService,provisoFlag:provisoFlag,unknownFlag:unknownFlag,sp_customer:sp_customer, sp_linkNumber:sp_linkNumber, 
+                        sp_speed : sp_speed,noEnrichFlag:noEnrichFlag,label : label
+                }
+            }
+            else if(S(alias).contains("BITSTREAM")){
+                // # Condition  Contain (-BITSTREAM)
+                // # Patterns   P1-BITSTREAM P2 P3
+                // # Patterns description   P1: Customer
+                // # P2: Link Number
+                // # P3: Speed
+                // # Examples   VODA-BITSTREAM L6 1GIG
+                // # NOOR-BITSTREAM L3 1GIG
+                // # LDN-BITSTREAM L6 1GIG
+                // # ETISALAT-BITSTREAM L2 1GIG
+
+                var specialService = "Bitstream";
+                var enrichmentString = S(alias).replaceAll(' ','-');//trying to unify byremoving spaces
+                var enrichmentFields = S(enrichmentString).splitLeft('-');
+                var sp_customer="Unknown",sp_linkNumber="Unknown",sp_speed="Unknown";
+                if(enrichmentFields.length == 4){
+                    sp_customer=enrichmentFields[0] || "Unknown";
+                    sp_linkNumber=enrichmentFields[2] || "Unknown";
+                    sp_speed=enrichmentFields[3] || "Unknown";
+                }
+                else{
+                    unknownFlag = 1;
+                }
+                anErichment= {
+                        specialService:specialService,provisoFlag:provisoFlag,unknownFlag:unknownFlag,sp_customer : sp_customer, sp_linkNumber:sp_linkNumber, 
+                        sp_speed:sp_speed,noEnrichFlag:noEnrichFlag,label : label
+                }
+            }
+            else if(S(alias).startsWith("ESP")){
+                // # Condition  Start with (ESP-*)
+                // # Patterns   ESP-P1-P2-P3-P4-P5
+                // # Patterns description   
+                // # P1: Customer Name
+                // # P2: POP Name
+                // # P3: Connection Type
+                // # P4: EMS Order Number
+                // # P5: Connected BW
+                // # Examples   ESP-TE_ACCESS-RAMSIS-INT-1-100
+
+                var specialService="ESP";
+                var enrichmentFields = S(alias).splitLeft('-');
+                var sp_customer="Unknown",sp_pop="Unknown",sp_connType="Unknown",sp_emsOrder="Unknown",sp_connectedBW="Unknown";
+                if(enrichmentFields.length == 6){
+                    sp_customer=enrichmentFields[1] || "Unknown";
+                    sp_pop=enrichmentFields[2] || "Unknown";
+                    sp_connType=enrichmentFields[3] || "Unknown";
+                    sp_emsOrder=enrichmentFields[4] || "Unknown";
+                    sp_connectedBW=enrichmentFields[5] || "Unknown";
+                }
+                else{
+                    unknownFlag = 1;
+                }
+                anErichment= {
+                        specialService : specialService, provisoFlag:provisoFlag, unknownFlag : unknownFlag, sp_customer : sp_customer, sp_pop : sp_pop, 
+                        sp_connType : sp_connType, sp_emsOrder : sp_emsOrder, sp_connectedBW : sp_connectedBW,noEnrichFlag:noEnrichFlag,label : label
+                }
+            }
+            else if(S(alias).contains("FW") && S(alias).contains("EG")){
+                // #Condition   Contain (*-FW*-*-EG)
+                // #Patterns    P1_P2_P3_P4-FW00P5-*-EG
+                // #Patterns description    
+                // #P1: POP Name
+                // #P2: GI
+                // #P3:Servise Type
+                // #P4:  IP Type 
+                // #P5: Vendor  (only 1 character)
+                // #Examples    ALMAZA_GI_Trust_IPv4-FW02E-C-EG
+
+                var specialService="Firewall";
+                var enrichmentString = S(alias).replaceAll('_','-');//trying to unify byremoving spaces
+                var enrichmentFields = S(enrichmentString).splitLeft('-');
+                var sp_pop="Unknown",sp_fwType="Unknown",sp_serviceType="Unknown",sp_ipType="Unknown",sp_vendor="Unknown";
+                if(enrichmentFields.length == 7){
+                        var sp_pop=enrichmentFields[0] || "Unknown";;
+                        var sp_fwType=enrichmentFields[1] || "Unknown";;
+                        var sp_serviceType=enrichmentFields[2] || "Unknown";;
+                        var sp_ipType=enrichmentFields[3] || "Unknown";;
+                        var sp_vendor=enrichmentFields[4].right(1).s || "Unknown";; 
+                }
+                else{
+                    unknownFlag = 1;
+                }
+
+                anErichment= {
+                        specialService : specialService, provisoFlag:provisoFlag, unknownFlag : unknownFlag, sp_pop : sp_pop, sp_fwType : sp_fwType, 
+                        sp_serviceType : sp_serviceType, sp_ipType : sp_ipType, sp_vendor : sp_vendor,noEnrichFlag:noEnrichFlag,label : label
+                }
+            }
+            else if(S(alias).startsWith("NR") ){
+                ///////////////////////////////////////
+                // # Condition  Start with (NR_)
+                // # Patterns   NR_P1_P2_P3_P4-N00P5-*-EG P6 P7
+                // # Patterns description   
+                // # P1: Provider
+                // # P2: Service
+                // # P3: Source Core
+                // # P4: Destination Core
+                // # P5: Vendor  (only 1 character)
+                // # P6: Link Number
+                // # P7: Speed
+                // # Examples   NR_Etisalat_Data_ALZ_AUTO-N01E-DSR-EG L1 GIG
+                // # NR_Orange_RTP_ALZ_OBR-N01O-R-EG L1 GIG
+                var specialService = "National-Roaming";
+                var enrichmentString = S(alias).replaceAll('_','-');//trying to unify by removing underscore
+                enrichmentString = S(enrichmentString).replaceAll(' ','-');//trying to unify by removing spaces
+                var enrichmentFields = S(enrichmentString).splitLeft('-');
+                var sp_provider = "Unknown",sp_service="Unknown",sp_sourceCore="Unknown",sp_destCore="Unknown",sp_vendor="Unknown",sp_linkNumber="Unknown",sp_speed="Unknown";
+                        
+                if(enrichmentFields.length == 10){
+                    sp_provider=enrichmentFields[1] || "Unknown";
+                    sp_service=enrichmentFields[2] || "Unknown";
+                    sp_sourceCore=enrichmentFields[3] || "Unknown";
+                    sp_destCore=enrichmentFields[4] || "Unknown";
+                    sp_vendor=enrichmentFields[5].right(1).s || "Unknown";
+                    sp_linkNumber=enrichmentFields[8] || "Unknown";
+                    sp_speed=enrichmentFields[9] || "Unknown";
+                }
+                else{
+                    unknownFlag = 1;
+                }
+                label = hostname+" "+interfaceName;
+                anErichment= {
+                        specialService:specialService,provisoFlag : provisoFlag, unknownFlag:unknownFlag, sp_provider : sp_provider, sp_service : sp_service, 
+                        sp_sourceCore : sp_sourceCore, sp_destCore : sp_destCore, sp_vendor : sp_vendor, sp_linkNumber : sp_linkNumber, sp_speed : sp_speed, label : label,
+                        noEnrichFlag:noEnrichFlag,label : label
+                }
+            }
+            // # LTE Interfaces
+            else if(S(alias).contains("ENP")){      
+                // # Condition  Contain (*_ENB*-E*-*-EG) or Contain (ENB)
+                // # Patterns   P1_ENB_P2-E00P3-*-EG P4 P5
+                // # Patterns description   
+                // # P1: POP Name
+                // # P2: Site Code
+                // # P3: Vendor  (only 1 character)
+                // # P4: Link Number
+                // # P5: Speed
+                // # Examples   MONEIB_ENB_LCaiG31109-E01N-C-EG L1 GIG
+                // # MONEIB_ENB_LCaiG31109_S1-MME-E01N-C-EG --> wrong example to be validated
+
+                var specialService="LTE";
+                var enrichmentString = S(alias).replaceAll('_','-');//trying to unify by removing underscore
+                enrichmentString = S(enrichmentString).replaceAll(' ','-');//trying to unify by removing spaces
+                var enrichmentFields = S(enrichmentString).splitLeft('-');
+                var sp_pop="Unknown",sp_siteCode="Unknown",sp_vendor="Unknown",sp_linkNumber="Unknown",sp_speed="Unknown";
+                if(enrichmentFields.length == 8){
+                    sp_pop=enrichmentFields[0] || "Unknown";
+                    sp_siteCode=enrichmentFields[2] || "Unknown";
+                    sp_vendor=enrichmentFields[3].right(1).s || "Unknown";
+                    sp_linkNumber=enrichmentFields[6] || "Unknown";
+                    sp_speed=enrichmentFields[7] || "Unknown";
+                }
+                else{
+                    unknownFlag=1;
+                }
+                anErichment= {
+                        specialService:specialService,provisoFlag : provisoFlag, unknownFlag:unknownFlag, sp_pop:sp_pop,sp_siteCode:sp_siteCode,sp_vendor:sp_vendor,
+                        sp_linkNumber:sp_linkNumber,sp_speed:sp_speed,noEnrichFlag:noEnrichFlag,label : label
+                }
+            }
+            // # EPC
+            else if(S(alias).contains("EPC")){      
+                // # Condition  Contain (* EPC*)
+                // # Patterns   P1 EPC P2 P3
+                // # Patterns description   
+                // # P1: Provider
+                // # P2: Link Number
+                // # P3: Speed
+                // # Examples   Ericson EPC L1 10GIG
+                // # Ericson EPC L2 10GIG
+                
+                var specialService="EPC";
+                var enrichmentFields = S(alias).splitLeft(' ');
+                var sp_provider="Unknown",sp_linkNumber="Unknown",sp_speed="Unknown";
+                if(enrichmentFields.length == 4){
+                    sp_provider=enrichmentFields[0] || "Unknown";
+                    sp_linkNumber=enrichmentFields[2] || "Unknown";
+                    sp_speed=enrichmentFields[3] || "Unknown";
+                }
+                else{
+                    unknownFlag=1;
+                }
+
+                anErichment= {
+                        specialService:specialService,provisoFlag : provisoFlag, unknownFlag:unknownFlag, sp_provider:sp_provider,sp_linkNumber:sp_linkNumber,
+                        sp_speed:sp_speed,noEnrichFlag:noEnrichFlag,label : label
+                }
+            }
+            // # DPI
+            else if(S(alias).contains("PRE1") ){        
+                // # Condition  Start with (POP Name-PRE1*) OR Contain (PRE1)
+                // # Patterns   P1-P2-P3
+                // # Patterns description   
+                // # P1: POP name
+                // # P2: Pre Number
+                // # P3: Port IDs
+                // # Examples   MAADI2-PRE1-1/1/INT
+                // # MAADI2-PRE1-1/2/EXT
+
+                var specialService="DPI";
+                var enrichmentFields = S(alias).splitLeft('-');
+                var sp_pop="Unknown",sp_preNumber="Unknown",sp_portID="Unknown";
+                if(enrichmentFields.length == 3){
+                    sp_pop=enrichmentFields[0];
+                    sp_preNumber=S(enrichmentFields[1]).chompLeft('PRE').s; 
+                    sp_portID=enrichmentFields[2];
+                }
+                else{
+                    unknownFlag = 1;
+                }
+                anErichment= {
+                        specialService:specialService,provisoFlag : provisoFlag, unknownFlag:unknownFlag, sp_pop:sp_pop,sp_preNumber:sp_preNumber,
+                        sp_portID:sp_portID,noEnrichFlag:noEnrichFlag,label : label
+                }
+            }
+
         }
-        else if(S(alias).contains("ALPHA-BITSTREAM")){
-            // # Condition  Contain (_ALPHA-BITSTREAM)
-            // # Patterns   P1-ALPHA-BITSTREAM P2 P3
-            // # Patterns description   
-            // # P1: Customer
-            // # P2: Link Number
-            // # P3: Speed
-            // # Examples   VODA-ALPHA-BITSTREAM L1 GIG
-            // # LDN-ALPHA-BITSTREAM L1 GIG
-            // # ETISALAT-ALPHA-BITSTREAM L1 GIG
 
-            var specialService="Alpha-Bitstream";
-            var enrichmentString = S(alias).replaceAll(' ','-');//trying to unify byremoving spaces
-            var enrichmentFields = S(enrichmentString).splitLeft('-');
-            var sp_customer="Unknown",sp_linkNumber="Unknown",sp_speed="Unknown";
-
-            if(enrichmentFields.length == 5){
-                sp_customer=enrichmentFields[0] || "Unknown";
-                sp_linkNumber=enrichmentFields[3] || "Unknown";
-                sp_speed=enrichmentFields[4] || "Unknown";
-            }
-            else{
-                unknownFlag = 1;
-            }
-            anErichment= {
-                    specialService:specialService,provisoFlag:provisoFlag,unknownFlag:unknownFlag,sp_customer : sp_customer, sp_linkNumber:sp_linkNumber, 
-                    sp_speed : sp_speed,noEnrichFlag:noEnrichFlag,label : label
-            }
-        }
-        else if(S(alias).contains("ESP-BITSTREAM")){
-            // # Condition  Contain (-ESP-BITSTREAM)
-            // # Patterns   P1-ESP-BITSTREAM P2 P3
-            // # Patterns description   P1: Customer
-            // # P2: Link Number
-            // # P3: Speed
-            // # Examples   ETISALAT-ESP-BITSTREAM B1 2GIG
-            var specialService = "SH-Bitstream";
-            var enrichmentString = S(alias).replaceAll(' ','-');//trying to unify byremoving spaces
-            var enrichmentFields = S(enrichmentString).splitLeft('-');
-            var sp_customer="Unknown",sp_linkNumber="Unknown",sp_speed="Unknown";
-            if(enrichmentFields.length == 5){
-                sp_customer=enrichmentFields[0] || "Unknown";
-                sp_linkNumber=enrichmentFields[3] || "Unknown";
-                sp_speed=enrichmentFields[4] || "Unknown";
-            }
-            else{
-                unknownFlag = 1;
-            }
-            anErichment= {
-                    specialService:specialService,provisoFlag:provisoFlag,unknownFlag:unknownFlag,sp_customer:sp_customer, sp_linkNumber:sp_linkNumber, 
-                    sp_speed : sp_speed,noEnrichFlag:noEnrichFlag,label : label
-            }
-        }
-        else if(S(alias).contains("BITSTREAM")){
-            // # Condition  Contain (-BITSTREAM)
-            // # Patterns   P1-BITSTREAM P2 P3
-            // # Patterns description   P1: Customer
-            // # P2: Link Number
-            // # P3: Speed
-            // # Examples   VODA-BITSTREAM L6 1GIG
-            // # NOOR-BITSTREAM L3 1GIG
-            // # LDN-BITSTREAM L6 1GIG
-            // # ETISALAT-BITSTREAM L2 1GIG
-
-            var specialService = "Bitstream";
-            var enrichmentString = S(alias).replaceAll(' ','-');//trying to unify byremoving spaces
-            var enrichmentFields = S(enrichmentString).splitLeft('-');
-            var sp_customer="Unknown",sp_linkNumber="Unknown",sp_speed="Unknown";
-            if(enrichmentFields.length == 4){
-                sp_customer=enrichmentFields[0] || "Unknown";
-                sp_linkNumber=enrichmentFields[2] || "Unknown";
-                sp_speed=enrichmentFields[3] || "Unknown";
-            }
-            else{
-                unknownFlag = 1;
-            }
-            anErichment= {
-                    specialService:specialService,provisoFlag:provisoFlag,unknownFlag:unknownFlag,sp_customer : sp_customer, sp_linkNumber:sp_linkNumber, 
-                    sp_speed:sp_speed,noEnrichFlag:noEnrichFlag,label : label
-            }
-        }
-        else if(S(alias).startsWith("ESP")){
-            // # Condition  Start with (ESP-*)
-            // # Patterns   ESP-P1-P2-P3-P4-P5
-            // # Patterns description   
-            // # P1: Customer Name
-            // # P2: POP Name
-            // # P3: Connection Type
-            // # P4: EMS Order Number
-            // # P5: Connected BW
-            // # Examples   ESP-TE_ACCESS-RAMSIS-INT-1-100
-
-            var specialService="ESP";
-            var enrichmentFields = S(alias).splitLeft('-');
-            var sp_customer="Unknown",sp_pop="Unknown",sp_connType="Unknown",sp_emsOrder="Unknown",sp_connectedBW="Unknown";
-            if(enrichmentFields.length == 6){
-                sp_customer=enrichmentFields[1] || "Unknown";
-                sp_pop=enrichmentFields[2] || "Unknown";
-                sp_connType=enrichmentFields[3] || "Unknown";
-                sp_emsOrder=enrichmentFields[4] || "Unknown";
-                sp_connectedBW=enrichmentFields[5] || "Unknown";
-            }
-            else{
-                unknownFlag = 1;
-            }
-            anErichment= {
-                    specialService : specialService, provisoFlag:provisoFlag, unknownFlag : unknownFlag, sp_customer : sp_customer, sp_pop : sp_pop, 
-                    sp_connType : sp_connType, sp_emsOrder : sp_emsOrder, sp_connectedBW : sp_connectedBW,noEnrichFlag:noEnrichFlag,label : label
-            }
-        }
-        else if(S(alias).contains("FW") && S(alias).contains("EG")){
-            // #Condition   Contain (*-FW*-*-EG)
-            // #Patterns    P1_P2_P3_P4-FW00P5-*-EG
-            // #Patterns description    
-            // #P1: POP Name
-            // #P2: GI
-            // #P3:Servise Type
-            // #P4:  IP Type 
-            // #P5: Vendor  (only 1 character)
-            // #Examples    ALMAZA_GI_Trust_IPv4-FW02E-C-EG
-
-            var specialService="Firewall";
-            var enrichmentString = S(alias).replaceAll('_','-');//trying to unify byremoving spaces
-            var enrichmentFields = S(enrichmentString).splitLeft('-');
-            var sp_pop="Unknown",sp_fwType="Unknown",sp_serviceType="Unknown",sp_ipType="Unknown",sp_vendor="Unknown";
-            if(enrichmentFields.length == 7){
-                    var sp_pop=enrichmentFields[0] || "Unknown";;
-                    var sp_fwType=enrichmentFields[1] || "Unknown";;
-                    var sp_serviceType=enrichmentFields[2] || "Unknown";;
-                    var sp_ipType=enrichmentFields[3] || "Unknown";;
-                    var sp_vendor=enrichmentFields[4].right(1).s || "Unknown";; 
-            }
-            else{
-                unknownFlag = 1;
-            }
-
-            anErichment= {
-                    specialService : specialService, provisoFlag:provisoFlag, unknownFlag : unknownFlag, sp_pop : sp_pop, sp_fwType : sp_fwType, 
-                    sp_serviceType : sp_serviceType, sp_ipType : sp_ipType, sp_vendor : sp_vendor,noEnrichFlag:noEnrichFlag,label : label
-            }
-        }
-        else if(S(alias).startsWith("NR") ){
-            ///////////////////////////////////////
-            // # Condition  Start with (NR_)
-            // # Patterns   NR_P1_P2_P3_P4-N00P5-*-EG P6 P7
-            // # Patterns description   
-            // # P1: Provider
-            // # P2: Service
-            // # P3: Source Core
-            // # P4: Destination Core
-            // # P5: Vendor  (only 1 character)
-            // # P6: Link Number
-            // # P7: Speed
-            // # Examples   NR_Etisalat_Data_ALZ_AUTO-N01E-DSR-EG L1 GIG
-            // # NR_Orange_RTP_ALZ_OBR-N01O-R-EG L1 GIG
-            var specialService = "National-Roaming";
-            var enrichmentString = S(alias).replaceAll('_','-');//trying to unify by removing underscore
-            enrichmentString = S(enrichmentString).replaceAll(' ','-');//trying to unify by removing spaces
-            var enrichmentFields = S(enrichmentString).splitLeft('-');
-            var sp_provider = "Unknown",sp_service="Unknown",sp_sourceCore="Unknown",sp_destCore="Unknown",sp_vendor="Unknown",sp_linkNumber="Unknown",sp_speed="Unknown";
-                    
-            if(enrichmentFields.length == 10){
-                sp_provider=enrichmentFields[1] || "Unknown";
-                sp_service=enrichmentFields[2] || "Unknown";
-                sp_sourceCore=enrichmentFields[3] || "Unknown";
-                sp_destCore=enrichmentFields[4] || "Unknown";
-                sp_vendor=enrichmentFields[5].right(1).s || "Unknown";
-                sp_linkNumber=enrichmentFields[8] || "Unknown";
-                sp_speed=enrichmentFields[9] || "Unknown";
-            }
-            else{
-                unknownFlag = 1;
-            }
-            label = hostname+" "+ifName;
-            anErichment= {
-                    specialService:specialService,provisoFlag : provisoFlag, unknownFlag:unknownFlag, sp_provider : sp_provider, sp_service : sp_service, 
-                    sp_sourceCore : sp_sourceCore, sp_destCore : sp_destCore, sp_vendor : sp_vendor, sp_linkNumber : sp_linkNumber, sp_speed : sp_speed, label : label,
-                    noEnrichFlag:noEnrichFlag,label : label
-            }
-        }
-        // # LTE Interfaces
-        else if(S(alias).contains("ENP")){      
-            // # Condition  Contain (*_ENB*-E*-*-EG) or Contain (ENB)
-            // # Patterns   P1_ENB_P2-E00P3-*-EG P4 P5
-            // # Patterns description   
-            // # P1: POP Name
-            // # P2: Site Code
-            // # P3: Vendor  (only 1 character)
-            // # P4: Link Number
-            // # P5: Speed
-            // # Examples   MONEIB_ENB_LCaiG31109-E01N-C-EG L1 GIG
-            // # MONEIB_ENB_LCaiG31109_S1-MME-E01N-C-EG --> wrong example to be validated
-
-            var specialService="LTE";
-            var enrichmentString = S(alias).replaceAll('_','-');//trying to unify by removing underscore
-            enrichmentString = S(enrichmentString).replaceAll(' ','-');//trying to unify by removing spaces
-            var enrichmentFields = S(enrichmentString).splitLeft('-');
-            var sp_pop="Unknown",sp_siteCode="Unknown",sp_vendor="Unknown",sp_linkNumber="Unknown",sp_speed="Unknown";
-            if(enrichmentFields.length == 8){
-                sp_pop=enrichmentFields[0] || "Unknown";
-                sp_siteCode=enrichmentFields[2] || "Unknown";
-                sp_vendor=enrichmentFields[3].right(1).s || "Unknown";
-                sp_linkNumber=enrichmentFields[6] || "Unknown";
-                sp_speed=enrichmentFields[7] || "Unknown";
-            }
-            else{
-                unknownFlag=1;
-            }
-            anErichment= {
-                    specialService:specialService,provisoFlag : provisoFlag, unknownFlag:unknownFlag, sp_pop:sp_pop,sp_siteCode:sp_siteCode,sp_vendor:sp_vendor,
-                    sp_linkNumber:sp_linkNumber,sp_speed:sp_speed,noEnrichFlag:noEnrichFlag,label : label
-            }
-        }
-        // # EPC
-        else if(S(alias).contains("EPC")){      
-            // # Condition  Contain (* EPC*)
-            // # Patterns   P1 EPC P2 P3
-            // # Patterns description   
-            // # P1: Provider
-            // # P2: Link Number
-            // # P3: Speed
-            // # Examples   Ericson EPC L1 10GIG
-            // # Ericson EPC L2 10GIG
-            
-            var specialService="EPC";
-            var enrichmentFields = S(alias).splitLeft(' ');
-            var sp_provider="Unknown",sp_linkNumber="Unknown",sp_speed="Unknown";
-            if(enrichmentFields.length == 4){
-                sp_provider=enrichmentFields[0] || "Unknown";
-                sp_linkNumber=enrichmentFields[2] || "Unknown";
-                sp_speed=enrichmentFields[3] || "Unknown";
-            }
-            else{
-                unknownFlag=1;
-            }
-
-            anErichment= {
-                    specialService:specialService,provisoFlag : provisoFlag, unknownFlag:unknownFlag, sp_provider:sp_provider,sp_linkNumber:sp_linkNumber,
-                    sp_speed:sp_speed,noEnrichFlag:noEnrichFlag,label : label
-            }
-        }
-        // # DPI
-        else if(S(alias).contains("PRE1") ){        
-            // # Condition  Start with (POP Name-PRE1*) OR Contain (PRE1)
-            // # Patterns   P1-P2-P3
-            // # Patterns description   
-            // # P1: POP name
-            // # P2: Pre Number
-            // # P3: Port IDs
-            // # Examples   MAADI2-PRE1-1/1/INT
-            // # MAADI2-PRE1-1/2/EXT
-
-            var specialService="DPI";
-            var enrichmentFields = S(alias).splitLeft('-');
-            var sp_pop="Unknown",sp_preNumber="Unknown",sp_portID="Unknown";
-            if(enrichmentFields.length == 3){
-                sp_pop=enrichmentFields[0];
-                sp_preNumber=S(enrichmentFields[1]).chompLeft('PRE').s; 
-                sp_portID=enrichmentFields[2];
-            }
-            else{
-                unknownFlag = 1;
-            }
-            anErichment= {
-                    specialService:specialService,provisoFlag : provisoFlag, unknownFlag:unknownFlag, sp_pop:sp_pop,sp_preNumber:sp_preNumber,
-                    sp_portID:sp_portID,noEnrichFlag:noEnrichFlag,label : label
-            }
-        }
-
-        else if(linkEnrichmentData.length > 0){
+        else if(linkEnrichmentData && linkEnrichmentData.length > 0){
             var pop = S(self.name).splitLeft('-')[0];
             var secondHost,secondInterface,secondPOP,type;
+            anErichment = null;
             if(linkEnrichmentData.isLeftEnd == true){
                 for (var i=0; i < linkEnrichmentData.length; i++) {
-                    if (linkEnrichmentData[i].interface1 === ifName) {
+                    if (linkEnrichmentData[i].interface1 === interfaceName) {
+                        skip = true;
+                        secondHost = linkEnrichmentData[i].device2;
+                        secondInterface = linkEnrichmentData[i].interface2;
+                        secondPOP = S(linkEnrichmentData[i].device2).splitLeft('-')[0];
+                        if(secondPOP == pop) type = "Local";
+                        else type = "WAN";
+                        anErichment = {secondHost:secondHost,secondInterface:secondInterface,secondPOP:secondPOP, provisoFlag:1,type:type,pop:pop};
                         break;
                     }
                 }
-                secondHost = linkEnrichmentData[i].device2;
-                secondInterface = linkEnrichmentData[i].interface2;
-                secondPOP = S(linkEnrichmentData[i].device2).splitLeft('-')[0];
             }
             else{
                 for (var i=0; i < linkEnrichmentData.length; i++) {
-                    if (linkEnrichmentData[i].interface2 === ifName) {
+                    if (S(linkEnrichmentData[i].interface2).s === S(interfaceName).s) {
+                        skip = true;
+                        secondHost = linkEnrichmentData[i].device1;
+                        secondInterface = linkEnrichmentData[i].interface1;
+                        secondPOP = S(linkEnrichmentData[i].device1).splitLeft('-')[0];
+                        if(secondPOP == pop) type = "Local";
+                        else type = "WAN";
+                        anErichment = {secondHost:secondHost,secondInterface:secondInterface,secondPOP:secondPOP, provisoFlag:1,type:type,pop:pop};
                         break;
                     }
                 }
-                secondHost = linkEnrichmentData[i].device1;
-                secondInterface = linkEnrichmentData[i].interface1;
-                secondPOP = S(linkEnrichmentData[i].device1).splitLeft('-')[0];
             }
-            if(secondPOP == pop) type = "Local";
-            else type = "WAN";
-            
-            anErichment = {secondHost:secondHost,secondInterface:secondInterface,secondPOP:secondPOP, provisoFlag:1,type:type,pop:pop};
         }//else
-        else if(
-            (S(interfaceName) &&
-            S(interfaceName).startsWith("100ge")  || 
-            S(interfaceName).startsWith("ae") || 
-            S(interfaceName).startsWith("at") || 
-            S(interfaceName).startsWith("bundle-ether") || 
-            S(interfaceName).startsWith("e1") || 
-            S(interfaceName).startsWith("et") || 
-            S(interfaceName).startsWith("fa") || 
-            S(interfaceName).startsWith("fe-") || 
-            S(interfaceName).startsWith("ge-") || 
-            S(interfaceName).startsWith("gi") || 
-            S(interfaceName).startsWith("hundredgige") || 
+        var tmpIfName = S(interfaceName).s.toLowerCase();
+        var tmpAlias ;
+        if(!S(alias).isEmpty()) tmpAlias= S(alias).s.toLowerCase();
+        else skip = true;
+        if(
+            ((skip == false) && S(tmpIfName) && 
+            S(tmpIfName).startsWith("100ge")  || 
+            S(tmpIfName).startsWith("ae") || 
+            S(tmpIfName).startsWith("at") || 
+            S(tmpIfName).startsWith("bundle-ether") || 
+            S(tmpIfName).startsWith("e1") || 
+            S(tmpIfName).startsWith("et") || 
+            S(tmpIfName).startsWith("fa") || 
+            S(tmpIfName).startsWith("fe-") || 
+            S(tmpIfName).startsWith("ge-") || 
+            S(tmpIfName).startsWith("gi") || 
+            S(tmpIfName).startsWith("hundredgige") || 
             new RegExp('/^[0-9]+\/[0-9]+\/[0-9]+/').test(S(interfaceName)) ||// number/nnumbe/number
-            S(interfaceName).startsWith("po") || 
-            S(interfaceName).startsWith("se") || 
-            S(interfaceName).startsWith("so-") || 
-            S(interfaceName).startsWith("te") || 
-            S(interfaceName).startsWith("xe-")) && 
-            !S(interfaceName).contains('.') &&
-            !S(alias).contains("esp")  && 
-            !S(alias).contains("vpn")  && 
-            !S(alias).contains("internet") && 
-            !S(alias).contains("mpls") ){
+            S(tmpIfName).startsWith("po") || 
+            S(tmpIfName).startsWith("se") || 
+            S(tmpIfName).startsWith("so-") || 
+            S(tmpIfName).startsWith("te") || 
+            S(tmpIfName).startsWith("xe-")) && 
+            !S(tmpIfName).contains('.') //&&
+            // !S(tmpAlias).contains("esp")  && 
+            // !S(tmpAlias).contains("vpn")  && 
+            // !S(tmpAlias).contains("internet") && 
+            // !S(tmpAlias).contains("mpls") 
+            ){
                 provisoFlag=1;
                 noEnrichFlag=1; 
                 unknownFlag=0;
-                var label = hostname+" "+ifName+" "+ifAlias;        
-                anErichment= { provisoFlag : provisoFlag, unknownFlag : unknownFlag , label : label , noEnrichFlag:noEnrichFlag };
+                // console.log(hostname+" "+interfaceName+" "+alias);
+                // var label = hostname+" "+interfaceName+" "+alias;        
+                // anErichment= { provisoFlag : provisoFlag, unknownFlag : unknownFlag , label : label , noEnrichFlag:noEnrichFlag };
         }
         else{
             anErichment = null;
         }
-        if(unknownFlag==1){
-             logger.warn(hostname+" "+ipaddress+" : special services interface with invalid description - Service: "+specialService+" - ifAlias: "+ifAlias+" - ifName: "+ifName+" - ifIndex: "+ifIndex);
+        if(!S(alias).isEmpty() && unknownFlag==1){
+             logger.warn(hostname+" "+ipaddress+" : special services interface with invalid description - Service: "+specialService+" - ifAlias: "+alias+" - interfaceName: "+ifName+" - ifIndex: "+ifIndex);
         }
-        if(noEnrichFlag==1){
-             logger.warn(hostname+" "+ipaddress+" : Interface with no enrichment has been marked to import into proviso - ifAlias: "+ifAlias+" - ifName: "+ifName+" - ifIndex: "+ifIndex);
+        if(!S(alias).isEmpty() && noEnrichFlag==1){
+             logger.warn(hostname+" "+ipaddress+" : Interface with no enrichment has been marked to import into proviso - ifAlias: "+alias+" - ifName: "+interfaceName+" - ifIndex: "+ifIndex);
         }
         return anErichment;
 
     }
 
     self.saveDevice = function(device){
+        console.log("saveDevice 1 "+self.device.ipaddress);        
         Device.findByIdAndUpdate(device._id,{interfaces: self.interestInterfaces, discovered: true, updatedAt: new Date()},function(error,updatedDevice){
+        console.log("saveDevice 2 "+self.device.ipaddress);        
             if(error){
                  logger.error(error);
             }
@@ -504,19 +537,152 @@ function discoveredDevice(device,linkEnrichmentData) {
         }
     };    
 
+self.retrieveAdminOper = function (error, varbinds) {
+    console.log("retrieveAdminOper: "+self.device.hostname);
+    if (error) {
+    console.error (error.toString ());
+    } else {
+for (var i = 0; i < 1; i++) {
+            if (i >= varbinds.length)
+                break;
+
+            if (snmp.isVarbindError (varbinds[i]))
+                console.error (snmp.varbindError (varbinds[i]));
+            else
+                console.log (varbinds[i].oid + "|" + varbinds[i].value);
+        }        
+        // console.log("varbind length " + varbinds.length);
+        // then step through the repeaters which are varbind arrays
+        var tmpInterestInterfacesIndices = [];//this will make iterating on interfaces during sync mode faster
+        // var interestInterfacesIndices = [];//this will make iterating on interfaces during sync mode faster
+        var index;
+        var counter=0;
+        for (var i = 0; i < varbinds.length; i++) {
+
+            // console.log(varbinds[i].length);
+            for (var j = 0; j < varbinds[i].length; j++) {
+                if (snmp.isVarbindError (varbinds[i][j])){
+                    console.error (snmp.varbindError (varbinds[i][j]));
+                }
+                else{
+                    // console.log (varbinds[i][j].oid + " | " + varbinds[i][j].value);
+                    if(S(varbinds[i][j].oid).contains("1.3.6.1.2.1.2.2.1.7.")) {
+                        console.log("admin: "+varbinds[i][j].oid);
+                        index = S(varbinds[i][j].oid).chompLeft("1.3.6.1.2.1.2.2.1.7.").s;
+                    }
+                    else {
+                        console.log("oper: "+varbinds[i][j].oid);
+                        index = S(varbinds[i][j].oid).chompLeft("1.3.6.1.2.1.2.2.1.8.").s;
+                    }
+                    if( S(varbinds[i][j].oid).contains("1.3.6.1.2.1.2.2.1.7.") && varbinds[i][j].value == 1 ) {
+                        console.log("admin status: "+varbinds[i][j].oid);
+                        tmpInterestInterfacesIndices.push(index);
+                    }
+                    else if( varbinds[i][j].value == 1 && tmpInterestInterfacesIndices.includes(index)) {
+                        console.log (varbinds[i][j].oid + " | " + varbinds[i][j].value);
+                        self.interestInterfacesIndices.push(index);
+                        counter = counter + 1;
+                    }
+                }
+            }
+        }
+        console.log(self.interestInterfacesIndices.length);
+        if(counter > 0){
+            oids = [ifOIDs.ifDescr,ifOIDs.ifType,ifOIDs.ifSpeed,ifOIDs.ifInOctets,ifOIDs.ifOutOctets,ifOIDs.ifName,ifOIDs.ifHCInOctets,ifOIDs.ifHCOutOctets,
+            ifOIDs.ifHighSpeed,ifOIDs.ifAlias];
+            // self.session.getBulk (oids, 0,15000,self.retrieveOtherOids);
+        }
+    // var baseOids = ["1.3.6.1.2.1.2.2.1.2","1.3.6.1.2.1.2.2.1.3","1.3.6.1.2.1.2.2.1.5",
+    //         "1.3.6.1.2.1.2.2.1.10","1.3.6.1.2.1.2.2.1.16","1.3.6.1.2.1.31.1.1.1.1",
+    //         "1.3.6.1.2.1.31.1.1.1.6","1.3.6.1.2.1.31.1.1.1.10","1.3.6.1.2.1.31.1.1.1.15","1.3.6.1.2.1.31.1.1.1.18"];
+    //     for(var i=0;i<self.interestInterfacesIndices.length;i++){
+    //         console.log("createOtherOIDs: "+self.interestInterfacesIndices[i]);
+    //         self.requestedOIDs.push("1.3.6.1.2.1.2.2.1.2."+self.interestInterfacesIndices[i]);
+    //         self.requestedOIDs.push("1.3.6.1.2.1.2.2.1.3."+self.interestInterfacesIndices[i]);
+    //         self.requestedOIDs.push("1.3.6.1.2.1.2.2.1.5."+self.interestInterfacesIndices[i]);
+    //         self.requestedOIDs.push("1.3.6.1.2.1.2.2.1.10."+self.interestInterfacesIndices[i]);
+    //         self.requestedOIDs.push("1.3.6.1.2.1.2.2.1.16."+self.interestInterfacesIndices[i]);
+    //         self.requestedOIDs.push("1.3.6.1.2.1.31.1.1.1.1."+self.interestInterfacesIndices[i]);
+    //         self.requestedOIDs.push("1.3.6.1.2.1.31.1.1.1.6."+self.interestInterfacesIndices[i]);
+    //         self.requestedOIDs.push("1.3.6.1.2.1.31.1.1.1.10."+self.interestInterfacesIndices[i]);
+    //         self.requestedOIDs.push("1.3.6.1.2.1.31.1.1.1.15."+self.interestInterfacesIndices[i]);
+    //         self.requestedOIDs.push("1.3.6.1.2.1.31.1.1.1.18."+self.interestInterfacesIndices[i]);
+    //         // if(interface.ifIndex == interfaceIndex){
+    //         //     intf = Object.assign(intf,interface);
+    //         // }
+    //     };    
+    //     console.log(self.requestedOIDs)         ;
+    }
+}
+// self.requestedOIDs = [];
+self.retrieveOtherOids = function (error, varbinds) {
+    console.log("retrieveOtherOids "+self.device.hostname);
+    if (error) {
+    console.error (error.toString ());
+    } else {
+        // console.log("varbind length " + varbinds.length);
+        // then step through the repeaters which are varbind arrays
+        var tmpInterestInterfacesIndices = [];//this will make iterating on interfaces during sync mode faster
+        var index;
+        for (var i = 0; i < varbinds.length; i++) {
+            // console.log(varbinds[i].length);
+            for (var j = 0; j < varbinds[i].length; j++) {
+                if (snmp.isVarbindError (varbinds[i][j])){
+                    console.error (snmp.varbindError (varbinds[i][j]));
+                }
+                else{
+                    // console.log (varbinds[i][j].oid + " | " + varbinds[i][j].value);
+                    // if(i==0) index = S(varbinds[i][j].oid).chompLeft("1.3.6.1.2.1.2.2.1.7.").s;
+                    // else index = S(varbinds[i][j].oid).chompLeft("1.3.6.1.2.1.2.2.1.8.").s;
+                    // if( (i==0) && varbinds[i][j].value == 1 ) tmpInterestInterfacesIndices.push(index);
+                    // else if( varbinds[i][j].value == 1 && tmpInterestInterfacesIndices.includes(index)) interestInterfacesIndices.push(index);
+                }
+            }
+        }
+        console.log(self.interestInterfacesIndices);
+        console.log(self.interestInterfacesIndices.length);
+    }
+};
+
+self.getOIDs = __async__(function(){
+    console.log("getInterestOIDs 1 "+self.device.ipaddress+" "+self.device.community);
+
+    // var oids = [ifOIDs.ifAdminStatus,ifOIDs.ifOperStatus];
+    var oids = [
+    "1.3.6.1.2.1.1.4.0",
+    "1.3.6.1.2.1.2.2.1.7",
+    "1.3.6.1.2.1.2.2.1.8"
+];
+
+    // oids = [ifOIDs.ifAdminStatus,ifOIDs.ifOperStatus,ifOIDs.ifDescr,ifOIDs.ifType,ifOIDs.ifSpeed,ifOIDs.ifInOctets,ifOIDs.ifOutOctets,ifOIDs.ifName,ifOIDs.ifHCInOctets,ifOIDs.ifHCOutOctets,
+    // ifOIDs.ifHighSpeed,ifOIDs.ifAlias];
+    __await__(self.session.getBulk (oids, 1, 1500 ,self.retrieveAdminOper));
+
+    // oids = [ifOIDs.ifDescr,ifOIDs.ifType,ifOIDs.ifSpeed,ifOIDs.ifInOctets,ifOIDs.ifOutOctets,ifOIDs.ifName,ifOIDs.ifHCInOctets,ifOIDs.ifHCOutOctets,
+    // ifOIDs.ifHighSpeed,ifOIDs.ifAlias];
+    // __await__(self.session.getBulk (oids, self.retrieveOtherOids));
+
+});
+
     self.retrieveIfTable = function( table,callback){
+        console.log("retrieveIfTable 1 "+self.device.ipaddress);
         var indexes = [];
+        console.log("retrieveIfTable  "+self.device.ipaddress+" table "+table);
         for (index in table){
+            console.log("retrieveIfTable index: "+ index);
             indexes.push (parseInt (index));
         }
+        console.log("retrieveIfTable 2 "+self.device.ipaddress);
         indexes.sort (sortInt);
-
+        console.log("retrieveIfTable 3 "+self.device.ipaddress);
         // Use the sorted indexes we've calculated to walk through each
         // row in order
         var i = indexes.length
         var columns = [];
         var columnSorted = false;
+        console.log("retrieveIfTable 4 "+self.device.ipaddress);
         async.forEachOf(table,function (value, key, callback){
+        console.log("retrieveIfTable 5 "+self.device.ipaddress);
             anInterface = new Interface();
             anInterface.hostname = self.device.hostname;
             anInterface.ipaddress = self.device.ipaddress;
@@ -530,30 +696,39 @@ function discoveredDevice(device,linkEnrichmentData) {
             anInterface.operStatus  = value[ifTableColumns.ifOperStatus];
             anInterface.ifInOctets  = value[ifTableColumns.ifInOctets];
             anInterface.ifOutOctets  = value[ifTableColumns.ifOutOctets];
+        console.log("retrieveIfTable 6 "+self.device.ipaddress);
             var interfaceType = S(anInterface.ifType).toInt();
+        console.log("retrieveIfTable 7 "+self.device.ipaddress);
             if( ((self.deviceType =="router") || (self.deviceType =="switch")) && 
                 (anInterface.adminStatus == snmpConstants.ifAdminOperStatus.up) && 
                 (anInterface.operStatus == snmpConstants.ifAdminOperStatus.up)) {
+        console.log("retrieveIfTable 8 "+self.device.ipaddress);
                 self.interfaces[key] = anInterface;
                 self.interestKeys.push(key);//push index to be used during ifXTable walk
+        console.log("retrieveIfTable 9 "+self.device.ipaddress);
             } 
             else if((self.deviceVendor == "huawei") && ((self.deviceType =="msan") || (self.deviceType =="gpon") || (self.deviceType =="dslam"))  ){
                 if((anInterface.adminStatus == snmpConstants.ifAdminOperStatus.up) &&
                     (anInterface.operStatus == snmpConstants.ifAdminOperStatus.up) &&
                     ((interfaceType == 6) || (interfaceType == 117))){
+        console.log("retrieveIfTable 10 "+self.device.ipaddress);
                     self.interfaces[key] = anInterface;
                     self.interestKeys.push(key);//push index to be used during ifXTable walk
+        console.log("retrieveIfTable 11 "+self.device.ipaddress);
                 }
             }
             else if((self.deviceVendor == "alcatel") && (self.deviceModel =="isam")   ){
                 if((anInterface.adminStatus == snmpConstants.ifAdminOperStatus.up) &&
                     (anInterface.operStatus == snmpConstants.ifAdminOperStatus.up) &&
                     (interfaceType == 6)){
+        console.log("retrieveIfTable 12 "+self.device.ipaddress);
                     self.interfaces[key] = anInterface;
                     self.interestKeys.push(key);//push index to be used during ifXTable walk
+        console.log("retrieveIfTable 13 "+self.device.ipaddress);
                 }
             }
         }); 
+        console.log("retrieveIfTable 14 "+self.device.ipaddress);
         self.ifTableError = false;
         self.ifXTableError = false;
         return self.interfaces;
@@ -569,7 +744,7 @@ function discoveredDevice(device,linkEnrichmentData) {
         var i = indexes.length
         var columns = [];
         var columnSorted = false;
-        
+
         async.forEachOf(table,function (value, key, callback){
             if(self.interestKeys.includes(key)){
                 var intf= self.interfaces[key];
@@ -586,25 +761,24 @@ function discoveredDevice(device,linkEnrichmentData) {
                     intf.counters = 32;
                     // var hcInOctet = value[ifXTableColumns.ifHCInOctets];ifHCOutOctets
                     if(hcInOctetsLarge || hcOutOctetsLarge) intf.counters = 64;
-                    var name="";
+                    var name="",lowerCaseName="";
                     if(!S(intf.ifName).isEmpty()) {
                         name = S(intf.ifName).trim().s;
-                        name = name.toLowerCase();
+                        lowerCaseName = name.toLowerCase();
                     }
                     var alias="";
                     if(!S(intf.ifAlias).isEmpty()){
                         alias = S(intf.ifAlias).trim().s;
-                        alias = alias.toLowerCase();                   
                     }
-                    if( ((self.deviceType =="router") || (self.deviceType =="switch")) && !S(name).isEmpty() && !S(name).contains('pppoe') && !S(name).startsWith("vi")) 
+                    if( ((self.deviceType =="router") || (self.deviceType =="switch")) && !S(lowerCaseName).isEmpty() && !S(lowerCaseName).contains('pppoe') && !S(lowerCaseName).startsWith("vi")) 
                     {
-                        var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress);
+                        // var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress);
                         if(enrichment) intf = Object.assign(intf,enrichment);
                         self.interestInterfaces.push(intf);
                         self.interestInterfacesIndices.push(intf.ifIndex);
                     }
                     else{//no more filtering is required, so add interface
-                        var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress);
+                        // var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress);
                         if(enrichment) Object.assign(intf,enrichment);
                         self.interestInterfaces.push(intf);
                         self.interestInterfacesIndices.push(intf.ifIndex);                        
@@ -651,21 +825,29 @@ function discoveredDevice(device,linkEnrichmentData) {
         }
     };
     self.ifXTableResponseCb = function  (error, table) {
+        console.log("ifXTableResponseCb 1 "+self.device.ipaddress);
+
         if (error) {
+        console.log("ifXTableResponseCb error "+self.device.ipaddress+" : "+error);
             //  logger.error ("device "+self.name+ " has " +error.toString () + " while reading ifXTable");
             self.ifTableError = true;
             self.ifXTableError = true;
             return;
         }
         if(self.inSyncMode){
+            console.log("ifXTableResponseCb 2 "+self.device.ipaddress);
             self.retrieveIfXTable(table,function(){});
+            console.log("ifXTableResponseCb 3 "+self.device.ipaddress);
             async.forEachOf(self.device.interfaces,function(interface,key,callback){
+                console.log("ifXTableResponseCb 4 "+self.device.ipaddress);
                 var syncCycles = S(interface.syncCycles).toInt();
+                console.log("ifXTableResponseCb 5 "+self.device.ipaddress);
                 interface.syncCycles = syncCycles + 1;
                 //  logger.info(interface.index+": "+interface.name+" , "+interface.updated +" , syncCycles "+interface.syncCycles);
                 //content of interestInterfaces are the found interfaces in the current sync cycles
                 // if: current interface index found in interestInterfaces and interface not updated, then: update interface
                 if(self.interestInterfacesIndices.includes(interface.ifIndex) && (interface.lastUpdate === undefined)){
+                console.log("ifXTableResponseCb 6 "+self.device.ipaddress);
                     var intf = self.getInterfaceFromInterestList(interface.ifIndex);
                     interface.ifName = intf.ifName;
                     interface.ifAlias = intf.ifAlias;
@@ -682,6 +864,7 @@ function discoveredDevice(device,linkEnrichmentData) {
                     //  logger.info("found interface "+interface.name +" with index "+interface.index+", with update state "+interface.updated);
                     //remove interface from list of interest interfaces as it is already exists
                     self.removeInterfaceFromInterestList(interface.ifIndex);
+                console.log("ifXTableResponseCb 7 "+self.device.ipaddress);
                 }
                 // if: current interface index not found and updated and syncCyles > threshold, then: let "delete = true" and update interface
                 else if((!self.interestInterfacesIndices.includes(interface.ifIndex)) && 
@@ -690,31 +873,41 @@ function discoveredDevice(device,linkEnrichmentData) {
                     (interface.syncCycles > syncCyclesThreshold)){
                     // interface.delete = true;
                     // self.interfaceUpdateList.push(interface);
+                console.log("ifXTableResponseCb 8 "+self.device.ipaddress);
                     self.interfaceRemoveList.push(interface);//we will remove directly
+                console.log("ifXTableResponseCb 9 "+self.device.ipaddress);
                 }else if((!self.interestInterfacesIndices.includes(interface.ifIndex)) && 
                     (interface.updated instanceof Date) && 
                     (self.getDateDifference(new Date(),interface.lastUpdate) <= 7) &&
                     (interface.syncCycles <= syncCyclesThreshold)){
+                console.log("ifXTableResponseCb 10 "+self.device.ipaddress);
                     interface.lastUpdate = new Date();
                     self.interfaceUpdateList.push(interface);
+                console.log("ifXTableResponseCb 11 "+self.device.ipaddress);
                 }
                 // if: current interface index not found and not updated and syncCyles > threshold, then: delete interface
                 else if((!self.interestInterfacesIndices.includes(interface.ifIndex)) && 
                     (interface.lastUpdate === undefined) && 
                     (interface.syncCycles > syncCyclesThreshold)){
+                console.log("ifXTableResponseCb 12 "+self.device.ipaddress);
                     self.interfaceRemoveList.push(interface);
+                console.log("ifXTableResponseCb 13 "+self.device.ipaddress);
                     //  logger.info("interface:"+ interface.name + " will be deleted automatically, it's syncCycle= "+interface.syncCycles);
                 }else if((!self.interestInterfacesIndices.includes(interface.ifIndex)) && 
                     (interface.lastUpdate === undefined) && 
                     (interface.syncCycles <= syncCyclesThreshold)){
                     //  logger.info("interface:"+ interface.name + " wasn't found during this sync cycle, it's syncCycle= "+interface.syncCycles);
+                console.log("ifXTableResponseCb 14 "+self.device.ipaddress);
                     interface.lastUpdate = new Date();
                     self.interfaceUpdateList.push(interface);
+                console.log("ifXTableResponseCb 15 "+self.device.ipaddress);
                 }
                 // if: current interface index found in interestInterfaces and interface updated, then: skip
                 else if(self.interestInterfacesIndices.includes(interface.ifIndex) && (interface.lastUpdate instanceof Date)){
                     //remove interface from list of interest interfaces as it is already exists
+                console.log("ifXTableResponseCb 16 "+self.device.ipaddress);
                     var intf = self.getInterfaceFromInterestList(interface.ifIndex);
+                console.log("ifXTableResponseCb 17 "+self.device.ipaddress);
                     // interface.ifName = intf.ifName;
                     // interface.ifAlias = intf.ifAlias;
                     // interface.ifDescr = intf.ifDescr;
@@ -727,51 +920,65 @@ function discoveredDevice(device,linkEnrichmentData) {
                     interface.syncCycles = 0;
                     interface = Object.assign(interface,intf);
                     // self.parseIfAlias(interface.ifAlias,self.name,interface.ifName,interface.ifIndex,self.device.ipaddress);
+                console.log("ifXTableResponseCb 18 "+self.device.ipaddress);
                     self.interfaceUpdateList.push(interface);
+                console.log("ifXTableResponseCb 19 "+self.device.ipaddress);
                     self.removeInterfaceFromInterestList(interface.ifIndex);
+                console.log("ifXTableResponseCb 20 "+self.device.ipaddress);
                 }
                 // if: new interface index, then create interface 
                 else {
+                console.log("ifXTableResponseCb 21 "+self.device.ipaddress);
                 }
             });
+                console.log("ifXTableResponseCb 22 "+self.device.ipaddress);
             if(self.interestInterfaces.length > 0) self.createInterfaces(self.interestInterfaces);
             if(self.interfaceUpdateList.length > 0) self.updateInterfaces(self.interfaceUpdateList);
             if(self.interfaceRemoveList.length > 0) self.removeInterfaces(self.interfaceRemoveList);
+                console.log("ifXTableResponseCb 23 "+self.device.ipaddress);
             //now the device will use interestInterfaces array during save action, so modify it to include only new and updated
             //interfaces
             self.interestInterfaces = self.interestInterfaces.concat(self.interfaceUpdateList);
+                console.log("ifXTableResponseCb 24 "+self.device.ipaddress);
             self.saveDevice(self.device); 
+                console.log("ifXTableResponseCb 25 "+self.device.ipaddress);
         }else{
             self.createInterfaces(self.retrieveIfXTable(table,function(){}));
             self.saveDevice(self.device);         
         }
     };    
     self.ifTableResponseCb = function  (error, table) {
+        console.log("ifTableResponseCb 1 "+self.device.ipaddress);
         if (error) {
+            console.log("ifTableResponseCb error "+self.device.ipaddress+" : "+error);
             snmpError = error.toString ();
             //  logger.error ("device "+self.name+ " has " +error.toString () + " while reading ifTable");
             self.ifTableError = true;
             self.ifXTableError = true;
             return;
         }
+        console.log("ifTableResponseCb 2 "+self.device.ipaddress);
         self.retrieveIfTable(table,function(){});
+        console.log("ifTableResponseCb 3 "+self.device.ipaddress);
         self.session.tableColumnsAsync(oids.ifXTable.OID, oids.ifXTable.Columns, self.maxRepetitions, self.ifXTableResponseCb);
     };
-    this.syncInterfaces = function(){
+    self.syncInterfaces = function(){
         self.inSyncMode = true;
-
         // discover new list of filtered interface indices
         // if: current interface index found in list and interface updated, then: skip
         // if: current interface index found in list and interface not updated, then: update interface
         // if: current interface index not found and updated and syncCyles > threshold, then: let "delete = true" and update interface
         // if: current interface index not found and not updated and syncCyles > threshold, then: delete interface
         // if: new interface index, then create interface 
-         logger.info("in sync mode for: "+self.name+" "+self.device.ipaddress+" "+self.device.community);
-        self.session.tableColumnsAsync(oids.ifTable.OID, oids.ifTable.Columns, self.maxRepetitions, self.ifTableResponseCb);
+        logger.info("in sync mode for: "+self.name+" "+self.device.ipaddress+" "+self.device.community);
+        // self.session.tableColumnsAsync(oids.ifTable.OID, oids.ifTable.Columns, self.maxRepetitions, self.ifTableResponseCb);
+        self.getOIDs();//.then(self.getOtherOids).catch();
+
     };
-    this.discoverInterfaces = function(){
-         logger.info(self.name+" "+self.device.ipaddress+" "+self.device.community);
+    self.discoverInterfaces = function(){
+        logger.info(self.name+" "+self.device.ipaddress+" "+self.device.community);
         self.session.tableColumnsAsync(oids.ifTable.OID, oids.ifTable.Columns, self.maxRepetitions, self.ifTableResponseCb);
+
     };
 }
 //*********************
@@ -835,7 +1042,7 @@ String.prototype.escapeSpecialChars = function() {
                .replace(/\\b/g, "")
                .replace(/\\f/g, "");
 };
-router.get("/pagination?", function(request, response) {
+router.get("/pagination?", middleware.isLoggedIn ,function(request, response) {
         // limit is the number of rows per page
         var limit = parseInt(request.query.limit);
         // offset is the page number
@@ -895,7 +1102,7 @@ router.get("/pagination?", function(request, response) {
         }
 });
 //INDEX - show all devices
-router.get("/",  function(request, response) {
+router.get("/", middleware.isLoggedIn , function(request, response) {
     // Device.find({}, function(err, foundDevices) {
     //     if (err) {
     //          logger.error(err);
@@ -910,7 +1117,7 @@ router.get("/",  function(request, response) {
 
 
 //CREATE - add new device to DB
-router.post("/",  function(request, response) {
+router.post("/",  middleware.isLoggedIn ,function(request, response) {
     //get data from a form and add to devices array
     var hostname = request.body.device.hostname;
     var ipaddress = request.body.device.ipaddress;
@@ -1149,7 +1356,7 @@ router.post("/",  function(request, response) {
 
 //NEW - show form to create new device
 //should show the form will post data to /devices
-router.get("/new", function(request, response) {
+router.get("/new", middleware.isLoggedIn ,function(request, response) {
     if(process.env.SEED == "true"){
         seedDB(request.user);
     }
@@ -1157,16 +1364,27 @@ router.get("/new", function(request, response) {
 });
 
 var getDeviceFarLinks = __async__ (function(ahostname){
-    var foundRightLink = __await__ (Link.findOne({device1:ahostname}));
-    var foundLeftLink = __await__ (Link.findOne({device2:ahostname}));
-    if(foundRightLink || foundLeftLink) {
-        return {secondHost: foundRightLink.device2 || foundLeftLink.device1,
-                                                secondInterface: foundRightLink.interface2 || foundLeftLink.interface1,
-                                                secondPOP: S(foundRightLink.device2).splitLeft('-')[0] || S(foundLeftLink.device1).splitLeft('-')[0]}
-    }
-    else{
-        return null;
-    }
+    var linkEnrichmentData;
+    var foundRightLink = __await__ (Link.find({device1:ahostname}));
+    var foundLeftLink = __await__ (Link.find({device2:ahostname}));
+    // if(foundRightLink || foundLeftLink) {
+    //     return {secondHost: foundRightLink.device2 || foundLeftLink.device1,
+    //                                             secondInterface: foundRightLink.interface2 || foundLeftLink.interface1,
+    //                                             secondPOP: S(foundRightLink.device2).splitLeft('-')[0] || S(foundLeftLink.device1).splitLeft('-')[0]}
+    // }
+    // else{
+    //     return null;
+    // }
+        if(foundRightLink.length > 0 || foundLeftLink.length > 0) {
+            linkEnrichmentData = foundRightLink.concat(foundLeftLink);
+            if(foundRightLink.length > 0) linkEnrichmentData.isLeftEnd = true;
+            else linkEnrichmentData.isLeftEnd = false;
+        }
+        else{
+            linkEnrichmentData = null;
+        }
+        console.log(linkEnrichmentData);
+        return linkEnrichmentData;
 });
 
 var getDeviceList = __async__ (function(){
@@ -1192,7 +1410,7 @@ var getDeviceList = __async__ (function(){
 
 //Sync devices
 var syncDevices = function(){
-    logger.iinfo("Starting bulk devices sync");
+    logger.info("Starting bulk devices sync");
     getDeviceList()
     .then(function(deviceList){
         for(var i=0;i<deviceList.length;i++){
@@ -1202,11 +1420,16 @@ var syncDevices = function(){
     .catch(); 
     
 }
-router.get("/sync",  function(request, response) {
+
+router.get("/sync",  middleware.isLoggedIn ,function(request, response) {
     syncDevices();
     response.redirect("/devices");
 });
-router.get("/sync/:id",  function(request, response) {
+
+
+
+
+router.get("/sync/:id",  middleware.isLoggedIn ,function(request, response) {
     // syncDevices();
     Device.findById(request.params.id, function(err, foundDevice) {
         if (err) {
@@ -1215,8 +1438,13 @@ router.get("/sync/:id",  function(request, response) {
         else {
                      logger.info("single sync mode, device " + foundDevice.hostname +" will be synced now");
                     // perform interface sync
-                    var discoDevice = new discoveredDevice(foundDevice);
-                    discoDevice.syncInterfaces();
+                    getDeviceFarLinks(foundDevice.hostname)
+                    // .then(getAdminOperOIDs(foundDevice.ipaddress,foundDevice.community))
+                    .then(function(linkEnrichmentData){
+                        var discoDevice = new discoveredDevice(foundDevice,linkEnrichmentData);
+                        discoDevice.syncInterfaces();
+                    })
+                    .catch();
         }
     });
 
@@ -1224,7 +1452,7 @@ router.get("/sync/:id",  function(request, response) {
 });
 
 //SHOW DEVICE ROUTE
-router.get("/:id", function(request,response){
+router.get("/:id", middleware.isLoggedIn ,function(request,response){
     //find device with provided id
     Device.findById(request.params.id).populate("interfaces").exec(function(error,foundDevice){
         if(error){
@@ -1238,7 +1466,7 @@ router.get("/:id", function(request,response){
 });
 
 //EDIT DEVICE ROUTE
-router.get("/:id/edit",   function(request,response){
+router.get("/:id/edit",  middleware.isLoggedIn , function(request,response){
     //is user logged in?
      logger.warn("Update a device");
     Device.findById(request.params.id,function(error,foundDevice){
@@ -1247,7 +1475,7 @@ router.get("/:id/edit",   function(request,response){
     
 });
 //UPDATE DEVICE ROUTE
-router.put("/:id",  function(request,response){
+router.put("/:id", middleware.isLoggedIn ,function(request,response){
     //find and update the correct DEVICE
     request.body.device.updatedAt = new Date();
     request.body.device.lastUpdatedBy = {id: request.user._id, email: request.user.email};
@@ -1282,7 +1510,7 @@ router.put("/:id",  function(request,response){
 
 });
 //DESTROY Device ROUTE
-router.delete("/:id",   function(request,response){
+router.delete("/:id",  middleware.isLoggedIn , function(request,response){
      logger.warn("Deleting device with id: "+request.params.id);
     if(request.params.id == -1){
         response.redirect("/devices");

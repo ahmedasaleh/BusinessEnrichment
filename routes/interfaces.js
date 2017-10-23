@@ -165,7 +165,7 @@ router.delete("/:id", middleware.isLoggedIn,  function(request,response){
             request.flash("error","something went wrong while updating the interface");
         }
         else{
-            var device = foundInterface.device.hostname;
+            var device = foundInterface.hostname;
             console.log(device);
 
             Interface.findByIdAndRemove(request.params.id,function(error){
@@ -174,7 +174,7 @@ router.delete("/:id", middleware.isLoggedIn,  function(request,response){
                 }
             });
 
-            Device.findOne({hostname: foundInterface.device.hostname},function(error,foundDevice){
+            Device.findOne({hostname: device},function(error,foundDevice){
                 if(error){
                     request.flash("error","Can't find containing device");
                     console.log("Can't find containing device");
