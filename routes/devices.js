@@ -537,132 +537,6 @@ function discoveredDevice(device,linkEnrichmentData) {
         }
     };    
 
-self.retrieveAdminOper = function (error, varbinds) {
-    console.log("retrieveAdminOper: "+self.device.hostname);
-    if (error) {
-    console.error (error.toString ());
-    } else {
-for (var i = 0; i < 1; i++) {
-            if (i >= varbinds.length)
-                break;
-
-            if (snmp.isVarbindError (varbinds[i]))
-                console.error (snmp.varbindError (varbinds[i]));
-            else
-                console.log (varbinds[i].oid + "|" + varbinds[i].value);
-        }        
-        // console.log("varbind length " + varbinds.length);
-        // then step through the repeaters which are varbind arrays
-        var tmpInterestInterfacesIndices = [];//this will make iterating on interfaces during sync mode faster
-        // var interestInterfacesIndices = [];//this will make iterating on interfaces during sync mode faster
-        var index;
-        var counter=0;
-        for (var i = 0; i < varbinds.length; i++) {
-
-            // console.log(varbinds[i].length);
-            for (var j = 0; j < varbinds[i].length; j++) {
-                if (snmp.isVarbindError (varbinds[i][j])){
-                    console.error (snmp.varbindError (varbinds[i][j]));
-                }
-                else{
-                    // console.log (varbinds[i][j].oid + " | " + varbinds[i][j].value);
-                    if(S(varbinds[i][j].oid).contains("1.3.6.1.2.1.2.2.1.7.")) {
-                        console.log("admin: "+varbinds[i][j].oid);
-                        index = S(varbinds[i][j].oid).chompLeft("1.3.6.1.2.1.2.2.1.7.").s;
-                    }
-                    else {
-                        console.log("oper: "+varbinds[i][j].oid);
-                        index = S(varbinds[i][j].oid).chompLeft("1.3.6.1.2.1.2.2.1.8.").s;
-                    }
-                    if( S(varbinds[i][j].oid).contains("1.3.6.1.2.1.2.2.1.7.") && varbinds[i][j].value == 1 ) {
-                        console.log("admin status: "+varbinds[i][j].oid);
-                        tmpInterestInterfacesIndices.push(index);
-                    }
-                    else if( varbinds[i][j].value == 1 && tmpInterestInterfacesIndices.includes(index)) {
-                        console.log (varbinds[i][j].oid + " | " + varbinds[i][j].value);
-                        self.interestInterfacesIndices.push(index);
-                        counter = counter + 1;
-                    }
-                }
-            }
-        }
-        console.log(self.interestInterfacesIndices.length);
-        if(counter > 0){
-            oids = [ifOIDs.ifDescr,ifOIDs.ifType,ifOIDs.ifSpeed,ifOIDs.ifInOctets,ifOIDs.ifOutOctets,ifOIDs.ifName,ifOIDs.ifHCInOctets,ifOIDs.ifHCOutOctets,
-            ifOIDs.ifHighSpeed,ifOIDs.ifAlias];
-            // self.session.getBulk (oids, 0,15000,self.retrieveOtherOids);
-        }
-    // var baseOids = ["1.3.6.1.2.1.2.2.1.2","1.3.6.1.2.1.2.2.1.3","1.3.6.1.2.1.2.2.1.5",
-    //         "1.3.6.1.2.1.2.2.1.10","1.3.6.1.2.1.2.2.1.16","1.3.6.1.2.1.31.1.1.1.1",
-    //         "1.3.6.1.2.1.31.1.1.1.6","1.3.6.1.2.1.31.1.1.1.10","1.3.6.1.2.1.31.1.1.1.15","1.3.6.1.2.1.31.1.1.1.18"];
-    //     for(var i=0;i<self.interestInterfacesIndices.length;i++){
-    //         console.log("createOtherOIDs: "+self.interestInterfacesIndices[i]);
-    //         self.requestedOIDs.push("1.3.6.1.2.1.2.2.1.2."+self.interestInterfacesIndices[i]);
-    //         self.requestedOIDs.push("1.3.6.1.2.1.2.2.1.3."+self.interestInterfacesIndices[i]);
-    //         self.requestedOIDs.push("1.3.6.1.2.1.2.2.1.5."+self.interestInterfacesIndices[i]);
-    //         self.requestedOIDs.push("1.3.6.1.2.1.2.2.1.10."+self.interestInterfacesIndices[i]);
-    //         self.requestedOIDs.push("1.3.6.1.2.1.2.2.1.16."+self.interestInterfacesIndices[i]);
-    //         self.requestedOIDs.push("1.3.6.1.2.1.31.1.1.1.1."+self.interestInterfacesIndices[i]);
-    //         self.requestedOIDs.push("1.3.6.1.2.1.31.1.1.1.6."+self.interestInterfacesIndices[i]);
-    //         self.requestedOIDs.push("1.3.6.1.2.1.31.1.1.1.10."+self.interestInterfacesIndices[i]);
-    //         self.requestedOIDs.push("1.3.6.1.2.1.31.1.1.1.15."+self.interestInterfacesIndices[i]);
-    //         self.requestedOIDs.push("1.3.6.1.2.1.31.1.1.1.18."+self.interestInterfacesIndices[i]);
-    //         // if(interface.ifIndex == interfaceIndex){
-    //         //     intf = Object.assign(intf,interface);
-    //         // }
-    //     };    
-    //     console.log(self.requestedOIDs)         ;
-    }
-}
-// self.requestedOIDs = [];
-self.retrieveOtherOids = function (error, varbinds) {
-    console.log("retrieveOtherOids "+self.device.hostname);
-    if (error) {
-    console.error (error.toString ());
-    } else {
-        // console.log("varbind length " + varbinds.length);
-        // then step through the repeaters which are varbind arrays
-        var tmpInterestInterfacesIndices = [];//this will make iterating on interfaces during sync mode faster
-        var index;
-        for (var i = 0; i < varbinds.length; i++) {
-            // console.log(varbinds[i].length);
-            for (var j = 0; j < varbinds[i].length; j++) {
-                if (snmp.isVarbindError (varbinds[i][j])){
-                    console.error (snmp.varbindError (varbinds[i][j]));
-                }
-                else{
-                    // console.log (varbinds[i][j].oid + " | " + varbinds[i][j].value);
-                    // if(i==0) index = S(varbinds[i][j].oid).chompLeft("1.3.6.1.2.1.2.2.1.7.").s;
-                    // else index = S(varbinds[i][j].oid).chompLeft("1.3.6.1.2.1.2.2.1.8.").s;
-                    // if( (i==0) && varbinds[i][j].value == 1 ) tmpInterestInterfacesIndices.push(index);
-                    // else if( varbinds[i][j].value == 1 && tmpInterestInterfacesIndices.includes(index)) interestInterfacesIndices.push(index);
-                }
-            }
-        }
-        console.log(self.interestInterfacesIndices);
-        console.log(self.interestInterfacesIndices.length);
-    }
-};
-
-self.getOIDs = __async__(function(){
-    console.log("getInterestOIDs 1 "+self.device.ipaddress+" "+self.device.community);
-
-    // var oids = [ifOIDs.ifAdminStatus,ifOIDs.ifOperStatus];
-    var oids = [
-    "1.3.6.1.2.1.1.4.0",
-    "1.3.6.1.2.1.2.2.1.7",
-    "1.3.6.1.2.1.2.2.1.8"
-];
-
-    // oids = [ifOIDs.ifAdminStatus,ifOIDs.ifOperStatus,ifOIDs.ifDescr,ifOIDs.ifType,ifOIDs.ifSpeed,ifOIDs.ifInOctets,ifOIDs.ifOutOctets,ifOIDs.ifName,ifOIDs.ifHCInOctets,ifOIDs.ifHCOutOctets,
-    // ifOIDs.ifHighSpeed,ifOIDs.ifAlias];
-    __await__(self.session.getBulk (oids, 1, 1500 ,self.retrieveAdminOper));
-
-    // oids = [ifOIDs.ifDescr,ifOIDs.ifType,ifOIDs.ifSpeed,ifOIDs.ifInOctets,ifOIDs.ifOutOctets,ifOIDs.ifName,ifOIDs.ifHCInOctets,ifOIDs.ifHCOutOctets,
-    // ifOIDs.ifHighSpeed,ifOIDs.ifAlias];
-    // __await__(self.session.getBulk (oids, self.retrieveOtherOids));
-
-});
 
     self.retrieveIfTable = function( table,callback){
         console.log("retrieveIfTable 1 "+self.device.ipaddress);
@@ -688,7 +562,7 @@ self.getOIDs = __async__(function(){
             anInterface.ipaddress = self.device.ipaddress;
             anInterface.pop = self.device.popName.name;
             anInterface.author = {id: self.device.author.id, email: self.device.author.email};
-            anInterface.ifIndex = value[ifTableColumns.ifIndex];
+            anInterface.ifIndex = key;//value[ifTableColumns.ifIndex];
             anInterface.ifDescr = value[ifTableColumns.ifDescr];
             anInterface.ifType = value[ifTableColumns.ifType];
             anInterface.ifSpeed = value[ifTableColumns.ifSpeed];
@@ -696,6 +570,7 @@ self.getOIDs = __async__(function(){
             anInterface.operStatus  = value[ifTableColumns.ifOperStatus];
             anInterface.ifInOctets  = value[ifTableColumns.ifInOctets];
             anInterface.ifOutOctets  = value[ifTableColumns.ifOutOctets];
+            console.log("key is: "+key);
         console.log("retrieveIfTable 6 "+self.device.ipaddress);
             var interfaceType = S(anInterface.ifType).toInt();
         console.log("retrieveIfTable 7 "+self.device.ipaddress);
@@ -772,14 +647,16 @@ self.getOIDs = __async__(function(){
                     }
                     if( ((self.deviceType =="router") || (self.deviceType =="switch")) && !S(lowerCaseName).isEmpty() && !S(lowerCaseName).contains('pppoe') && !S(lowerCaseName).startsWith("vi")) 
                     {
+                    console.log("device type: "+self.deviceType);console.log("ifName: "+lowerCaseName);
+
                         // var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress);
-                        if(enrichment) intf = Object.assign(intf,enrichment);
+                        // if(enrichment) intf = Object.assign(intf,enrichment);
                         self.interestInterfaces.push(intf);
                         self.interestInterfacesIndices.push(intf.ifIndex);
                     }
-                    else{//no more filtering is required, so add interface
+                    else if(!((self.deviceType =="router") || (self.deviceType =="switch"))){//no more filtering is required, so add interface
                         // var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress);
-                        if(enrichment) Object.assign(intf,enrichment);
+                        // if(enrichment) Object.assign(intf,enrichment);
                         self.interestInterfaces.push(intf);
                         self.interestInterfacesIndices.push(intf.ifIndex);                        
                     }
@@ -802,11 +679,14 @@ self.getOIDs = __async__(function(){
     };
     self.updateInterfaces  = function(interfaceList){
         var ignoreMissing = false;
+        console.log("updateInterfaces 1")
         interfaceList.forEach((interface, i) => {
             Interface.findOneAndUpdate({"hostname" : S(interfaceList[i].hostname).s , "ifIndex" : S(interfaceList[i].ifIndex).toInt() },{lastUpdate:new Date()},function(error,updatedInterface){
             // Interface.find({"hostname" : S(interfaceList[i].hostname).s , "ifIndex" : S(interfaceList[i].ifIndex).toInt() }).exec((err, foundInterface) => {
                 self.allowedFields.forEach(function(field) {
                     if ((typeof interfaceList[i][field] !== 'undefined' && ignoreMissing) || !ignoreMissing) {
+                        console.log("interface field: "+updatedInterface[field]);
+                        console.log("interface list: "+interfaceList[i][field]);
                         updatedInterface[field] = interfaceList[i][field];
                     }
                 });
@@ -864,6 +744,7 @@ self.getOIDs = __async__(function(){
                     //  logger.info("found interface "+interface.name +" with index "+interface.index+", with update state "+interface.updated);
                     //remove interface from list of interest interfaces as it is already exists
                     self.removeInterfaceFromInterestList(interface.ifIndex);
+                    console.log(interface);
                 console.log("ifXTableResponseCb 7 "+self.device.ipaddress);
                 }
                 // if: current interface index not found and updated and syncCyles > threshold, then: let "delete = true" and update interface
@@ -906,6 +787,8 @@ self.getOIDs = __async__(function(){
                 else if(self.interestInterfacesIndices.includes(interface.ifIndex) && (interface.lastUpdate instanceof Date)){
                     //remove interface from list of interest interfaces as it is already exists
                 console.log("ifXTableResponseCb 16 "+self.device.ipaddress);
+                    console.log(interface);
+                    console.log(interface.ifIndex);
                     var intf = self.getInterfaceFromInterestList(interface.ifIndex);
                 console.log("ifXTableResponseCb 17 "+self.device.ipaddress);
                     // interface.ifName = intf.ifName;
@@ -971,8 +854,8 @@ self.getOIDs = __async__(function(){
         // if: current interface index not found and not updated and syncCyles > threshold, then: delete interface
         // if: new interface index, then create interface 
         logger.info("in sync mode for: "+self.name+" "+self.device.ipaddress+" "+self.device.community);
-        // self.session.tableColumnsAsync(oids.ifTable.OID, oids.ifTable.Columns, self.maxRepetitions, self.ifTableResponseCb);
-        self.getOIDs();//.then(self.getOtherOids).catch();
+        self.session.tableColumnsAsync(oids.ifTable.OID, oids.ifTable.Columns, self.maxRepetitions, self.ifTableResponseCb);
+        // self.getOIDs();//.then(self.getOtherOids).catch();
 
     };
     self.discoverInterfaces = function(){
@@ -1000,7 +883,7 @@ var oids = {
     ifTable: {
         OID: "1.3.6.1.2.1.2.2",
         Columns: [
-            ifTableColumns.ifIndex,
+            // ifTableColumns.ifIndex,
             ifTableColumns.ifDescr,
             ifTableColumns.ifType,
             ifTableColumns.ifSpeed,
