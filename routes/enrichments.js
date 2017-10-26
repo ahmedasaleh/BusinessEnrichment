@@ -19,7 +19,7 @@ var appendMode         = true;
 var fileUploadPath;     
 var fileExportPath;     
 var parsedInterfaces   = [];
-var maxCollectorLoad = 30000;
+// var maxCollectorLoad = 30000;
 
 if(process.env.OS == "WIN"){
   fileUploadPath     = __dirname+"\\..\\import\\";
@@ -33,36 +33,36 @@ function puts(error, stdout, stderr) {
   sys.puts(stdout);
 }
 
-function populateEnrichmentData() {
-    Enrichment.aggregate({$group: {_id: '$B_TED_Elt_Device', deviceData:{$push:{B_TED_Elt_IP:'$B_TED_Elt_IP',B_TED_Elt_Model:'$B_TED_Elt_Model'}}}}
-        ,function(error,device){
-            logger.info(device);
-        });
-}
+// function populateEnrichmentData() {
+//     Enrichment.aggregate({$group: {_id: '$B_TED_Elt_Device', deviceData:{$push:{B_TED_Elt_IP:'$B_TED_Elt_IP',B_TED_Elt_Model:'$B_TED_Elt_Model'}}}}
+//         ,function(error,device){
+//             logger.info(device);
+//         });
+// }
 
 
-function getSecondHost(devicename,ifDesc){
-  var secondHost = null;
-  logger.error("getSecondHost: "+devicename+"\t"+ifDesc);
-  Link.findOne({device1: devicename, interface1: "ge-0/0/0"},function(error,foundLink){
-    if(error){
-      logger.error(error);
-      return (null);
-    }
-    else if(foundLink != null){
-      secondHost = foundLink.device2;
-      secondPOP = linkParser.parseHostname(S(secondHost).s).popName;
-      logger.error("second host: "+secondHost);
-      logger.error("second POP: "+secondPOP);
-      return (secondHost) ;
-    }
-    else{
-      logger.error("can't find second host for the device "+devicename+" on interface "+ifDesc);
-      return (null);     
-    }
-  });
+// function getSecondHost(devicename,ifDesc){
+//   var secondHost = null;
+//   logger.error("getSecondHost: "+devicename+"\t"+ifDesc);
+//   Link.findOne({device1: devicename, interface1: "ge-0/0/0"},function(error,foundLink){
+//     if(error){
+//       logger.error(error);
+//       return (null);
+//     }
+//     else if(foundLink != null){
+//       secondHost = foundLink.device2;
+//       secondPOP = linkParser.parseHostname(S(secondHost).s).popName;
+//       logger.error("second host: "+secondHost);
+//       logger.error("second POP: "+secondPOP);
+//       return (secondHost) ;
+//     }
+//     else{
+//       logger.error("can't find second host for the device "+devicename+" on interface "+ifDesc);
+//       return (null);     
+//     }
+//   });
 
-}
+// }
 //INDEX - show all enrichment data
 router.get("/", middleware.isLoggedIn ,function(request, response) {  
     Enrichment.find({}, function(error, foundEnrichments) {

@@ -59,13 +59,50 @@
                                 <th data-field="ifName" data-sortable="true">Name</th>
                                 <th data-field="ifAlias" data-sortable="true">Alias</th>
                                 <th data-field="ifDescr">Description</th>
-                                <th data-field="ifType" data-sortable="true">Type</th>
+                                <th data-field="ifType" data-sortable="true">ifType</th>
                                 <th data-field="ifSpeed" data-sortable="true">Speed</th>
                                 <th data-field="ifHighSpeed" data-sortable="true">High Speed</th>
                                 <th data-field="counters" data-sortable="true">Counters</th>
                                 <th data-field="adminStatus" data-sortable="true">Admin Status</th>
                                 <th data-field="operStatus" data-sortable="true">Operational Status</th>
                                 <th data-field="actualspeed" data-sortable="true">Actual Speed</th>
+                                <th data-field="ifHighSpeed">HighSpeed</th>
+                                <th data-field="counters"> Counters  </th>
+                                <th data-field="type"> type  </th>
+                                <th data-field="specialService"> Special Service  </th>
+                                <th data-field="secondPOP"> Second POP  </th>
+                                <th data-field="secondHost"> Second Host  </th>
+                                <th data-field="secondInterface"> Second Interface  </th>
+                                <th data-field="label"> Label  </th>
+                                <th data-field="provisoFlag"> provisoFlag  </th>
+                                <th data-field="noEnrichFlag"> noEnrichFlag  </th>
+                                <th data-field="unknownFlag"> unknownFlag  </th>
+                                <th data-field="sp_service"> sp_service  </th>
+                                <th data-field="sp_provider"> sp_provider  </th>
+                                <th data-field="sp_termination">  sp_termination </th>
+                                <th data-field="sp_bundleId"> sp_bundleId  </th>
+                                <th data-field="sp_linkNumber"> sp_linkNumber  </th>
+                                <th data-field="sp_CID"> sp_CID  </th>
+                                <th data-field="sp_TECID"> sp_TECID  </th>
+                                <th data-field="sp_subCable"> sp_subCable  </th>
+                                <th data-field="sp_customer">  sp_customer </th>
+                                <th data-field="sp_sourceCore"> sp_sourceCore  </th>
+                                <th data-field="sp_destCore"> sp_destCore  </th>
+                                <th data-field="sp_vendor"> sp_vendor  </th>
+                                <th data-field="sp_speed"> sp_speed  </th>
+                                <th data-field="sp_pop"> sp_pop  </th>
+                                <th data-field="sp_fwType"> sp_fwType  </th>
+                                <th data-field="sp_serviceType">  sp_serviceType </th>
+                                <th data-field="sp_ipType"> sp_ipType  </th>
+                                <th data-field="sp_siteCode"> sp_siteCode  </th>
+                                <th data-field="sp_connType"> sp_connType  </th>
+                                <th data-field="sp_emsOrder"> sp_emsOrder  </th>
+                                <th data-field="sp_connectedBW">  sp_connectedBW </th>
+                                <th data-field="sp_dpiName"> sp_dpiName  </th>
+                                <th data-field="sp_portID"> sp_portID  </th>
+                                <th data-field="adminStatus" data-visible="false"> adminStatus  </th>
+                                <th data-field="operStatus" data-visible="false"> operStatus  </th>
+                                <th data-field="pop"> POP  </th>
                                 <th data-field="createdAt" data-sortable="true">Date Created</th>
                                 <th data-field="lastUpdate" data-sortable="true">Date Updated</th>
                             </tr>
@@ -86,8 +123,44 @@
                                     <td><%= interface.adminStatus %></td>
                                     <td><%= interface.operStatus %></td>
                                     <td><%= interface.actualspeed %></td>
-                                    <td>
-                                        <% if(interface.createdAt) { %>
+                                    <td><%= interface.ifHighSpeed %></td>
+                                    <td><%= interface.counters %></td>
+                                    <td><%= interface.type %></td>
+                                    <td><%= interface.specialService %></td>
+                                    <td><%= interface.secondPOP %></td>
+                                    <td><%= interface.secondHost %></td>
+                                    <td><%= interface.secondInterface %></td>
+                                    <td><%= interface.label %></td>
+                                    <td><%= interface.provisoFlag %></td>
+                                    <td><%= interface.noEnrichFlag %></td>
+                                    <td><%= interface.unknownFlag %></td>
+                                    <td><%= interface.sp_service %></td>
+                                    <td><%= interface.sp_provider %></td>
+                                    <td><%= interface.sp_termination %></td>
+                                    <td><%= interface.sp_bundleId %></td>
+                                    <td><%= interface.sp_linkNumber %></td>
+                                    <td><%= interface.sp_CID %></td>
+                                    <td><%= interface.sp_TECID %></td>
+                                    <td><%= interface.sp_subCable %></td>
+                                    <td><%= interface.sp_customer %></td>
+                                    <td><%= interface.sp_sourceCore %></td>
+                                    <td><%= interface.sp_destCore %></td>
+                                    <td><%= interface.sp_vendor %></td>
+                                    <td><%= interface.sp_speed %></td>
+                                    <td><%= interface.sp_pop %></td>
+                                    <td><%= interface.sp_fwType %></td>
+                                    <td><%= interface.sp_serviceType %></td>
+                                    <td><%= interface.sp_ipType %></td>
+                                    <td><%= interface.sp_siteCode %></td>
+                                    <td><%= interface.sp_connType %></td>
+                                    <td><%= interface.sp_emsOrder %></td>
+                                    <td><%= interface.sp_connectedBW %></td>
+                                    <td><%= interface.sp_dpiName %></td>
+                                    <td><%= interface.sp_portID %></td>
+                                    <td><%= interface.adminStatus %></td>
+                                    <td><%= interface.operStatus %></td>
+                                    <td><%= interface.pop %></td>
+                                    <td><% if(interface.createdAt) { %>
                                             <%= interface.createdAt.toDateString() %>
                                         <% } %>
                                     </td>

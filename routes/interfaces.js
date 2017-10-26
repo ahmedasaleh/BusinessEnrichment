@@ -35,7 +35,9 @@ router.get("/pagination?",middleware.isLoggedIn ,function(request, response) {
 
         if(S(searchQuery).isEmpty()){
             Interface.count({}, function(err, interfacesCount) {
-                Interface.find({},'ifIndex ifName hostname ipaddress ifAlias ifDescr ifSpeed actualspeed ifType createdAt lastUpdate',{lean:true,skip:skip,limit:limit}, function(err, foundInterfaces) {
+                //ifName ifAlias ifIndex ifDescr ifType ifSpeed ifHighSpeed counters type specialService secondPOP secondHost secondInterface label provisoFlag noEnrichFlag sp_service sp_provider sp_termination sp_bundleId sp_linkNumber sp_CID sp_TECID sp_subCable sp_customer sp_sourceCore sp_destCore sp_vendor sp_speed sp_pop sp_fwType sp_serviceType sp_ipType sp_siteCode sp_connType sp_emsOrder sp_connectedBW sp_dpiName sp_portID unknownFlag adminStatus operStatus actualspeed createdAt lastUpdate hostname ipaddress pop 
+                // Interface.find({},'ifIndex ifName hostname ipaddress ifAlias ifDescr ifSpeed actualspeed ifType counters createdAt lastUpdate',{lean:true,skip:skip,limit:limit}, function(err, foundInterfaces) {
+                Interface.find({},'ifName ifAlias ifIndex ifDescr ifType ifSpeed ifHighSpeed counters type specialService secondPOP secondHost secondInterface label provisoFlag noEnrichFlag sp_service sp_provider sp_termination sp_bundleId sp_linkNumber sp_CID sp_TECID sp_subCable sp_customer sp_sourceCore sp_destCore sp_vendor sp_speed sp_pop sp_fwType sp_serviceType sp_ipType sp_siteCode sp_connType sp_emsOrder sp_connectedBW sp_dpiName sp_portID unknownFlag adminStatus operStatus actualspeed createdAt lastUpdate hostname ipaddress pop',{lean:true,skip:skip,limit:limit}, function(err, foundInterfaces) {
                     if (err) {
                         logger.error(err);
                     }
@@ -53,16 +55,18 @@ router.get("/pagination?",middleware.isLoggedIn ,function(request, response) {
         } 
         else {
             searchQuery = ".*"+S(searchQuery).s.toLowerCase()+".*";
-            Interface.count({'$or' : [{name: new RegExp(searchQuery,'i')},
-                {alias: new RegExp(searchQuery,'i')},
-                {description: new RegExp(searchQuery,'i')},
-                {"device.hostname": new RegExp(searchQuery,'i')}]}, function(err, m_interfacesCount) {
+            Interface.count({'$or' : [{ifName: new RegExp(searchQuery,'i')},
+                {ifAlias: new RegExp(searchQuery,'i')},
+                {ifDescr: new RegExp(searchQuery,'i')},
+                {ipaddress: new RegExp(searchQuery,'i')},
+                {hostname: new RegExp(searchQuery,'i')}]}, function(err, m_interfacesCount) {
                 console.log("total interfacse match the query: "+m_interfacesCount);
                 console.log(searchQuery);
-                Interface.find({'$or' : [{name: new RegExp(searchQuery,'i')},
-                    {alias: new RegExp(searchQuery,'i')},
-                    {description: new RegExp(searchQuery,'i')},
-                    {"device.hostname": new RegExp(searchQuery,'i')}]},'ifIndex ifName hostname ipaddress ifAlias ifDescr ifSpeed actualspeed ifType createdAt lastUpdate',{lean:true,skip:skip,limit:limit}, function(err, foundInterfaces) {
+                Interface.find({'$or' : [{ifName: new RegExp(searchQuery,'i')},
+                {ifAlias: new RegExp(searchQuery,'i')},
+                {ifDescr: new RegExp(searchQuery,'i')},
+                {ipaddress: new RegExp(searchQuery,'i')},
+                {hostname: new RegExp(searchQuery,'i')}]},'ifName ifAlias ifIndex ifDescr ifType ifSpeed ifHighSpeed counters type specialService secondPOP secondHost secondInterface label provisoFlag noEnrichFlag sp_service sp_provider sp_termination sp_bundleId sp_linkNumber sp_CID sp_TECID sp_subCable sp_customer sp_sourceCore sp_destCore sp_vendor sp_speed sp_pop sp_fwType sp_serviceType sp_ipType sp_siteCode sp_connType sp_emsOrder sp_connectedBW sp_dpiName sp_portID unknownFlag adminStatus operStatus actualspeed createdAt lastUpdate hostname ipaddress pop',{lean:true,skip:skip,limit:limit}, function(err, foundInterfaces) {
                     if (err) {
                         logger.error(err);
                     }
