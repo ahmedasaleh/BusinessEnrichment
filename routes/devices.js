@@ -20,7 +20,9 @@ var middleware      = require("../middleware");
 var logger          = require("../middleware/logger");
 var Parser          = require('../middleware/parser/parser');
 var sleep           = require('thread-sleep');
-
+var ProgressBar     = require('progress');
+var delay           = require('delay');
+var deasync = require('deasync');
 var ObjectId        = require('mongodb').ObjectID;
 
 //create and save a document, handle error if occured
@@ -41,7 +43,8 @@ ifAlias:"1.3.6.1.2.1.31.1.1.1.16",
 
 var aDevice = new Device() ;
 var targets = [];
-
+var MAX_PARALLEL_DEVICES = 15;
+var throttle = MAX_PARALLEL_DEVICES;
 function discoveredDevice(device,linkEnrichmentData) {
     var self = this;
     self.name = device.hostname;
@@ -61,6 +64,7 @@ function discoveredDevice(device,linkEnrichmentData) {
     self.deviceVendor = S(self.device.vendor).s.toLowerCase();
     self.deviceModel = S(self.device.model).s.toLowerCase();
     self.maxRepetitions = 20;
+    self.linkEnrichmentData = linkEnrichmentData;
 
     self.allowedFields = ['ifName','ifAlias','ifIndex','ifDescr','ifType','ifSpeed','ifHighSpeed','counters','type',' specialService','secondPOP','secondHost','secondInterface','label','provisoFlag','noEnrichFlag','sp_service','sp_provider','sp_termination','sp_bundleId','sp_linkNumber','sp_CID','sp_TECID','sp_subCable','sp_customer','sp_sourceCore','sp_destCore','sp_vendor','sp_speed','sp_pop','sp_fwType','sp_serviceType','sp_ipType','sp_siteCode','sp_connType','sp_emsOrder','sp_connectedBW','sp_dpiName','sp_portID','unknownFlag','adminStatus','operStatus','actualspeed','syncCycles','lastUpdate','hostname','ipaddress','pop'];
 
@@ -514,7 +518,9 @@ function discoveredDevice(device,linkEnrichmentData) {
             }
             else{
                  logger.info(self.name+" done");
+                 self.session.close();
             }
+            throttle = throttle + 1;
         });
     };
     self.getInterfaceFromInterestList = function(interfaceIndex){
@@ -560,8 +566,8 @@ function discoveredDevice(device,linkEnrichmentData) {
             anInterface = new Interface();
             anInterface.hostname = self.device.hostname;
             anInterface.ipaddress = self.device.ipaddress;
-            anInterface.pop = self.device.popName.name;
-            anInterface.author = {id: self.device.author.id, email: self.device.author.email};
+            anInterface.pop = S(self.device.hostname).splitLeft('-')[0];
+            // anInterface.author = {id: self.device.author.id, email: self.device.author.email};
             anInterface.ifIndex = key;//value[ifTableColumns.ifIndex];
             anInterface.ifDescr = value[ifTableColumns.ifDescr];
             anInterface.ifType = value[ifTableColumns.ifType];
@@ -649,14 +655,14 @@ function discoveredDevice(device,linkEnrichmentData) {
                     {
                     console.log("device type: "+self.deviceType);console.log("ifName: "+lowerCaseName);
 
-                        // var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress);
-                        // if(enrichment) intf = Object.assign(intf,enrichment);
+                        var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress);
+                        if(enrichment) intf = Object.assign(intf,enrichment);
                         self.interestInterfaces.push(intf);
                         self.interestInterfacesIndices.push(intf.ifIndex);
                     }
                     else if(!((self.deviceType =="router") || (self.deviceType =="switch"))){//no more filtering is required, so add interface
-                        // var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress);
-                        // if(enrichment) Object.assign(intf,enrichment);
+                        var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress);
+                        if(enrichment) Object.assign(intf,enrichment);
                         self.interestInterfaces.push(intf);
                         self.interestInterfacesIndices.push(intf.ifIndex);                        
                     }
@@ -846,6 +852,7 @@ function discoveredDevice(device,linkEnrichmentData) {
         self.session.tableColumnsAsync(oids.ifXTable.OID, oids.ifXTable.Columns, self.maxRepetitions, self.ifXTableResponseCb);
     };
     self.syncInterfaces = function(){
+    throttle = throttle -1;
         self.inSyncMode = true;
         // discover new list of filtered interface indices
         // if: current interface index found in list and interface updated, then: skip
@@ -1001,6 +1008,7 @@ router.get("/", middleware.isLoggedIn , function(request, response) {
 
 //CREATE - add new device to DB
 router.post("/",  middleware.isLoggedIn ,function(request, response) {
+    throttle = MAX_PARALLEL_DEVICES;
     //get data from a form and add to devices array
     var hostname = request.body.device.hostname;
     var ipaddress = request.body.device.ipaddress;
@@ -1250,14 +1258,6 @@ var getDeviceFarLinks = __async__ (function(ahostname){
     var linkEnrichmentData;
     var foundRightLink = __await__ (Link.find({device1:ahostname}));
     var foundLeftLink = __await__ (Link.find({device2:ahostname}));
-    // if(foundRightLink || foundLeftLink) {
-    //     return {secondHost: foundRightLink.device2 || foundLeftLink.device1,
-    //                                             secondInterface: foundRightLink.interface2 || foundLeftLink.interface1,
-    //                                             secondPOP: S(foundRightLink.device2).splitLeft('-')[0] || S(foundLeftLink.device1).splitLeft('-')[0]}
-    // }
-    // else{
-    //     return null;
-    // }
         if(foundRightLink.length > 0 || foundLeftLink.length > 0) {
             linkEnrichmentData = foundRightLink.concat(foundLeftLink);
             if(foundRightLink.length > 0) linkEnrichmentData.isLeftEnd = true;
@@ -1266,7 +1266,7 @@ var getDeviceFarLinks = __async__ (function(ahostname){
         else{
             linkEnrichmentData = null;
         }
-        console.log(linkEnrichmentData);
+        // console.log(linkEnrichmentData);
         return linkEnrichmentData;
 });
 
@@ -1297,6 +1297,9 @@ var syncDevices = function(){
     getDeviceList()
     .then(function(deviceList){
         for(var i=0;i<deviceList.length;i++){
+            while(throttle <= 0) {
+                deasync.sleep(100);
+            }
             deviceList[i].syncInterfaces();
         }
     })
@@ -1305,6 +1308,7 @@ var syncDevices = function(){
 }
 
 router.get("/sync",  middleware.isLoggedIn ,function(request, response) {
+    throttle = MAX_PARALLEL_DEVICES;
     syncDevices();
     response.redirect("/devices");
 });
@@ -1314,6 +1318,7 @@ router.get("/sync",  middleware.isLoggedIn ,function(request, response) {
 
 router.get("/sync/:id",  middleware.isLoggedIn ,function(request, response) {
     // syncDevices();
+    throttle = MAX_PARALLEL_DEVICES;
     Device.findById(request.params.id, function(err, foundDevice) {
         if (err) {
              logger.error(err);
@@ -1321,11 +1326,13 @@ router.get("/sync/:id",  middleware.isLoggedIn ,function(request, response) {
         else {
                      logger.info("single sync mode, device " + foundDevice.hostname +" will be synced now");
                     // perform interface sync
+                    var discoDevice = new discoveredDevice(foundDevice,{});
                     getDeviceFarLinks(foundDevice.hostname)
-                    // .then(getAdminOperOIDs(foundDevice.ipaddress,foundDevice.community))
                     .then(function(linkEnrichmentData){
-                        var discoDevice = new discoveredDevice(foundDevice,linkEnrichmentData);
-                        discoDevice.syncInterfaces();
+                        console.log(linkEnrichmentData);
+                        discoDevice.linkEnrichmentData = linkEnrichmentData;
+                        for(var i=0; i<1;i++) discoDevice.syncInterfaces();
+                        console.log("after syncInterfaces");
                     })
                     .catch();
         }
