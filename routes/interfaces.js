@@ -165,32 +165,33 @@ router.get("/:id",function(request,response){
 router.delete("/:id", middleware.isLoggedIn,  function(request,response){
     Interface.findById(request.params.id,function(error,foundInterface){
         if(error){
-            console.log(error);
+            logger.error.log(error);
             request.flash("error","something went wrong while updating the interface");
         }
         else{
             var device = foundInterface.hostname;
-            console.log(device);
+            // console.log(device);
 
             Interface.findByIdAndRemove(request.params.id,function(error){
+                // logger.info("deleted interface from Interfaces table");
                 if(error){
-                    console.log(error);
+                    logger.error(error);
                 }
             });
 
             Device.findOne({hostname: device},function(error,foundDevice){
                 if(error){
                     request.flash("error","Can't find containing device");
-                    console.log("Can't find containing device");
+                    logger.error("Can't find containing device");
                 }
                 else{
                     for(var i=0; i<foundDevice.interfaces.length;i++){
                         if(foundDevice.interfaces[i].index ==  foundInterface.index){
                             //remove interface from the device
                             foundDevice.interfaces.splice(i,1);
-                            console.log(foundDevice.interfaces);
+                            // console.log(foundDevice.interfaces);
                             Device.update({_id: foundDevice._id},foundDevice,function(error,device){
-                                 if(error) console.log(error);
+                                 if(error) logger.error(error);
                             });
                             break;
                         }
@@ -238,44 +239,89 @@ router.put("/:id", middleware.isLoggedIn,function(request,response){
             request.flash("error","something went wrong while updating the interface");
         }
         else{
-            foundInterface.name = request.body.interface.name;
-            foundInterface.alias = request.body.interface.alias;
-            foundInterface.description = request.body.interface.description;
-            foundInterface.type = request.body.interface.type;
             foundInterface.actualspeed = request.body.interface.actualspeed;
-            if(request.body.interface.isDeviceUpLink && request.body.interface.isDeviceUpLink.toLowerCase() == "yes"){
-                foundInterface.isDeviceUpLink = true;
-            } else {
-                foundInterface.isDeviceUpLink = false;
-            }
-            foundInterface.secondHost = request.body.interface.secondHost;
-            foundInterface.secondPOP =  request.body.interface.secondPOP;
-            foundInterface.connectionType = request.body.interface.connectionType
-            if(request.body.interface.isPOPUpLink && request.body.interface.isPOPUpLink.toLowerCase() == "yes"){
-                foundInterface.isPOPUpLink = true;
-            } else {
-                foundInterface.isPOPUpLink = false;                
-            }
-            foundInterface.linkBandwidth = request.body.interface.linkBandwidth
-            foundInterface.linkIP = request.body.interface.linkIP
-            foundInterface.linkNumber = request.body.interface.linkNumber
-            foundInterface.linkType = request.body.interface.linkType
             if(foundInterface.linkType && foundInterface.linkType.toLowerCase() == "international"){
-                foundInterface.provider = request.body.interface.provider 
-                foundInterface.service = request.body.interface.service 
-                foundInterface.linkID = request.body.interface.linkID
-                foundInterface.subCable = request.body.interface.subCable 
-                foundInterface.teCID = request.body.interface.teCID 
-                foundInterface.termination = request.body.interface.termination     
+                if(request.body.interface.sp_provider) foundInterface.sp_provider = request.body.interface.sp_provider ;
+                if(request.body.interface.sp_service) foundInterface.sp_service = request.body.interface.sp_service ;
+                if(request.body.interface.sp_linkNumber) foundInterface.sp_linkNumber = request.body.interface.sp_linkNumber;
+                if(request.body.interface.sp_subCable) foundInterface.sp_subCable = request.body.interface.sp_subCable ;
+                if(request.body.interface.sp_TECID) foundInterface.sp_TECID = request.body.interface.sp_TECID ;
+                if(request.body.interface.sp_termination) foundInterface.sp_termination = request.body.interface.sp_termination ;
+                if(request.body.interface.sp_connType) foundInterface.sp_connType = request.body.interface.sp_connType; 
+                if(request.body.interface.sp_bundleId) foundInterface.sp_bundleId = request.body.interface.sp_bundleId; 
+                if(request.body.interface.sp_CID) foundInterface.sp_CID = request.body.interface.sp_CID; 
+                if(request.body.interface.sp_speed) foundInterface.sp_speed =  request.body.interface.sp_speed;
+            }
+            else if(foundInterface.linkType && foundInterface.linkType.toLowerCase() == "alpha-bitstream"){
+                if(request.body.interface.sp_customer) foundInterface.sp_customer = request.body.interface.sp_customer; 
+                if(request.body.interface.sp_linkNumber) foundInterface.sp_linkNumber = request.body.interface.sp_linkNumber; 
+                if(request.body.interface.sp_speed) foundInterface.sp_speed = request.body.interface.sp_speed;
+            }
+            else if(foundInterface.linkType && foundInterface.linkType.toLowerCase() == "sh-bitstream"){
+                if(request.body.interface.sp_customer) foundInterface.sp_customer = request.body.interface.sp_customer; 
+                if(request.body.interface.sp_linkNumber) foundInterface.sp_linkNumber = request.body.interface.sp_linkNumber; 
+                if(request.body.interface.sp_speed) foundInterface.sp_speed = request.body.interface.sp_speed;
+            }
+            else if(foundInterface.linkType && foundInterface.linkType.toLowerCase() == "bitstream"){
+                if(request.body.interface.sp_customer) foundInterface.sp_customer = request.body.interface.sp_customer; 
+                if(request.body.interface.sp_linkNumber) foundInterface.sp_linkNumber = request.body.interface.sp_linkNumber; 
+                if(request.body.interface.sp_speed) foundInterface.sp_speed = request.body.interface.sp_speed;
+            }
+            else if(foundInterface.linkType && foundInterface.linkType.toLowerCase() == "esp"){
+                if(request.body.interface.sp_customer) foundInterface.sp_customer = request.body.interface.sp_customer; 
+                if(request.body.interface.sp_pop) foundInterface.sp_pop = request.body.interface.sp_pop; 
+                if(request.body.interface.sp_connType) foundInterface.sp_connType = request.body.interface.sp_connType; 
+                if(request.body.interface.sp_emsOrder) foundInterface.sp_emsOrder = request.body.interface.sp_emsOrder; 
+                if(request.body.interface.sp_connectedBW) foundInterface.sp_connectedBW = request.body.interface.sp_connectedBW; 
+            }
+            else if(foundInterface.linkType && foundInterface.linkType.toLowerCase() == "firewall"){
+                if(request.body.interface.sp_fwType) foundInterface.sp_fwType = request.body.interface.sp_fwType; 
+                if(request.body.interface.sp_pop) foundInterface.sp_pop = request.body.interface.sp_pop; 
+                if(request.body.interface.sp_serviceType) foundInterface.sp_serviceType = request.body.interface.sp_serviceType; 
+                if(request.body.interface.sp_ipType) foundInterface.sp_ipType = request.body.interface.sp_ipType; 
+                if(request.body.interface.sp_vendor) foundInterface.sp_vendor = request.body.interface.sp_vendor; 
+            }
+            else if(foundInterface.linkType && foundInterface.linkType.toLowerCase() == "national-roaming"){
+                if(request.body.interface.sp_provider) foundInterface.sp_provider = request.body.interface.sp_provider ;
+                if(request.body.interface.sp_service) foundInterface.sp_service = request.body.interface.sp_service ;
+                if(request.body.interface.sp_linkNumber) foundInterface.sp_linkNumber = request.body.interface.sp_linkNumber;
+                if(request.body.interface.sp_speed) foundInterface.sp_speed = request.body.interface.sp_speed;
+                if(request.body.interface.sp_sourceCore) foundInterface.sp_sourceCore =  request.body.interface.sp_sourceCore;
+                if(request.body.interface.sp_destCore) foundInterface.sp_destCore =  request.body.interface.sp_destCore;
+                if(request.body.interface.sp_vendor) foundInterface.sp_vendor =  request.body.interface.sp_vendor;
+            }
+            else if(foundInterface.linkType && foundInterface.linkType.toLowerCase() == "lte"){
+                if(request.body.interface.sp_pop) foundInterface.sp_pop = request.body.interface.sp_pop ;
+                if(request.body.interface.sp_siteCode) foundInterface.sp_siteCode = request.body.interface.sp_siteCode ;
+                if(request.body.interface.sp_vendor) foundInterface.sp_vendor = request.body.interface.sp_vendor;
+                if(request.body.interface.sp_speed) foundInterface.sp_speed =  request.body.interface.sp_speed;
+                if(request.body.interface.sp_linkNumber) foundInterface.sp_linkNumber =  request.body.interface.sp_linkNumber;
+            }
+            else if(foundInterface.linkType && foundInterface.linkType.toLowerCase() == "epc"){
+                if(request.body.interface.sp_provider) foundInterface.sp_provider = request.body.interface.sp_provider ;
+                if(request.body.interface.sp_linkNumber) foundInterface.sp_linkNumber = request.body.interface.sp_linkNumber;
+                if(request.body.interface.sp_speed) foundInterface.sp_speed =  request.body.interface.sp_speed;
+            }
+            else if(foundInterface.linkType && foundInterface.linkType.toLowerCase() == "dpi"){
+                if(request.body.interface.sp_pop) foundInterface.sp_pop = request.body.interface.sp_pop ;
+                if(request.body.interface.sp_preNumber) foundInterface.sp_preNumber = request.body.interface.sp_preNumber ;
+                if(request.body.interface.sp_portID) foundInterface.sp_portID = request.body.interface.sp_portID ;
+            }
+            else if(foundInterface.linkType && foundInterface.linkType.toLowerCase() == "link-interface"){
+                if(request.body.interface.secondHost) foundInterface.secondHost = request.body.interface.secondHost ;
+                if(request.body.interface.secondInterface) foundInterface.secondInterface = request.body.interface.secondInterface ;
+                if(request.body.interface.secondPOP) foundInterface.secondPOP = request.body.interface.secondPOP ;
+                if(request.body.interface.type) foundInterface.type = request.body.interface.type ;
+                if(request.body.interface.pop) foundInterface.pop = request.body.interface.pop ;
             }
 
             foundInterface.updated = new Date();
-            foundInterface.lastUpdatedBy = {id: request.user._id, email: request.user.email};
+            // foundInterface.lastUpdatedBy = {id: request.user._id, email: request.user.email};
 
             foundInterface.save(function(error,intf){
                 if(error) console.log(error);
             });
-            Device.findOne({hostname: foundInterface.device.hostname},function(error,foundDevice){
+            Device.findOne({hostname: foundInterface.hostname},function(error,foundDevice){
                 if(error){
                     request.flash("error","Can't find containing device");
                     console.log("Can't find containing device");

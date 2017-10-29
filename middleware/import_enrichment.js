@@ -94,7 +94,7 @@ function createDocRecurse (err,filename) {
             var dbName;
             if(process.env.DEV_DB || process.env.PROD_DB) dbName = process.env.DEV_DB || process.env.PROD_DB;
             var command = process.env.MONGO_PATH + " -d "+ dbName + " -c devices --type csv --file "+S(filename).s + " --headerline";
-            console.log(command);
+            logger.info(command);
             cmd.get(command,function(err, data, stderr){
                 if(err) logger.error(err);
                 else logger.info("file imported successfully");

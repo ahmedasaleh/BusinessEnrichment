@@ -20,7 +20,10 @@ var middleware      = require("../middleware");
 var logger          = require("../middleware/logger");
 var Parser          = require('../middleware/parser/parser');
 var sleep           = require('thread-sleep');
-var deasync = require('deasync');
+var deasync         = require('deasync');
+var ProgressBar     = require('progress');
+var enrichmentData  = require("../lookUps/enrich");
+
 var ObjectId        = require('mongodb').ObjectID;
 
 //create and save a document, handle error if occured
@@ -41,8 +44,9 @@ ifAlias:"1.3.6.1.2.1.31.1.1.1.16",
 
 var aDevice = new Device() ;
 var targets = [];
-var MAX_PARALLEL_DEVICES = 500;
+var MAX_PARALLEL_DEVICES = 200;//500;
 var throttle = MAX_PARALLEL_DEVICES;
+var doneDevices = 0;
 function discoveredDevice(device,linkEnrichmentData) {
     var self = this;
     self.name = device.hostname;
@@ -64,7 +68,8 @@ function discoveredDevice(device,linkEnrichmentData) {
     self.maxRepetitions = 50;
     self.linkEnrichmentData = linkEnrichmentData;
 
-    self.allowedFields = ['ifName','ifAlias','ifIndex','ifDescr','ifType','ifSpeed','ifHighSpeed','counters','type',' specialService','secondPOP','secondHost','secondInterface','label','provisoFlag','noEnrichFlag','sp_service','sp_provider','sp_termination','sp_bundleId','sp_linkNumber','sp_CID','sp_TECID','sp_subCable','sp_customer','sp_sourceCore','sp_destCore','sp_vendor','sp_speed','sp_pop','sp_fwType','sp_serviceType','sp_ipType','sp_siteCode','sp_connType','sp_emsOrder','sp_connectedBW','sp_dpiName','sp_portID','unknownFlag','adminStatus','operStatus','actualspeed','syncCycles','lastUpdate','hostname','ipaddress','pop'];
+// Interface.allowedFields;
+    self.allowedFields =  enrichmentData.interfaceAllowedFields ;//['ifName','ifAlias','ifIndex','ifDescr','ifType','ifSpeed','ifHighSpeed','counters','type',' specialService','secondPOP','secondHost','secondInterface','label','provisoFlag','noEnrichFlag','sp_service','sp_provider','sp_termination','sp_bundleId','sp_linkNumber','sp_CID','sp_TECID','sp_subCable','sp_customer','sp_sourceCore','sp_destCore','sp_vendor','sp_speed','sp_pop','sp_fwType','sp_serviceType','sp_ipType','sp_siteCode','sp_connType','sp_emsOrder','sp_connectedBW','sp_dpiName','sp_portID','unknownFlag','adminStatus','operStatus','actualspeed','syncCycles','lastUpdate','hostname','ipaddress','pop'];
 
     self.session = snmp.createSession(self.device.ipaddress, S(self.device.community).trim().s,{ sourceAddress: "213.158.183.140",timeout: 10000, version: snmp.Version2c ,retries: 1});
 
@@ -78,7 +83,10 @@ function discoveredDevice(device,linkEnrichmentData) {
         var multiplier, unit;
         if(S(speed).isEmpty()){
             logger.warn(self.name +" : Unkown speed text "+speed);
-            return null;
+            return 0;
+        }
+        else if(S(speed).toInt() == 0){
+            return 0;
         }
         var tmpSpeed = S(speed).s.toLowerCase();
         if(S(tmpSpeed).isAlphaNumeric()){
@@ -120,7 +128,7 @@ function discoveredDevice(device,linkEnrichmentData) {
           // Convert back to days and return
           return Math.floor(difference_ms/one_day); 
     };
-    self.parseIfAlias = function(ifAlias,hostname,ifName,ifIndex,ipaddress){
+    self.parseIfAlias = function(ifAlias,hostname,ifName,ifIndex,ipaddress,ifSpeed,ifHighSpeed){
         // if(S(ifAlias).isEmpty()) return null;
         var anErichment= {
             specialService : '', provisoFlag : '', sp_service : '', sp_provider : '', sp_termination : '', sp_connType : '', sp_bundleId : '', sp_linkNumber : '', 
@@ -138,11 +146,13 @@ function discoveredDevice(device,linkEnrichmentData) {
         var provisoFlag=1;
         var unknownFlag = 0;
         var noEnrichFlag=0;         
-        var label = hostname+" "+interfaceName+" "+alias;        
+        var label = hostname+" "+interfaceName+" "+alias;      
+          
         if(!S(ifAlias).isEmpty()){
             if(S(alias).startsWith("INT-")){
                 // # Patterns   INT-P1-P2-P3-P4-P5-P6-P7-P8-P9
-                // # Patterns description   P1: Service
+                // # Patterns description   
+                // # P1: Service
                 // # P2: Provider Name
                 // # P3: Termination
                 // # P4: Connection Type
@@ -157,7 +167,7 @@ function discoveredDevice(device,linkEnrichmentData) {
                 var enrichmentString = S(alias).strip("INT-").s;
                 var enrichmentFields = S(enrichmentString).splitLeft('-');
                 var sp_service="Unknown",sp_provider="Unknown",sp_termination="Unknown",sp_connType="Unknown",sp_bundleId="Unknown",sp_linkNumber="Unknown",
-                sp_CID="Unknown",sp_TECID="Unknown",sp_subCable="Unknown";
+                sp_CID="Unknown",sp_TECID="Unknown",sp_subCable="Unknown",sp_speed=0;
 
                 if(enrichmentFields.length == 9){
                     sp_service=enrichmentFields[1] || "Unknown";
@@ -175,11 +185,12 @@ function discoveredDevice(device,linkEnrichmentData) {
                 }
                         
                 label=hostname+" "+interfaceName;
-
+                sp_speed = self.parseSpeed(ifHighSpeed || ifSpeed);
+                
                 anErichment= {
                             specialService : specialService, provisoFlag : provisoFlag,sp_service : sp_service, sp_provider : sp_provider, sp_termination : sp_termination, 
                             sp_connType : sp_connType, sp_bundleId : sp_bundleId, sp_linkNumber : sp_linkNumber, sp_CID : sp_CID, sp_TECID : sp_TECID, 
-                            sp_subCable : sp_subCable, unknownFlag : unknownFlag, label : label,noEnrichFlag:noEnrichFlag
+                            sp_subCable : sp_subCable, unknownFlag : unknownFlag, label : label,noEnrichFlag:noEnrichFlag,sp_speed:sp_speed
                 }
             }
             else if(S(alias).contains("ALPHA-BITSTREAM")){
@@ -206,6 +217,7 @@ function discoveredDevice(device,linkEnrichmentData) {
                 else{
                     unknownFlag = 1;
                 }
+                sp_speed = self.parseSpeed(sp_speed);
                 anErichment= {
                         specialService:specialService,provisoFlag:provisoFlag,unknownFlag:unknownFlag,sp_customer : sp_customer, sp_linkNumber:sp_linkNumber, 
                         sp_speed : sp_speed,noEnrichFlag:noEnrichFlag,label : label
@@ -510,7 +522,7 @@ function discoveredDevice(device,linkEnrichmentData) {
                 S(tmpIfName).startsWith("ge-") || 
                 S(tmpIfName).startsWith("gi") || 
                 S(tmpIfName).startsWith("hundredgige") || 
-                new RegExp('/^[0-9]+\/[0-9]+\/[0-9]+/').test(S(interfaceName)) ||// number/nnumbe/number
+                new RegExp('/^[0-9]+\/[0-9]+\/[0-9]+/').test(S(tmpIfName)) ||// number/nnumbe/number
                 S(tmpIfName).startsWith("po") || 
                 S(tmpIfName).startsWith("se") || 
                 S(tmpIfName).startsWith("so-") || 
@@ -535,10 +547,10 @@ function discoveredDevice(device,linkEnrichmentData) {
             anErichment = null;
         }
         if(!S(alias).isEmpty() && unknownFlag==1){
-             // logger.warn(hostname+" "+ipaddress+" : special services interface with invalid description - Service: "+specialService+" - ifAlias: "+alias+" - interfaceName: "+ifName+" - ifIndex: "+ifIndex);
+             logger.warn(hostname+" "+ipaddress+" : special services interface with invalid description - Service: "+specialService+" - ifAlias: "+alias+" - interfaceName: "+ifName+" - ifIndex: "+ifIndex);
         }
         if(!S(alias).isEmpty() && noEnrichFlag==1){
-             // logger.warn(hostname+" "+ipaddress+" : Interface with no enrichment has been marked to import into proviso - ifAlias: "+alias+" - ifName: "+interfaceName+" - ifIndex: "+ifIndex);
+             logger.warn(hostname+" "+ipaddress+" : Interface with no enrichment has been marked to import into proviso - ifAlias: "+alias+" - ifName: "+interfaceName+" - ifIndex: "+ifIndex);
         }
         return anErichment;
 
@@ -552,10 +564,12 @@ function discoveredDevice(device,linkEnrichmentData) {
                  logger.error(error);
             }
             else{
-                 logger.info(self.name+" done");
-                 self.session.close();
+                self.session.close();
+                doneDevices = doneDevices + 1;
+                logger.info(self.name+" done, total done: "+doneDevices);
             }
             throttle = throttle + 1;
+
         });
     };
     self.getInterfaceFromInterestList = function(interfaceIndex){
@@ -601,7 +615,10 @@ function discoveredDevice(device,linkEnrichmentData) {
             anInterface = new Interface();
             anInterface.hostname = self.device.hostname;
             anInterface.ipaddress = self.device.ipaddress;
-            anInterface.pop = S(self.device.hostname).splitLeft('-')[0];
+            // anInterface.pop = S(self.device.hostname).splitLeft('-')[0];
+            anInterface.devType = self.deviceType;
+            anInterface.devVendor = self.deviceVendor;
+            anInterface.devModel = self.deviceModel;
             // anInterface.author = {id: self.device.author.id, email: self.device.author.email};
             anInterface.ifIndex = key;//value[ifTableColumns.ifIndex];
             anInterface.ifDescr = value[ifTableColumns.ifDescr];
@@ -691,15 +708,19 @@ function discoveredDevice(device,linkEnrichmentData) {
                     // console.log("device type: "+self.deviceType);console.log("ifName: "+lowerCaseName);
 
                         var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress);
-                        if(enrichment) intf = Object.assign(intf,enrichment);
-                        self.interestInterfaces.push(intf);
-                        self.interestInterfacesIndices.push(intf.ifIndex);
+                        if(enrichment) {
+                            intf = Object.assign(intf,enrichment);
+                            self.interestInterfaces.push(intf);
+                            self.interestInterfacesIndices.push(intf.ifIndex);
+                        }
                     }
                     else if(!((self.deviceType =="router") || (self.deviceType =="switch"))){//no more filtering is required, so add interface
                         var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress);
-                        if(enrichment) Object.assign(intf,enrichment);
-                        self.interestInterfaces.push(intf);
-                        self.interestInterfacesIndices.push(intf.ifIndex);                        
+                        if(enrichment) {
+                            Object.assign(intf,enrichment);
+                            self.interestInterfaces.push(intf);
+                            self.interestInterfacesIndices.push(intf.ifIndex); 
+                        }                       
                     }
                 }
             }
@@ -794,7 +815,7 @@ function discoveredDevice(device,linkEnrichmentData) {
                     // if: current interface index not found and updated and syncCyles > threshold, then: let "delete = true" and update interface
                     else if((!self.interestInterfacesIndices.includes(interface.ifIndex)) && 
                         (interface.lastUpdate instanceof Date) && 
-                        (self.getDateDifference(new Date(),interface.lastUpdate) > 7) &&
+                        (self.getDateDifference(new Date(),interface.lastUpdate) > DifferenceInUpdateDates) &&
                         (interface.syncCycles > syncCyclesThreshold)){
                         // interface.delete = true;
                         // self.interfaceUpdateList.push(interface);
@@ -803,7 +824,7 @@ function discoveredDevice(device,linkEnrichmentData) {
                     // console.log("ifXTableResponseCb 9 "+self.device.ipaddress);
                     }else if((!self.interestInterfacesIndices.includes(interface.ifIndex)) && 
                         (interface.updated instanceof Date) && 
-                        (self.getDateDifference(new Date(),interface.lastUpdate) <= 7) &&
+                        (self.getDateDifference(new Date(),interface.lastUpdate) <= DifferenceInUpdateDates) &&
                         (interface.syncCycles <= syncCyclesThreshold)){
                     // console.log("ifXTableResponseCb 10 "+self.device.ipaddress);
                         interface.lastUpdate = new Date();
@@ -920,7 +941,8 @@ function discoveredDevice(device,linkEnrichmentData) {
 //*********************
 // The maxRepetitions argument is optional, and will be ignored unless using
 // SNMP verison 2c
-var syncCyclesThreshold = 3;
+var syncCyclesThreshold = 1;
+var DifferenceInUpdateDates = 1;
 var snmpError = "";
 
 var theWalkSession, theTableSession, theTableColumnsSession; 
@@ -1318,6 +1340,7 @@ var getDeviceList = __async__ (function(){
     var deviceList = [];
     var linkEnrichmentData;
     var foundDevices = __await__ (Device.find({},{lean:false}));
+
     foundDevices.forEach(function (device, i) {
         var foundRightLink = __await__ (Link.find({device1:device.hostname}));
         var foundLeftLink = __await__ (Link.find({device2:device.hostname}));
@@ -1331,6 +1354,8 @@ var getDeviceList = __async__ (function(){
         }
         // delete device._id;
         deviceList.push( new discoveredDevice(device.toObject(),linkEnrichmentData));
+        if(deviceList.length % 250 == 0) process.stdout.write("=");
+
     });
     return deviceList;
 });
@@ -1338,6 +1363,7 @@ var getDeviceList = __async__ (function(){
 //Sync devices
 var syncDevices = function(){
     logger.info("Starting bulk devices sync");
+    // process.stdout.write(" [");
     getDeviceList()
     .then(function(deviceList){
         for(var i=0;i<deviceList.length;i++){

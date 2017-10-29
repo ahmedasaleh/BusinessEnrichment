@@ -18,11 +18,7 @@
                 </div>
                 <div class="form-group">
                     <label for="communityString">Community String</label>
-                    <input class="form-control" type="text" name="device[communityString]" value="<%= device.communityString %>">
-                </div>
-                <div class="form-group">
-                    <label for="defaultCollector">Default Collector</label>
-                    <input class="form-control" type="text" name="device[defaultCollector]" value="<%= device.defaultCollector %>" readonly>
+                    <input class="form-control" type="text" name="device[communityString]" value="<%= device.community %>">
                 </div>
                 <div class="form-group">
                     <label for="device-pop-name">POP Name</label>
@@ -51,7 +47,7 @@
                 </div>
                 <div class="form-group">
                     <label for="deviceType">Type</label>
-                    <select id="device-type" class="form-control select2-single" name="device[type]" data-init-text="<%= device.type %>">
+                    <select id="device-type" class="form-control select2-single" name="device[type]" data-init-text="<%= device.type %>" disabled>
                       <option value="Router">Router</option>
                       <option value="Switch">Switch</option>
                       <option value="Access Switch">Access Switch</option>
@@ -61,11 +57,11 @@
                 </div>
                 <div class="form-group">
                     <label for="model">Model</label>
-                    <input class="form-control" type="text" name="device[model]" value="<%= device.model %>">
+                    <input class="form-control" type="text" name="device[model]" value="<%= device.model %>" readonly>
                 </div>
                 <div class="form-group">
                     <label for="vendor">Vendor</label>
-                    <input class="form-control" type="text" name="device[vendor]" value="<%= device.vendor %>">
+                    <input class="form-control" type="text" name="device[vendor]" value="<%= device.vendor %>" readonly>
                 </div>
                 <div class="form-group">
                     <!--<btn-block will let the button takes width of the 2 inputs>-->
