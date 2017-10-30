@@ -93,7 +93,7 @@ function createDocRecurse (err,filename) {
             // <command path>  -d <db_name> -c devices --type csv --file <path_to_file> --headerline
             var dbName;
             if(process.env.DEV_DB || process.env.PROD_DB) dbName = process.env.DEV_DB || process.env.PROD_DB;
-            var command = process.env.MONGO_PATH + " -d "+ dbName + " -c devices --type csv --file "+S(filename).s + " --headerline";
+            var command = process.env.MONGO_IMPORT_PATH + " -d "+ dbName + " -c devices --type csv --file "+S(filename).s + " --headerline";
             logger.info(command);
             cmd.get(command,function(err, data, stderr){
                 if(err) logger.error(err);

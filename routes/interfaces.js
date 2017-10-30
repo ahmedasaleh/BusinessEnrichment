@@ -315,7 +315,7 @@ router.put("/:id", middleware.isLoggedIn,function(request,response){
                 if(request.body.interface.pop) foundInterface.pop = request.body.interface.pop ;
             }
 
-            foundInterface.updated = new Date();
+            foundInterface.lastUpdate = new Date();
             // foundInterface.lastUpdatedBy = {id: request.user._id, email: request.user.email};
 
             foundInterface.save(function(error,intf){
@@ -331,10 +331,13 @@ router.put("/:id", middleware.isLoggedIn,function(request,response){
                         if(foundDevice.interfaces[i].index ==  foundInterface.index){
                             foundDevice.interfaces[i] = foundInterface;
                             console.log(foundDevice.interfaces[i]);
-                            Device.update({_id: foundDevice._id},foundDevice,function(error,device){
-                                 if(error) console.log(error);
+                            Device.findByIdAndUpdate(foundDevice._id,{interfaces: foundDevice.interfaces, discovered: true, updatedAt: new Date()},
+                                function(error,updatedDevice){
+                            // Device.findOneAndUpdate({_id: foundDevice._id},foundDevice,function(error,device){
+                                    if(error) console.log(error);
+                                    else i = foundDevice.interfaces.length
                             });
-                            break;
+                            // break;
                         }
                     }
                 }
