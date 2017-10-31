@@ -60,22 +60,23 @@ function discoveredDevice(device,linkEnrichmentData) {
 
     self.setActualSpeed = function(sp_speed,ifSpeed,ifHighSpeed){
         var tmpActualSpeed;
-                if( sp_speed > 0)
-                {
-                    tmpActualSpeed=sp_speed;
-                }
-                else if(ifHighSpeed > 0){
-                    tmpActualSpeed=ifHighSpeed*1000000;
-                }
-                else{
-                    tmpActualSpeed=ifSpeed;
-                }
-                return tmpActualSpeed;
+        if( sp_speed > 0)
+        {
+            tmpActualSpeed=sp_speed;
+        }
+        else if(ifHighSpeed > 0){
+            tmpActualSpeed=ifHighSpeed*1000000;
+        }
+        else{
+            tmpActualSpeed=ifSpeed;
+        }
+        return tmpActualSpeed;
     };
 
     self.parseSpeed = function(speed){
         var multiplier, unit;
-        if(S(speed).isEmpty() || S(speed).s.toLowerCase() == "unknown"){
+        console.log("parseSpeed()");
+        if(S(speed).isEmpty() || S(speed).s.toLowerCase() == "unknown" ){
             logger.warn(self.name +" : Unkown speed text "+speed);
             return 0;
         }
@@ -83,31 +84,32 @@ function discoveredDevice(device,linkEnrichmentData) {
             return 0;
         }
         var tmpSpeed = S(speed).s.toLowerCase();
-        if(S(tmpSpeed).isAlphaNumeric() ){
-            //extract number
-            // var regexp = new RegExp('/^[0-9]+/');
-            multiplier =  S(tmpSpeed).toInt();//regexp.exec(S(speed).s);
-            console.log("multiplier: "+multiplier);console.log("tmpSpeed: "+S(tmpSpeed).s);
+        console.log("tmpSpeed is: "+tmpSpeed);
+        var numberPattern = /^[0-9]+/;
+        var num = tmpSpeed.match(numberPattern);
+        console.log("num is: "+num);
+        if(num) {
+            console.log(num[0]);
+            multiplier = S(num[0]).toInt();
         }
         else{
-           multiplier = 1;
-            console.log("multiplier: "+multiplier);
+            multiplier = 1;
         }
-        if( S(tmpSpeed).contains("gig") ||  S(tmpSpeed).contains("g")){
+
+        if( S(tmpSpeed).startsWith("gig") ||  S(tmpSpeed).startsWith("g") || S(tmpSpeed).right(1).s == "g"){
             unit = 1000000000;
-            console.log("unit: "+unit);
         }
-        else if( S(tmpSpeed).contains("mig") ||  S(tmpSpeed).contains("m") || S(tmpSpeed).isNumeric()){
+        else if( S(tmpSpeed).startsWith("mig") ||  S(tmpSpeed).startsWith("m") || S(tmpSpeed).right(1).s == "m" || S(tmpSpeed).isNumeric()){
             unit = 1000000;
-            console.log("unit: "+unit);
         }
-        else if( S(tmpSpeed).contains("kilo") ||  S(tmpSpeed).contains("k")){
+        else if( S(tmpSpeed).startsWith("kilo") ||  S(tmpSpeed).startsWith("k") || S(tmpSpeed).right(1).s == "k"){
             unit = 1000;
-            console.log("unit: "+unit);
         }
         else{
             logger.warn(self.name +" : Unkown speed text "+speed);  
+            multiplier = 0; unit = 1;
         }
+        console.log("multiplier: "+multiplier+" unit: "+unit);
         return S(multiplier).toInt() * S(unit).toInt();
     };
 
@@ -138,6 +140,7 @@ function discoveredDevice(device,linkEnrichmentData) {
         var interfaceName = S(ifName).trim().s;
         var alias;
         if(!S(ifAlias).isEmpty()) alias = S(ifAlias).trim().s;
+        var pollInterval = "15min";
         var provisoFlag = 0;
         var unknownFlag = 0;
         var noEnrichFlag = 0;         
@@ -150,7 +153,6 @@ function discoveredDevice(device,linkEnrichmentData) {
         }
 
           
-        console.log("checking SPECIAL SERVICES for ifAlias: "+alias);
         if(alias && S(alias).startsWith("INT-")){
             // # Patterns   INT-P1-P2-P3-P4-P5-P6-P7-P8-P9
             // # Patterns description   
@@ -168,38 +170,81 @@ function discoveredDevice(device,linkEnrichmentData) {
             skipNextCheck = true;
             var specialService="International";
             provisoFlag=1;
-            console.log(specialService);
+            pollInterval = "02min";
             var enrichmentString = S(alias).strip("INT-").s;
             var enrichmentFields = S(enrichmentString).splitLeft('-');
             var sp_service="Unknown",sp_provider="Unknown",sp_termination="Unknown",sp_connType="Unknown",sp_bundleId="Unknown",sp_linkNumber="Unknown",
             sp_CID="Unknown",sp_TECID="Unknown",sp_subCable="Unknown",sp_speed=0;
 
             if(enrichmentFields.length == 9){
-                sp_service=enrichmentFields[1] || "Unknown";
-                sp_provider=enrichmentFields[2] || "Unknown";
-                sp_termination=enrichmentFields[3] || "Unknown";
-                sp_connType=enrichmentFields[4] || "Unknown";
-                sp_bundleId=enrichmentFields[5] || "Unknown";
-                sp_linkNumber=enrichmentFields[6] || "Unknown";
-                sp_CID=enrichmentFields[7] || "Unknown";
-                sp_TECID=enrichmentFields[8] || "Unknown";
-                sp_subCable=enrichmentFields[9] || "Unknown";
+                sp_service=enrichmentFields[0] || "Unknown";
+                sp_provider=enrichmentFields[1] || "Unknown";
+                sp_termination=enrichmentFields[2] || "Unknown";
+                sp_connType=enrichmentFields[3] || "Unknown";
+                sp_bundleId=enrichmentFields[4] || "Unknown";
+                sp_linkNumber=enrichmentFields[5] || "Unknown";
+                sp_CID=enrichmentFields[6] || "Unknown";
+                sp_TECID=enrichmentFields[7] || "Unknown";
+                sp_subCable=enrichmentFields[8] || "Unknown";
             }
             else if(enrichmentFields.length != 9 ){
                 unknownFlag = 1;
             }
                     
             label=hostname+" "+interfaceName;
-            sp_speed = self.parseSpeed(ifHighSpeed || ifSpeed);
+            sp_speed = self.parseSpeed(sp_connType);
             actualspeed = self.setActualSpeed(sp_speed,ifSpeed,ifHighSpeed);
             anErichment= {
                         specialService : specialService, provisoFlag : provisoFlag,sp_service : sp_service, sp_provider : sp_provider, sp_termination : sp_termination, 
                         sp_connType : sp_connType, sp_bundleId : sp_bundleId, sp_linkNumber : sp_linkNumber, sp_CID : sp_CID, sp_TECID : sp_TECID, 
                         sp_subCable : sp_subCable, unknownFlag : unknownFlag, label : label,noEnrichFlag:noEnrichFlag,sp_speed:sp_speed,
-                        actualspeed:actualspeed
+                        actualspeed:actualspeed,pollInterval:pollInterval
             }
         }
-        else if(alias && S(alias).contains("ALPHA-BITSTREAM")){
+        else if(alias && S(alias).startsWith("Cache-")){
+            // # Condition Start with (Cache-)
+            // # Patterns  Cache-P1-P2-P3-P4-P5---P6
+            // # Patterns description  P1: Provider Name
+            // # P2: Node
+            // # P3: TX
+            // # P4: Bundle
+            // # P5: Link Number
+            // # P6: Server Number
+            // # Cache-Facebook-CAI-10G-NB-L11-CID_5688980-SVDC-
+            // # Examples  INT-IPT-Cogent-ALX-10GIG-B2-NB-L22-1_300050661-EIG_IPT_10G_0019-EIG
+            // # INT-IPT-AIRTEL-ALX-10G-NB-L2-ALX_MBB_10GbE_002_M-IMW_IPT_10G_0013-IMWE
+            skipNextCheck = true;
+
+            var specialService=specialService="Caching";
+            provisoFlag=1;
+            pollInterval = "02min";
+            var enrichmentString = S(alias).strip("Cache-").s;
+            var enrichmentFields = S(enrichmentString).splitLeft('-');
+            var sp_provider="Unknown",sp_termination="Unknown",sp_connType="Unknown",sp_bundleId="Unknown",sp_linkNumber="Unknown",
+            sp_subCable="Unknown",sp_speed=0;
+            if(enrichmentFields.length == 8){
+                sp_provider=enrichmentFields[0] || "Unknown";
+                sp_termination=enrichmentFields[1] || "Unknown";
+                sp_connType=enrichmentFields[2] || "Unknown";
+                sp_bundleId=enrichmentFields[3] || "Unknown";
+                sp_linkNumber=enrichmentFields[4] || "Unknown";
+                sp_subCable=enrichmentFields[7] || "Unknown";
+            }
+            else if(enrichmentFields.length != 8 ){
+                unknownFlag = 1;
+            }
+
+            sp_speed=self.parseSpeed(sp_connType);
+            label=hostname+" "+interfaceName;
+            actualspeed = self.setActualSpeed(sp_speed,ifSpeed,ifHighSpeed);
+            anErichment= {
+                        specialService : specialService, provisoFlag : provisoFlag,sp_provider : sp_provider, sp_termination : sp_termination, 
+                        sp_connType : sp_connType, sp_bundleId : sp_bundleId, sp_linkNumber : sp_linkNumber,  
+                        sp_subCable : sp_subCable, unknownFlag : unknownFlag, label : label,noEnrichFlag:noEnrichFlag,sp_speed:sp_speed,
+                        actualspeed:actualspeed,pollInterval:pollInterval
+            }
+        }
+        else if(alias && S(alias).contains("-ALPHA-BITSTREAM")){
             // # Condition  Contain (_ALPHA-BITSTREAM)
             // # Patterns   P1-ALPHA-BITSTREAM P2 P3
             // # Patterns description   
@@ -212,7 +257,6 @@ function discoveredDevice(device,linkEnrichmentData) {
             skipNextCheck = true;
             var specialService="Alpha-Bitstream";
             provisoFlag=1;
-            console.log(specialService);
             var enrichmentString = S(alias).replaceAll(' ','-');//trying to unify byremoving spaces
             var enrichmentFields = S(enrichmentString).splitLeft('-');
             var sp_customer="Unknown",sp_linkNumber="Unknown",sp_speed=0;
@@ -229,10 +273,10 @@ function discoveredDevice(device,linkEnrichmentData) {
             actualspeed = self.setActualSpeed(sp_speed,ifSpeed,ifHighSpeed);
             anErichment= {
                     specialService:specialService,provisoFlag:provisoFlag,unknownFlag:unknownFlag,sp_customer : sp_customer, sp_linkNumber:sp_linkNumber, 
-                    sp_speed : sp_speed,noEnrichFlag:noEnrichFlag,label : label,actualspeed:actualspeed
+                    sp_speed : sp_speed,noEnrichFlag:noEnrichFlag,label : label,actualspeed:actualspeed,pollInterval:pollInterval
             }
         }
-        else if(alias && S(alias).contains("ESP-BITSTREAM")){
+        else if(alias && S(alias).contains("-ESP-BITSTREAM")){
             // # Condition  Contain (-ESP-BITSTREAM)
             // # Patterns   P1-ESP-BITSTREAM P2 P3
             // # Patterns description   P1: Customer
@@ -242,7 +286,6 @@ function discoveredDevice(device,linkEnrichmentData) {
             skipNextCheck = true;
             var specialService = "SH-Bitstream";
             provisoFlag=1;
-            console.log(specialService);
             var enrichmentString = S(alias).replaceAll(' ','-');//trying to unify byremoving spaces
             var enrichmentFields = S(enrichmentString).splitLeft('-');
             var sp_customer="Unknown",sp_linkNumber="Unknown",sp_speed=0;
@@ -259,10 +302,10 @@ function discoveredDevice(device,linkEnrichmentData) {
 
             anErichment= {
                     specialService:specialService,provisoFlag:provisoFlag,unknownFlag:unknownFlag,sp_customer:sp_customer, sp_linkNumber:sp_linkNumber, 
-                    sp_speed : sp_speed,noEnrichFlag:noEnrichFlag,label : label
+                    sp_speed : sp_speed,noEnrichFlag:noEnrichFlag,label : label,pollInterval:pollInterval
             }
         }
-        else if(alias && S(alias).contains("BITSTREAM")){
+        else if(alias && S(alias).contains("-BITSTREAM")){
             // # Condition  Contain (-BITSTREAM)
             // # Patterns   P1-BITSTREAM P2 P3
             // # Patterns description   P1: Customer
@@ -273,9 +316,8 @@ function discoveredDevice(device,linkEnrichmentData) {
             // # LDN-BITSTREAM L6 1GIG
             // # ETISALAT-BITSTREAM L2 1GIG
             skipNextCheck = true;
-            var specialService = "Bitstream";
+            var specialService = "Unlimited-Bitstream";
             provisoFlag=1;
-            console.log(specialService);
             var enrichmentString = S(alias).replaceAll(' ','-');//trying to unify byremoving spaces
             var enrichmentFields = S(enrichmentString).splitLeft('-');
             var sp_customer="Unknown",sp_linkNumber="Unknown",sp_speed=0;
@@ -291,10 +333,10 @@ function discoveredDevice(device,linkEnrichmentData) {
             actualspeed = self.setActualSpeed(sp_speed,ifSpeed,ifHighSpeed);
             anErichment= {
                     specialService:specialService,provisoFlag:provisoFlag,unknownFlag:unknownFlag,sp_customer : sp_customer, sp_linkNumber:sp_linkNumber, 
-                    sp_speed:sp_speed,noEnrichFlag:noEnrichFlag,label : label
+                    sp_speed:sp_speed,noEnrichFlag:noEnrichFlag,label : label,pollInterval:pollInterval
             }
         }
-        else if(alias && S(alias).startsWith("ESP")){
+        else if(alias && S(alias).startsWith("ESP-")){
             // # Condition  Start with (ESP-*)
             // # Patterns   ESP-P1-P2-P3-P4-P5
             // # Patterns description   
@@ -307,7 +349,6 @@ function discoveredDevice(device,linkEnrichmentData) {
             skipNextCheck = true;
             var specialService="ESP";
             provisoFlag=1;
-            console.log(specialService);
             var enrichmentFields = S(alias).splitLeft('-');
             var sp_customer="Unknown",sp_pop="Unknown",sp_connType="Unknown",sp_emsOrder="Unknown",sp_connectedBW="Unknown";
             if(enrichmentFields.length == 6){
@@ -325,10 +366,10 @@ function discoveredDevice(device,linkEnrichmentData) {
             anErichment= {
                     specialService : specialService, provisoFlag:provisoFlag, unknownFlag : unknownFlag, sp_customer : sp_customer, sp_pop : sp_pop, 
                     sp_connType : sp_connType, sp_emsOrder : sp_emsOrder, sp_connectedBW : sp_connectedBW,noEnrichFlag:noEnrichFlag,label : label,
-                    sp_speed:sp_speed,actualspeed:actualspeed
+                    sp_speed:sp_speed,actualspeed:actualspeed,pollInterval:pollInterval
             }
         }
-        else if(alias && S(alias).contains("FW") && S(alias).contains("EG")){
+        else if(alias && S(alias).contains("-FW") && S(alias).contains("-EG")){
             // #Condition   Contain (*-FW*-*-EG)
             // #Patterns    P1_P2_P3_P4-FW00P5-*-EG
             // #Patterns description    
@@ -341,7 +382,6 @@ function discoveredDevice(device,linkEnrichmentData) {
             skipNextCheck = true;
             var specialService="Firewall";
             provisoFlag=1;
-            console.log(specialService);
             var enrichmentString = S(alias).replaceAll('_','-');//trying to unify byremoving spaces
             var enrichmentFields = S(enrichmentString).splitLeft('-');
             var sp_pop="Unknown",sp_fwType="Unknown",sp_serviceType="Unknown",sp_ipType="Unknown",sp_vendor="Unknown";
@@ -350,7 +390,7 @@ function discoveredDevice(device,linkEnrichmentData) {
                     var sp_fwType=enrichmentFields[1] || "Unknown";;
                     var sp_serviceType=enrichmentFields[2] || "Unknown";;
                     var sp_ipType=enrichmentFields[3] || "Unknown";;
-                    var sp_vendor=enrichmentFields[4].right(1).s || "Unknown";; 
+                    var sp_vendor=S(enrichmentFields[4]).right(1).s || "Unknown";; 
             }
             else{
                 unknownFlag = 1;
@@ -359,10 +399,11 @@ function discoveredDevice(device,linkEnrichmentData) {
 
             anErichment= {
                     specialService : specialService, provisoFlag:provisoFlag, unknownFlag : unknownFlag, sp_pop : sp_pop, sp_fwType : sp_fwType, 
-                    sp_serviceType : sp_serviceType, sp_ipType : sp_ipType, sp_vendor : sp_vendor,noEnrichFlag:noEnrichFlag,label : label
+                    sp_serviceType : sp_serviceType, sp_ipType : sp_ipType, sp_vendor : sp_vendor,noEnrichFlag:noEnrichFlag,label : label,
+                    pollInterval:pollInterval
             }
         }
-        else if(alias && S(alias).startsWith("NR") ){
+        else if(alias && S(alias).startsWith("NR_") ){
             ///////////////////////////////////////
             // # Condition  Start with (NR_)
             // # Patterns   NR_P1_P2_P3_P4-N00P5-*-EG P6 P7
@@ -379,7 +420,6 @@ function discoveredDevice(device,linkEnrichmentData) {
             skipNextCheck = true;
             var specialService = "National-Roaming";
             provisoFlag=1;
-            console.log(specialService);
             var enrichmentString = S(alias).replaceAll('_','-');//trying to unify by removing underscore
             enrichmentString = S(enrichmentString).replaceAll(' ','-');//trying to unify by removing spaces
             var enrichmentFields = S(enrichmentString).splitLeft('-');
@@ -390,7 +430,7 @@ function discoveredDevice(device,linkEnrichmentData) {
                 sp_service=enrichmentFields[2] || "Unknown";
                 sp_sourceCore=enrichmentFields[3] || "Unknown";
                 sp_destCore=enrichmentFields[4] || "Unknown";
-                sp_vendor=enrichmentFields[5].right(1).s || "Unknown";
+                sp_vendor=S(enrichmentFields[5]).right(1).s || "Unknown";
                 sp_linkNumber=enrichmentFields[8] || "Unknown";
                 sp_speed=enrichmentFields[9] || 0;
             }
@@ -403,7 +443,7 @@ function discoveredDevice(device,linkEnrichmentData) {
             anErichment= {
                     specialService:specialService,provisoFlag : provisoFlag, unknownFlag:unknownFlag, sp_provider : sp_provider, sp_service : sp_service, 
                     sp_sourceCore : sp_sourceCore, sp_destCore : sp_destCore, sp_vendor : sp_vendor, sp_linkNumber : sp_linkNumber, sp_speed : sp_speed, label : label,
-                    noEnrichFlag:noEnrichFlag,label : label
+                    noEnrichFlag:noEnrichFlag,label : label,pollInterval:pollInterval
             }
         }
         // # LTE Interfaces
@@ -421,7 +461,6 @@ function discoveredDevice(device,linkEnrichmentData) {
             skipNextCheck = true;
             provisoFlag=1;
             var specialService="LTE";
-            console.log(specialService);
             var enrichmentString = S(alias).replaceAll('_','-');//trying to unify by removing underscore
             enrichmentString = S(enrichmentString).replaceAll(' ','-');//trying to unify by removing spaces
             var enrichmentFields = S(enrichmentString).splitLeft('-');
@@ -429,7 +468,7 @@ function discoveredDevice(device,linkEnrichmentData) {
             if(enrichmentFields.length == 8){
                 sp_pop=enrichmentFields[0] || "Unknown";
                 sp_siteCode=enrichmentFields[2] || "Unknown";
-                sp_vendor=enrichmentFields[3].right(1).s || "Unknown";
+                sp_vendor=S(enrichmentFields[3]).right(1).s || "Unknown";
                 sp_linkNumber=enrichmentFields[6] || "Unknown";
                 sp_speed=enrichmentFields[7] || 0;
             }
@@ -440,7 +479,7 @@ function discoveredDevice(device,linkEnrichmentData) {
             actualspeed = self.setActualSpeed(sp_speed,ifSpeed,ifHighSpeed);
             anErichment= {
                     specialService:specialService,provisoFlag : provisoFlag, unknownFlag:unknownFlag, sp_pop:sp_pop,sp_siteCode:sp_siteCode,sp_vendor:sp_vendor,
-                    sp_linkNumber:sp_linkNumber,sp_speed:sp_speed,noEnrichFlag:noEnrichFlag,label : label
+                    sp_linkNumber:sp_linkNumber,sp_speed:sp_speed,noEnrichFlag:noEnrichFlag,label : label,pollInterval:pollInterval
             }
         }
         // # EPC
@@ -456,7 +495,6 @@ function discoveredDevice(device,linkEnrichmentData) {
             skipNextCheck = true;                
             var specialService="EPC";
             provisoFlag=1;
-            console.log(specialService);
             var enrichmentFields = S(alias).splitLeft(' ');
             var sp_provider="Unknown",sp_linkNumber="Unknown",sp_speed=0;
             if(enrichmentFields.length == 4){
@@ -472,7 +510,7 @@ function discoveredDevice(device,linkEnrichmentData) {
 
             anErichment= {
                     specialService:specialService,provisoFlag : provisoFlag, unknownFlag:unknownFlag, sp_provider:sp_provider,sp_linkNumber:sp_linkNumber,
-                    sp_speed:sp_speed,noEnrichFlag:noEnrichFlag,label : label
+                    sp_speed:sp_speed,noEnrichFlag:noEnrichFlag,label : label,pollInterval:pollInterval
             }
         }
         // # DPI
@@ -488,7 +526,6 @@ function discoveredDevice(device,linkEnrichmentData) {
             skipNextCheck = true;
             var specialService="DPI";
             provisoFlag=1;
-            console.log(specialService);
             var enrichmentFields = S(alias).splitLeft('-');
             var sp_pop="Unknown",sp_preNumber="Unknown",sp_portID="Unknown";
             if(enrichmentFields.length == 3){
@@ -519,7 +556,7 @@ function discoveredDevice(device,linkEnrichmentData) {
                         if(secondPOP == pop) type = "Local";
                         else type = "WAN";
                         anErichment = {secondHost:secondHost,secondInterface:secondInterface,secondPOP:secondPOP, provisoFlag:1,
-                            noEnrichFlag:noEnrichFlag,unknownFlag:unknownFlag,type:type,pop:pop,label:label};
+                            noEnrichFlag:noEnrichFlag,unknownFlag:unknownFlag,type:type,pop:pop,label:label,pollInterval:pollInterval};
                         i = self.linkEnrichmentData.length;//break only first loop 
                     }
                 }
@@ -534,7 +571,7 @@ function discoveredDevice(device,linkEnrichmentData) {
                         if(secondPOP == pop) type = "Local";
                         else type = "WAN";
                         anErichment = {secondHost:secondHost,secondInterface:secondInterface,secondPOP:secondPOP, provisoFlag:1,
-                            noEnrichFlag:noEnrichFlag,unknownFlag:unknownFlag,type:type,pop:pop,label:label};
+                            noEnrichFlag:noEnrichFlag,unknownFlag:unknownFlag,type:type,pop:pop,label:label,pollInterval:pollInterval};
                         i = self.linkEnrichmentData.length;//break only first loop 
                     }
                 }
@@ -549,7 +586,7 @@ function discoveredDevice(device,linkEnrichmentData) {
                         if(secondPOP == pop) type = "Local";
                         else type = "WAN";
                         anErichment = {secondHost:secondHost,secondInterface:secondInterface,secondPOP:secondPOP, provisoFlag:1,
-                            noEnrichFlag:noEnrichFlag,unknownFlag:unknownFlag,type:type,pop:pop,label:label};
+                            noEnrichFlag:noEnrichFlag,unknownFlag:unknownFlag,type:type,pop:pop,label:label,pollInterval:pollInterval};
                         i = self.linkEnrichmentData.length;//break only first loop 
                     }
                     else if (S(self.linkEnrichmentData[i].device2).s == self.name && S(self.linkEnrichmentData[i].interface2).s == S(interfaceName).s) {
@@ -560,7 +597,7 @@ function discoveredDevice(device,linkEnrichmentData) {
                         if(secondPOP == pop) type = "Local";
                         else type = "WAN";
                         anErichment = {secondHost:secondHost,secondInterface:secondInterface,secondPOP:secondPOP, provisoFlag:1,
-                            noEnrichFlag:noEnrichFlag,unknownFlag:unknownFlag,type:type,pop:pop,label:label};
+                            noEnrichFlag:noEnrichFlag,unknownFlag:unknownFlag,type:type,pop:pop,label:label,pollInterval:pollInterval};
                         i = self.linkEnrichmentData.length;//break only first loop 
                     }
 
@@ -579,7 +616,6 @@ function discoveredDevice(device,linkEnrichmentData) {
         }
 
         if(skipNextCheck == false){
-            console.log("checking generic Interface");
             if(
                 (S(tmpIfName).startsWith("100ge")  || 
                 S(tmpIfName).startsWith("ae") || 
@@ -608,7 +644,7 @@ function discoveredDevice(device,linkEnrichmentData) {
                     noEnrichFlag=1; 
                     unknownFlag=0;
                     // var label = hostname+" "+interfaceName+" "+alias;        
-                    anErichment= { provisoFlag : provisoFlag, unknownFlag : unknownFlag , label : label , noEnrichFlag:noEnrichFlag };
+                    anErichment= { provisoFlag : provisoFlag, unknownFlag : unknownFlag , label : label , noEnrichFlag:noEnrichFlag,pollInterval:pollInterval };
             }
 
         }
@@ -674,17 +710,19 @@ function discoveredDevice(device,linkEnrichmentData) {
             anInterface = new Interface();
             anInterface.hostname = self.device.hostname;
             anInterface.ipaddress = self.device.ipaddress;
-            anInterface.devType = self.deviceType;
-            anInterface.devVendor = self.deviceVendor;
-            anInterface.devModel = self.deviceModel;
+            anInterface.devType = S(self.deviceType).s;
+            anInterface.devVendor = S(self.deviceVendor).s;
+            anInterface.devModel = S(self.deviceModel).s;
             anInterface.ifIndex = key;//value[ifTableColumns.ifIndex];
             anInterface.ifDescr = value[ifTableColumns.ifDescr];
             anInterface.ifType = value[ifTableColumns.ifType];
+            anInterface.ifTypeStr = snmpConstants.ifTypeStringLookup[S(anInterface.ifType).toInt()];
             anInterface.ifSpeed = value[ifTableColumns.ifSpeed];
-            // anInterface.adminStatus = value[ifTableColumns.ifAdminStatus];
+            anInterface.adminStatus = value[ifTableColumns.ifAdminStatus];
             anInterface.operStatus  = value[ifTableColumns.ifOperStatus];
             anInterface.ifInOctets  = value[ifTableColumns.ifInOctets];
             anInterface.ifOutOctets  = value[ifTableColumns.ifOutOctets];
+            anInterface.lastUpdate = new Date();
             var interfaceType = S(anInterface.ifType).toInt();
             if(anInterface.operStatus == snmpConstants.ifAdminOperStatus.up){
                     self.interfaces[key] = anInterface;
@@ -695,66 +733,6 @@ function discoveredDevice(device,linkEnrichmentData) {
         self.ifXTableError = false;
         return self.interfaces;
     };
-    self.applyFilterCriteria  = function(){
-        async.forEachOf(self.interfaces,function(interface,key,callback){
-            var intf= self.interfaces[key];
-            if (intf.ifHCInOctets.length > 2 || intf.ifHCOutOctets.length > 2 || (intf.ifInOctets > 0) || (intf.ifOutOctets > 0)){
-                var name="",lowerCaseName="";
-                if(!S(intf.ifName).isEmpty()) {
-                    name = S(intf.ifName).trim().s;
-                    lowerCaseName = name.toLowerCase();
-                }
-                var alias="";
-                    if(!S(intf.ifAlias).isEmpty()){
-                    alias = S(intf.ifAlias).trim().s;
-                }
-
-                if( ((intf.deviceType =="router") || (intf.deviceType =="switch")) && !S(lowerCaseName).isEmpty() && !S(lowerCaseName).contains('pppoe') && !S(lowerCaseName).startsWith("vi")) 
-                {
-                    self.interestRawInterfaces.push(Object.assign(rawInterface,intf));
-                    self.interfaces[key] = 
-                }
-                else if((anInterface.deviceVendor == "huawei") && ((anInterface.deviceType =="msan") || (anInterface.deviceType =="gpon") || (anInterface.deviceType =="dslam"))  ){
-                    if(((interfaceType == 6) || (interfaceType == 117))){
-                        // self.interfaces[key] = anInterface;
-                        // self.interestKeys.push(key);//push index to be used during ifXTable walk
-                        self.interestRawInterfaces.push(Object.assign(rawInterface,intf));
-                    }
-                }
-                else if((anInterface.deviceVendor == "alcatel") && (anInterface.deviceModel =="isam")   ){
-                    if((interfaceType == 6)){
-                        // self.interfaces[key] = anInterface;
-                        // self.interestKeys.push(key);//push index to be used during ifXTable walk
-                        self.interestRawInterfaces.push(Object.assign(rawInterface,intf));
-                    }
-                }
-                else{
-                    self.interfaces.splice(key, 1);
-                }                
-            }
-            else{
-                self.interfaces.splice(key, 1);
-            }
-        });
-    };
-
-    self.extractEnrichmentData = function(){
-        async.forEachOf(self.interfaces,function(interface,key,callback){
-            var intf= self.interfaces[key];
-            intf.counters = 32;
-            // var hcInOctet = value[ifXTableColumns.ifHCInOctets];ifHCOutOctets
-            if(hcInOctetsLarge || hcOutOctetsLarge) intf.counters = 64;
-            var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress,intf.ifSpeed ,intf.ifHighSpeed);
-            if(enrichment) {
-                Object.assign(intf,enrichment);
-                self.interestInterfaces.push(intf);
-                self.interestInterfacesIndices.push(intf.ifIndex); 
-            }                       
-        }); 
-
-
-    };
-
     self.retrieveIfXTable = function( table,callback){
         var indexes = [];
         for (index in table){
@@ -773,60 +751,70 @@ function discoveredDevice(device,linkEnrichmentData) {
                 intf.ifName = value[ifXTableColumns.ifName];
                 intf.ifAlias = value[ifXTableColumns.ifAlias];
                 intf.ifHighSpeed = value[ifXTableColumns.ifHighSpeed];
-                // var name="",lowerCaseName="";
-                // if(!S(intf.ifName).isEmpty()) {
-                //     name = S(intf.ifName).trim().s;
-                //     lowerCaseName = name.toLowerCase();
-                // }
-                // var alias="";
-                // if(!S(intf.ifAlias).isEmpty()){
-                //     alias = S(intf.ifAlias).trim().s;
-                // }
+                var name="",lowerCaseName="";
+                if(!S(intf.ifName).isEmpty()) {
+                    name = S(intf.ifName).trim().s;
+                    lowerCaseName = name.toLowerCase();
+                }
+                var alias="";
+                if(!S(intf.ifAlias).isEmpty()){
+                    alias = S(intf.ifAlias).trim().s;
+                }
 
                 var hcInOctets = value[ifXTableColumns.ifHCInOctets];
                 var hcOutOctets = value[ifXTableColumns.ifHCOutOctets];
-                // var hcInOctetsLarge, hcOutOctetsLarge;
+                var hcInOctetsLarge, hcOutOctetsLarge;
 
-                // if(hcInOctets) hcInOctetsLarge=hcInOctets.toString("hex").length > 2;//has traffic 
-                // if(hcOutOctets) hcOutOctetsLarge= hcOutOctets.toString("hex").length > 2;//has traffic 
+                if(hcInOctets) hcInOctetsLarge=hcInOctets.toString("hex").length > 2;//has traffic 
+                if(hcOutOctets) hcOutOctetsLarge= hcOutOctets.toString("hex").length > 2;//has traffic 
 
                 var rawInterface = new RawInterface();
-                // rawInterface.ifHCInOctets = hcInOctetsLarge;
-                // rawInterface.ifHCOutOctets = hcOutOctetsLarge;
-                intf.ifHCInOctets = hcInOctets.toString("hex");
-                intf.ifHCOutOctets = hcOutOctets.toString("hex");
-                self.interfaces[key] = intf;
-                self.interestRawInterfaces.push(Object.assign(rawInterface,intf));
-                // if( ((intf.deviceType =="router") || (intf.deviceType =="switch")) && !S(lowerCaseName).isEmpty() && !S(lowerCaseName).contains('pppoe') && !S(lowerCaseName).startsWith("vi")) 
-                // {
-                //     self.interestRawInterfaces.push(Object.assign(rawInterface,intf));
-                // }
-                // else if((anInterface.deviceVendor == "huawei") && ((anInterface.deviceType =="msan") || (anInterface.deviceType =="gpon") || (anInterface.deviceType =="dslam"))  ){
-                //     if(((interfaceType == 6) || (interfaceType == 117))){
-                //         // self.interfaces[key] = anInterface;
-                //         // self.interestKeys.push(key);//push index to be used during ifXTable walk
-                //         self.interestRawInterfaces.push(Object.assign(rawInterface,intf));
-                //     }
-                // }
-                // else if((anInterface.deviceVendor == "alcatel") && (anInterface.deviceModel =="isam")   ){
-                //     if((interfaceType == 6)){
-                //         // self.interfaces[key] = anInterface;
-                //         // self.interestKeys.push(key);//push index to be used during ifXTable walk
-                //         self.interestRawInterfaces.push(Object.assign(rawInterface,intf));
-                //     }
-                // }                
-
-                // if(hcInOctets && hcOutOctets && (hcInOctetsLarge || hcOutOctetsLarge || (intf.ifInOctets > 0) || (intf.ifOutOctets > 0))){
-                //     intf.counters = 32;
-                //     // var hcInOctet = value[ifXTableColumns.ifHCInOctets];ifHCOutOctets
-                //     if(hcInOctetsLarge || hcOutOctetsLarge) intf.counters = 64;
-                //     var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress,intf.ifSpeed ,intf.ifHighSpeed);
-                //     if(enrichment) {
-                //         Object.assign(intf,enrichment);
-                //         self.interestInterfaces.push(intf);
-                //         self.interestInterfacesIndices.push(intf.ifIndex); 
-                //     }                       
-                // }
+                rawInterface.ifHCInOctets = hcInOctetsLarge;
+                rawInterface.ifHCOutOctets = hcOutOctetsLarge;
+                if(hcInOctets && hcOutOctets && (hcInOctetsLarge || hcOutOctetsLarge || (intf.ifInOctets > 0) || (intf.ifOutOctets > 0))){
+                    if( ((intf.devType =="router") || (intf.devType =="switch")) && !S(lowerCaseName).isEmpty() && !S(lowerCaseName).contains('pppoe') && !S(lowerCaseName).startsWith("vi")) 
+                    {
+                        self.interestRawInterfaces.push(Object.assign(rawInterface,intf));
+                        intf.counters = 32;
+                        if(hcInOctetsLarge || hcOutOctetsLarge) intf.counters = 64;
+                        var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress,intf.ifSpeed ,intf.ifHighSpeed);
+                        if(enrichment) {
+                            Object.assign(intf,enrichment);
+                            self.interestInterfaces.push(intf);
+                            self.interestInterfacesIndices.push(intf.ifIndex); 
+                        }                       
+                    }
+                    else if((intf.devVendor == "huawei") && ((intf.devType =="msan") || (intf.devType =="gpon") || (intf.devType =="dslam"))  ){
+                        if(((S(intf.ifType).toInt() == 6) || (S(intf.ifType).toInt() == 117))){
+                            // self.interfaces[key] = anInterface;
+                            // self.interestKeys.push(key);//push index to be used during ifXTable walk
+                            self.interestRawInterfaces.push(Object.assign(rawInterface,intf));
+                            intf.counters = 32;
+                            if(hcInOctetsLarge || hcOutOctetsLarge) intf.counters = 64;
+                            var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress,intf.ifSpeed ,intf.ifHighSpeed);
+                            if(enrichment) {
+                                Object.assign(intf,enrichment);
+                                self.interestInterfaces.push(intf);
+                                self.interestInterfacesIndices.push(intf.ifIndex); 
+                            }                       
+                        }
+                    }
+                    else if((intf.devVendor == "alcatel") && (intf.devModel =="isam")   ){
+                        if((S(intf.ifType).toInt() == 6)){
+                            // self.interfaces[key] = anInterface;
+                            // self.interestKeys.push(key);//push index to be used during ifXTable walk
+                            self.interestRawInterfaces.push(Object.assign(rawInterface,intf));
+                            intf.counters = 32;
+                            if(hcInOctetsLarge || hcOutOctetsLarge) intf.counters = 64;
+                            var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress,intf.ifSpeed ,intf.ifHighSpeed);
+                            if(enrichment) {
+                                Object.assign(intf,enrichment);
+                                self.interestInterfaces.push(intf);
+                                self.interestInterfacesIndices.push(intf.ifIndex); 
+                            }                       
+                        }
+                    }
+                }
             }
         }); 
         self.ifTableError = false;
@@ -878,42 +866,38 @@ function discoveredDevice(device,linkEnrichmentData) {
         else{
             if(self.inSyncMode){
                 self.retrieveIfXTable(table,function(){});
-                // async.forEachOf(self.device.interfaces,function(interface,key,callback){
-                //     var syncCycles = S(interface.syncCycles).toInt();
-                //     interface.syncCycles = syncCycles + 1;
-                //     // if: current interface index found in interestInterfaces and interface not updated, then: update interface
-                //     if(self.interestInterfacesIndices.includes(interface.ifIndex) && (interface.lastUpdate === undefined)){
-                //         var intf = self.getInterfaceFromInterestList(interface.ifIndex);
-                //         interface.ifName = intf.ifName;
-                //         interface.ifAlias = intf.ifAlias;
-                //         interface.ifDescr = intf.ifDescr;
-                //         interface.ifType = intf.ifType;
-                //         interface.ifSpeed = intf.ifSpeed;
-                //         interface.ifHighSpeed = intf.ifHighSpeed;
-                //         interface.counters = intf.counters;
-                //         interface.lastUpdate = new Date();
-                //         // interface.delete = false;
-                //         interface.syncCycles = 0;
-                //         self.interfaceUpdateList.push(interface);
-                //         //remove interface from list of interest interfaces as it is already exists
-                //         self.removeInterfaceFromInterestList(interface.ifIndex);
-                //     }
-                //     // if: current interface index not found and updated and syncCyles > threshold, then: let "delete = true" and update interface
-                //     else if((!self.interestInterfacesIndices.includes(interface.ifIndex)) && 
-                //         (interface.lastUpdate instanceof Date) && 
-                //         (self.getDateDifference(new Date(),interface.lastUpdate) > DifferenceInUpdateDates) &&
-                //         (interface.syncCycles > syncCyclesThreshold)){
-                //         // interface.delete = true;
-                //         // self.interfaceUpdateList.push(interface);
-                //         self.interfaceRemoveList.push(interface);//we will remove directly
-                //     }else if((!self.interestInterfacesIndices.includes(interface.ifIndex)) && 
-                //         (interface.updated instanceof Date) && 
-                //         (self.getDateDifference(new Date(),interface.lastUpdate) <= DifferenceInUpdateDates) &&
-                //         (interface.syncCycles <= syncCyclesThreshold)){
-                //         interface.lastUpdate = new Date();
-                //         self.interfaceUpdateList.push(interface);
-                //     }
-                //     // if: current interface index not found and not updated and syncCyles > threshold, then: delete interface
+                async.forEachOf(self.device.interfaces,function(interface,key,callback){
+                    var syncCycles = S(interface.syncCycles).toInt();
+                    interface.syncCycles = syncCycles + 1;
+                    // if: current interface index found in interestInterfaces and interface not updated, then: update interface
+                    if(self.interestInterfacesIndices.includes(interface.ifIndex) && (interface.lastUpdate === undefined)){
+                        console.log("interface.lastUpdate === undefined");
+                        var intf = self.getInterfaceFromInterestList(interface.ifIndex);
+                        interface = Object.assign(interface,intf);
+                        interface.lastUpdate = new Date();
+                        // interface.delete = false;
+                        interface.syncCycles = 0;
+                        self.interfaceUpdateList.push(interface);
+                        //remove interface from list of interest interfaces as it is already exists
+                        self.removeInterfaceFromInterestList(interface.ifIndex);
+                    }
+                    // if: current interface index not found and updated and syncCyles > threshold, then: let "delete = true" and update interface
+                    else if((!self.interestInterfacesIndices.includes(interface.ifIndex)) && 
+                        (interface.lastUpdate instanceof Date) && 
+                        (self.getDateDifference(new Date(),interface.lastUpdate) > DifferenceInUpdateDates) &&
+                        (interface.syncCycles > syncCyclesThreshold)){
+                        // interface.delete = true;
+                        // self.interfaceUpdateList.push(interface);
+                        self.interfaceRemoveList.push(interface);//we will remove directly
+                    }
+                     else if((!self.interestInterfacesIndices.includes(interface.ifIndex)) && 
+                        (interface.updated instanceof Date) && 
+                        (self.getDateDifference(new Date(),interface.lastUpdate) <= DifferenceInUpdateDates) &&
+                        (interface.syncCycles <= syncCyclesThreshold)){
+                        interface.lastUpdate = new Date();
+                        self.interfaceUpdateList.push(interface);
+                    }
+                    // if: current interface index not found and not updated and syncCyles > threshold, then: delete interface
                 //     else if((!self.interestInterfacesIndices.includes(interface.ifIndex)) && 
                 //         (interface.lastUpdate === undefined) && 
                 //         (interface.syncCycles > syncCyclesThreshold)){
@@ -927,20 +911,21 @@ function discoveredDevice(device,linkEnrichmentData) {
                 //         self.interfaceUpdateList.push(interface);
                 //     }
                 //     // if: current interface index found in interestInterfaces and interface updated, then: skip
-                //     else if(self.interestInterfacesIndices.includes(interface.ifIndex) && (interface.lastUpdate instanceof Date)){
-                //         //remove interface from list of interest interfaces as it is already exists
-                //         var intf = self.getInterfaceFromInterestList(interface.ifIndex);
-                //         delete intf.createdAt;
-                //         interface.lastUpdate = new Date();
-                //         interface.syncCycles = 0;
-                //         interface = Object.assign(interface,intf);
-                //         self.interfaceUpdateList.push(interface);
-                //         self.removeInterfaceFromInterestList(interface.ifIndex);
-                //     }
+                    else if(self.interestInterfacesIndices.includes(interface.ifIndex) && (interface.lastUpdate instanceof Date)){
+                        console.log("interface.lastUpdate is instanceof Date");
+                        //remove interface from list of interest interfaces as it is already exists
+                        var intf = self.getInterfaceFromInterestList(interface.ifIndex);
+                        // delete intf.createdAt;
+                        interface = Object.assign(interface,intf);
+                        interface.lastUpdate = new Date();
+                        interface.syncCycles = 0;
+                        self.interfaceUpdateList.push(interface);
+                        self.removeInterfaceFromInterestList(interface.ifIndex);
+                    }
                 //     // if: new interface index, then create interface 
                 //     else {
                 //     }
-                // });//end of async.forEachOf
+                });//end of async.forEachOf
                 if(self.interestInterfaces.length > 0) self.createInterfaces(self.interestInterfaces);
                 if(self.interfaceUpdateList.length > 0) self.updateInterfaces(self.interfaceUpdateList);
                 if(self.interfaceRemoveList.length > 0) self.removeInterfaces(self.interfaceRemoveList);
@@ -962,7 +947,7 @@ function discoveredDevice(device,linkEnrichmentData) {
             self.ifTableError = true;
             self.ifXTableError = true;
             // return;
-            self.session.close();
+            // self.session.close();
             throttle = throttle + 1;
         }
         else{
@@ -980,7 +965,6 @@ function discoveredDevice(device,linkEnrichmentData) {
         // if: current interface index not found and not updated and syncCyles > threshold, then: delete interface
         // if: new interface index, then create interface 
         logger.info("in sync mode for: "+self.name+" "+self.device.ipaddress+" "+self.device.community);
-        console.log("*****************************");console.log(self.linkEnrichmentData);console.log("*****************************");
         self.session.tableColumnsAsync(oids.ifTable.OID, oids.ifTable.Columns, self.maxRepetitions, self.ifTableResponseCb);
         // self.getOIDs();//.then(self.getOtherOids).catch();
 
@@ -1420,7 +1404,7 @@ var syncDevices = function(){
     .then(function(deviceList){
         for(var i=0;i<deviceList.length;i++){
             while(throttle <= 0) {
-                deasync.sleep(10);
+                deasync.sleep(100);
             }
             deviceList[i].syncInterfaces();
         }
@@ -1452,7 +1436,6 @@ router.get("/sync/:id",  middleware.isLoggedIn ,function(request, response) {
             getDeviceFarLinks(foundDevice.hostname)
             .then(function(linkEnrichmentData){
                 discoDevice.linkEnrichmentData = linkEnrichmentData;
-                console.log(discoDevice.linkEnrichmentData);console.log("^^^^^^^^^^^^^^^^^^^^^^^^^");
                 for(var i=0; i<1;i++) discoDevice.syncInterfaces();
             })
             .catch();
@@ -1465,7 +1448,8 @@ router.get("/sync/:id",  middleware.isLoggedIn ,function(request, response) {
 //SHOW DEVICE ROUTE
 router.get("/:id", middleware.isLoggedIn ,function(request,response){
     //find device with provided id
-    Device.findById(request.params.id).populate("interfaces").exec(function(error,foundDevice){
+    // Device.findById(request.params.id).populate("interfaces").exec(function(error,foundDevice){
+    Device.findById(request.params.id,function(error,foundDevice){
         if(error){
              logger.error(error);
         }

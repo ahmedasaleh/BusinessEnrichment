@@ -163,10 +163,11 @@ router.get("/:id",function(request,response){
 
 //DESTROY Interface ROUTE
 router.delete("/:id", middleware.isLoggedIn,  function(request,response){
+    console.log(request.params);
     Interface.findById(request.params.id,function(error,foundInterface){
         if(error){
             logger.error.log(error);
-            request.flash("error","something went wrong while updating the interface");
+            request.flash("error","something went wrong while deleting the interface");
         }
         else{
             var device = foundInterface.hostname;
@@ -230,6 +231,7 @@ router.get("/:id/edit", middleware.isLoggedIn, function(request,response){
 //UPDATE INTERFACE ROUTE
 router.put("/:id", middleware.isLoggedIn,function(request,response){
     //find and update the correct DEVICE
+    console.log(request.body);
     request.body.interface.updated = new Date();
     request.body.interface.lastUpdatedBy = {id: request.user._id, email: request.user.email};
 
