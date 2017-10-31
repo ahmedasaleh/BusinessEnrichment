@@ -7,8 +7,12 @@ var interfaceSchema = new mongoose.Schema({
     ifIndex: Number,
     ifDescr: String,
     ifType: String,
+    ifTypeStr: String,
     ifSpeed: Number,
     ifHighSpeed: Number,
+    ifHCInOctets: String,
+    ifHCOutOctets: String,
+    pollInterval: String,
     counters: Number,
     type: String, //Local or WAN
     specialService: String,
@@ -48,13 +52,13 @@ var interfaceSchema = new mongoose.Schema({
     adminStatus: String,
     operStatus: String,
     actualspeed: Number,
-    // delete: {type: Boolean, default: false},//used to mark interface for deletion
     syncCycles: {type: Number, default: 0},//used to track number of sync cycles where interface was missed
     createdAt: { type: Date, default: Date.now },
     lastUpdate: Date,
     hostname:  String,
     ipaddress:  String,
     pop: String //device pop
+    // delete: {type: Boolean, default: false},//used to mark interface for deletion
     // author: {
     //     id:{
     //         type: mongoose.Schema.Types.ObjectId,

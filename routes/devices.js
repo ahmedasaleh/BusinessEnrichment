@@ -695,6 +695,66 @@ function discoveredDevice(device,linkEnrichmentData) {
         self.ifXTableError = false;
         return self.interfaces;
     };
+    self.applyFilterCriteria  = function(){
+        async.forEachOf(self.interfaces,function(interface,key,callback){
+            var intf= self.interfaces[key];
+            if (intf.ifHCInOctets.length > 2 || intf.ifHCOutOctets.length > 2 || (intf.ifInOctets > 0) || (intf.ifOutOctets > 0)){
+                var name="",lowerCaseName="";
+                if(!S(intf.ifName).isEmpty()) {
+                    name = S(intf.ifName).trim().s;
+                    lowerCaseName = name.toLowerCase();
+                }
+                var alias="";
+                    if(!S(intf.ifAlias).isEmpty()){
+                    alias = S(intf.ifAlias).trim().s;
+                }
+
+                if( ((intf.deviceType =="router") || (intf.deviceType =="switch")) && !S(lowerCaseName).isEmpty() && !S(lowerCaseName).contains('pppoe') && !S(lowerCaseName).startsWith("vi")) 
+                {
+                    self.interestRawInterfaces.push(Object.assign(rawInterface,intf));
+                    self.interfaces[key] = 
+                }
+                else if((anInterface.deviceVendor == "huawei") && ((anInterface.deviceType =="msan") || (anInterface.deviceType =="gpon") || (anInterface.deviceType =="dslam"))  ){
+                    if(((interfaceType == 6) || (interfaceType == 117))){
+                        // self.interfaces[key] = anInterface;
+                        // self.interestKeys.push(key);//push index to be used during ifXTable walk
+                        self.interestRawInterfaces.push(Object.assign(rawInterface,intf));
+                    }
+                }
+                else if((anInterface.deviceVendor == "alcatel") && (anInterface.deviceModel =="isam")   ){
+                    if((interfaceType == 6)){
+                        // self.interfaces[key] = anInterface;
+                        // self.interestKeys.push(key);//push index to be used during ifXTable walk
+                        self.interestRawInterfaces.push(Object.assign(rawInterface,intf));
+                    }
+                }
+                else{
+                    self.interfaces.splice(key, 1);
+                }                
+            }
+            else{
+                self.interfaces.splice(key, 1);
+            }
+        });
+    };
+
+    self.extractEnrichmentData = function(){
+        async.forEachOf(self.interfaces,function(interface,key,callback){
+            var intf= self.interfaces[key];
+            intf.counters = 32;
+            // var hcInOctet = value[ifXTableColumns.ifHCInOctets];ifHCOutOctets
+            if(hcInOctetsLarge || hcOutOctetsLarge) intf.counters = 64;
+            var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress,intf.ifSpeed ,intf.ifHighSpeed);
+            if(enrichment) {
+                Object.assign(intf,enrichment);
+                self.interestInterfaces.push(intf);
+                self.interestInterfacesIndices.push(intf.ifIndex); 
+            }                       
+        }); 
+
+
+    };
+
     self.retrieveIfXTable = function( table,callback){
         var indexes = [];
         for (index in table){
@@ -713,62 +773,60 @@ function discoveredDevice(device,linkEnrichmentData) {
                 intf.ifName = value[ifXTableColumns.ifName];
                 intf.ifAlias = value[ifXTableColumns.ifAlias];
                 intf.ifHighSpeed = value[ifXTableColumns.ifHighSpeed];
-                var name="",lowerCaseName="";
-                if(!S(intf.ifName).isEmpty()) {
-                    name = S(intf.ifName).trim().s;
-                    lowerCaseName = name.toLowerCase();
-                }
-                var alias="";
-                if(!S(intf.ifAlias).isEmpty()){
-                    alias = S(intf.ifAlias).trim().s;
-                }
+                // var name="",lowerCaseName="";
+                // if(!S(intf.ifName).isEmpty()) {
+                //     name = S(intf.ifName).trim().s;
+                //     lowerCaseName = name.toLowerCase();
+                // }
+                // var alias="";
+                // if(!S(intf.ifAlias).isEmpty()){
+                //     alias = S(intf.ifAlias).trim().s;
+                // }
 
                 var hcInOctets = value[ifXTableColumns.ifHCInOctets];
                 var hcOutOctets = value[ifXTableColumns.ifHCOutOctets];
-                var hcInOctetsLarge, hcOutOctetsLarge;
+                // var hcInOctetsLarge, hcOutOctetsLarge;
 
-                if(hcInOctets) hcInOctetsLarge=hcInOctets.toString("hex").length > 2;//has traffic 
-                if(hcOutOctets) hcOutOctetsLarge= hcOutOctets.toString("hex").length > 2;//has traffic 
+                // if(hcInOctets) hcInOctetsLarge=hcInOctets.toString("hex").length > 2;//has traffic 
+                // if(hcOutOctets) hcOutOctetsLarge= hcOutOctets.toString("hex").length > 2;//has traffic 
 
                 var rawInterface = new RawInterface();
-                rawInterface.ifHCInOctets = hcInOctetsLarge;
-                rawInterface.ifHCOutOctets = hcOutOctetsLarge;
-                if( ((intf.deviceType =="router") || (intf.deviceType =="switch")) && !S(lowerCaseName).isEmpty() && !S(lowerCaseName).contains('pppoe') && !S(lowerCaseName).startsWith("vi")) 
-                {
-                    self.interestRawInterfaces.push(Object.assign(rawInterface,intf));
-                }
-                else if((anInterface.deviceVendor == "huawei") && ((anInterface.deviceType =="msan") || (anInterface.deviceType =="gpon") || (anInterface.deviceType =="dslam"))  ){
-                    if(((interfaceType == 6) || (interfaceType == 117))){
-                        // self.interfaces[key] = anInterface;
-                        // self.interestKeys.push(key);//push index to be used during ifXTable walk
-                        self.interestRawInterfaces.push(Object.assign(rawInterface,intf));
-                    }
-                }
-                else if((anInterface.deviceVendor == "alcatel") && (anInterface.deviceModel =="isam")   ){
-                    if((interfaceType == 6)){
-                        // self.interfaces[key] = anInterface;
-                        // self.interestKeys.push(key);//push index to be used during ifXTable walk
-                        self.interestRawInterfaces.push(Object.assign(rawInterface,intf));
-                    }
-                }                
+                // rawInterface.ifHCInOctets = hcInOctetsLarge;
+                // rawInterface.ifHCOutOctets = hcOutOctetsLarge;
+                intf.ifHCInOctets = hcInOctets.toString("hex");
+                intf.ifHCOutOctets = hcOutOctets.toString("hex");
+                self.interfaces[key] = intf;
+                self.interestRawInterfaces.push(Object.assign(rawInterface,intf));
+                // if( ((intf.deviceType =="router") || (intf.deviceType =="switch")) && !S(lowerCaseName).isEmpty() && !S(lowerCaseName).contains('pppoe') && !S(lowerCaseName).startsWith("vi")) 
+                // {
+                //     self.interestRawInterfaces.push(Object.assign(rawInterface,intf));
+                // }
+                // else if((anInterface.deviceVendor == "huawei") && ((anInterface.deviceType =="msan") || (anInterface.deviceType =="gpon") || (anInterface.deviceType =="dslam"))  ){
+                //     if(((interfaceType == 6) || (interfaceType == 117))){
+                //         // self.interfaces[key] = anInterface;
+                //         // self.interestKeys.push(key);//push index to be used during ifXTable walk
+                //         self.interestRawInterfaces.push(Object.assign(rawInterface,intf));
+                //     }
+                // }
+                // else if((anInterface.deviceVendor == "alcatel") && (anInterface.deviceModel =="isam")   ){
+                //     if((interfaceType == 6)){
+                //         // self.interfaces[key] = anInterface;
+                //         // self.interestKeys.push(key);//push index to be used during ifXTable walk
+                //         self.interestRawInterfaces.push(Object.assign(rawInterface,intf));
+                //     }
+                // }                
 
-                if(hcInOctets && hcOutOctets && (hcInOctetsLarge || hcOutOctetsLarge || (intf.ifInOctets > 0) || (intf.ifOutOctets > 0))){
-                    intf.counters = 32;
-                    // var hcInOctet = value[ifXTableColumns.ifHCInOctets];ifHCOutOctets
-                    if(hcInOctetsLarge || hcOutOctetsLarge) intf.counters = 64;
-                    console.log("111111111111111111111111");
-
-                    console.log("intf.ifIndex: "+intf.ifIndex);
-                    var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress,intf.ifSpeed ,intf.ifHighSpeed);
-                    console.log("22222222222222222222222");
-                    if(enrichment) {
-                    console.log("33333333333333333333333");
-                        Object.assign(intf,enrichment);
-                    console.log("44444444444444444444444");
-                        self.interestInterfaces.push(intf);
-                        self.interestInterfacesIndices.push(intf.ifIndex); 
-                    }                       
-                }
+                // if(hcInOctets && hcOutOctets && (hcInOctetsLarge || hcOutOctetsLarge || (intf.ifInOctets > 0) || (intf.ifOutOctets > 0))){
+                //     intf.counters = 32;
+                //     // var hcInOctet = value[ifXTableColumns.ifHCInOctets];ifHCOutOctets
+                //     if(hcInOctetsLarge || hcOutOctetsLarge) intf.counters = 64;
+                //     var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress,intf.ifSpeed ,intf.ifHighSpeed);
+                //     if(enrichment) {
+                //         Object.assign(intf,enrichment);
+                //         self.interestInterfaces.push(intf);
+                //         self.interestInterfacesIndices.push(intf.ifIndex); 
+                //     }                       
+                // }
             }
         }); 
         self.ifTableError = false;
