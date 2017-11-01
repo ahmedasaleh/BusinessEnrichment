@@ -75,7 +75,6 @@ function discoveredDevice(device,linkEnrichmentData) {
 
     self.parseSpeed = function(speed){
         var multiplier, unit;
-        console.log("parseSpeed()");
         if(S(speed).isEmpty() || S(speed).s.toLowerCase() == "unknown" ){
             logger.warn(self.name +" : Unkown speed text "+speed);
             return 0;
@@ -84,32 +83,27 @@ function discoveredDevice(device,linkEnrichmentData) {
             return 0;
         }
         var tmpSpeed = S(speed).s.toLowerCase();
-        console.log("tmpSpeed is: "+tmpSpeed);
         var numberPattern = /^[0-9]+/;
         var num = tmpSpeed.match(numberPattern);
-        console.log("num is: "+num);
         if(num) {
-            console.log(num[0]);
             multiplier = S(num[0]).toInt();
         }
         else{
             multiplier = 1;
         }
-
-        if( S(tmpSpeed).startsWith("gig") ||  S(tmpSpeed).startsWith("g") || S(tmpSpeed).right(1).s == "g"){
+		if(tmpSpeed.match(/^[0-9]*g[ig]*$/)){
             unit = 1000000000;
         }
-        else if( S(tmpSpeed).startsWith("mig") ||  S(tmpSpeed).startsWith("m") || S(tmpSpeed).right(1).s == "m" || S(tmpSpeed).isNumeric()){
+        else if(tmpSpeed.match(/^[0-9]*m[eg]*$/)||tmpSpeed.match(/^[0-9]+$/)){
             unit = 1000000;
         }
-        else if( S(tmpSpeed).startsWith("kilo") ||  S(tmpSpeed).startsWith("k") || S(tmpSpeed).right(1).s == "k"){
+        else if(tmpSpeed.match(/^[0-9]*k[ilo]*$/)){
             unit = 1000;
         }
         else{
             logger.warn(self.name +" : Unkown speed text "+speed);  
             multiplier = 0; unit = 1;
         }
-        console.log("multiplier: "+multiplier+" unit: "+unit);
         return S(multiplier).toInt() * S(unit).toInt();
     };
 
@@ -800,7 +794,7 @@ function discoveredDevice(device,linkEnrichmentData) {
                         }
                     }
                     else if((intf.devVendor == "alcatel") && (intf.devModel =="isam")   ){
-                        if((S(intf.ifType).toInt() == 6)){
+                        if((S(intf.ifType).toInt() == 6) || (S(intf.ifType).toInt() == 117)){
                             // self.interfaces[key] = anInterface;
                             // self.interestKeys.push(key);//push index to be used during ifXTable walk
                             self.interestRawInterfaces.push(Object.assign(rawInterface,intf));
@@ -871,7 +865,6 @@ function discoveredDevice(device,linkEnrichmentData) {
                     interface.syncCycles = syncCycles + 1;
                     // if: current interface index found in interestInterfaces and interface not updated, then: update interface
                     if(self.interestInterfacesIndices.includes(interface.ifIndex) && (interface.lastUpdate === undefined)){
-                        console.log("interface.lastUpdate === undefined");
                         var intf = self.getInterfaceFromInterestList(interface.ifIndex);
                         interface = Object.assign(interface,intf);
                         interface.lastUpdate = new Date();
@@ -912,7 +905,6 @@ function discoveredDevice(device,linkEnrichmentData) {
                 //     }
                 //     // if: current interface index found in interestInterfaces and interface updated, then: skip
                     else if(self.interestInterfacesIndices.includes(interface.ifIndex) && (interface.lastUpdate instanceof Date)){
-                        console.log("interface.lastUpdate is instanceof Date");
                         //remove interface from list of interest interfaces as it is already exists
                         var intf = self.getInterfaceFromInterestList(interface.ifIndex);
                         // delete intf.createdAt;
