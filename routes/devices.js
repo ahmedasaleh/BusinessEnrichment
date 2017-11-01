@@ -716,7 +716,7 @@ function discoveredDevice(device,linkEnrichmentData) {
             anInterface.operStatus  = value[ifTableColumns.ifOperStatus];
             anInterface.ifInOctets  = value[ifTableColumns.ifInOctets];
             anInterface.ifOutOctets  = value[ifTableColumns.ifOutOctets];
-            anInterface.lastUpdate = new Date();
+            // anInterface.lastUpdate = new Date();
             var interfaceType = S(anInterface.ifType).toInt();
             if(anInterface.operStatus == snmpConstants.ifAdminOperStatus.up){
                     self.interfaces[key] = anInterface;
@@ -768,11 +768,14 @@ function discoveredDevice(device,linkEnrichmentData) {
                 if(hcInOctets && hcOutOctets && (hcInOctetsLarge || hcOutOctetsLarge || (intf.ifInOctets > 0) || (intf.ifOutOctets > 0))){
                     if( ((intf.devType =="router") || (intf.devType =="switch")) && !S(lowerCaseName).isEmpty() && !S(lowerCaseName).contains('pppoe') && !S(lowerCaseName).startsWith("vi")) 
                     {
+                        console.log("found router or switch");
                         self.interestRawInterfaces.push(Object.assign(rawInterface,intf));
                         intf.counters = 32;
                         if(hcInOctetsLarge || hcOutOctetsLarge) intf.counters = 64;
                         var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress,intf.ifSpeed ,intf.ifHighSpeed);
                         if(enrichment) {
+                            // console.log("an enrichment for the device found with the following: ");
+                            // console.log(enrichment);
                             Object.assign(intf,enrichment);
                             self.interestInterfaces.push(intf);
                             self.interestInterfacesIndices.push(intf.ifIndex); 
@@ -828,8 +831,8 @@ function discoveredDevice(device,linkEnrichmentData) {
     self.updateInterfaces  = function(interfaceList){
         var ignoreMissing = false;
         interfaceList.forEach((interface, i) => {
-            Interface.findOneAndUpdate({"hostname" : S(interfaceList[i].hostname).s , "ifIndex" : S(interfaceList[i].ifIndex).toInt() },{lastUpdate:new Date()},function(error,updatedInterface){
-            // Interface.find({"hostname" : S(interfaceList[i].hostname).s , "ifIndex" : S(interfaceList[i].ifIndex).toInt() }).exec((err, foundInterface) => {
+            // Interface.findOneAndUpdate({"hostname" : S(interfaceList[i].hostname).s , "ifIndex" : S(interfaceList[i].ifIndex).toInt() },{lastUpdate:new Date()},function(error,updatedInterface){
+            Interface.findOneAndUpdate({"hostname" : S(interfaceList[i].hostname).s , "ifIndex" : S(interfaceList[i].ifIndex).toInt() },{syncCycles:interfaceList[i].syncCycles},function(error,updatedInterface){
                 self.allowedFields.forEach(function(field) {
                     if ((typeof interfaceList[i][field] !== 'undefined' && ignoreMissing) || !ignoreMissing) {
                         updatedInterface[field] = interfaceList[i][field];
@@ -849,6 +852,61 @@ function discoveredDevice(device,linkEnrichmentData) {
 
         }
     };
+    self.copyObject = function(toObject,fromObject,override){
+        if(fromObject.ifName) toObject.ifName = fromObject.ifName;
+        if(fromObject.ifAlias) toObject.ifAlias = fromObject.ifAlias;
+        if(fromObject.ifDescr) toObject.ifDescr = fromObject.ifDescr
+        if(fromObject.ifType) toObject.ifType = fromObject.ifType
+        if(fromObject.ifTypeStr) toObject.ifTypeStr = fromObject.ifTypeStr
+        if(fromObject.ifSpeed) toObject.ifSpeed = fromObject.ifSpeed
+        if(fromObject.ifHighSpeed) toObject.ifHighSpeed = fromObject.ifHighSpeed
+        if(fromObject.ifHCInOctets) toObject.ifHCInOctets = fromObject.ifHCInOctets
+        if(fromObject.ifHCOutOctets) toObject.ifHCOutOctets = fromObject.ifHCOutOctets
+        if(fromObject.pollInterval && override == true) toObject.pollInterval = fromObject.pollInterval
+        if(fromObject.counters) toObject.counters = fromObject.counters
+        if(fromObject.type && override == true) toObject.type  = fromObject.type 
+        if(fromObject.specialService) toObject.specialService = fromObject.specialService
+        if(fromObject.secondPOP && override == true) toObject.secondPOP = fromObject.secondPOP
+        if(fromObject.secondHost && override == true) toObject.secondHost = fromObject.secondHost
+        if(fromObject.secondInterface && override == true) toObject.secondInterface = fromObject.secondInterface
+        if(fromObject.label) toObject.label = fromObject.label
+        if(fromObject.provisoFlag) toObject.provisoFlag = fromObject.provisoFlag
+        if(fromObject.noEnrichFlag) toObject.noEnrichFlag = fromObject.noEnrichFlag
+        if(fromObject.devType) toObject.devType = fromObject.devType
+        if(fromObject.devVendor) toObject.devVendor = fromObject.devVendor
+        if(fromObject.devModel) toObject.devModel = fromObject.devModel
+        if(fromObject.sp_service && override == true) toObject.sp_service = fromObject.sp_service
+        if(fromObject.sp_provider && override == true) toObject.sp_provider = fromObject.sp_provider
+        if(fromObject.sp_termination && override == true) toObject.sp_termination = fromObject.sp_termination
+        if(fromObject.sp_bundleId && override == true) toObject.sp_bundleId = fromObject.sp_bundleId
+        if(fromObject.sp_linkNumber && override == true) toObject.sp_linkNumber = fromObject.sp_linkNumber
+        if(fromObject.sp_CID && override == true) toObject.sp_CID = fromObject.sp_CID
+        if(fromObject.sp_TECID && override == true) toObject.sp_TECID = fromObject.sp_TECID
+        if(fromObject.sp_subCable && override == true) toObject.sp_subCable = fromObject.sp_subCable
+        if(fromObject.sp_customer && override == true) toObject.sp_customer = fromObject.sp_customer
+        if(fromObject.sp_sourceCore && override == true) toObject.sp_sourceCore = fromObject.sp_sourceCore
+        if(fromObject.sp_destCore && override == true) toObject.sp_destCore = fromObject.sp_destCore
+        if(fromObject.sp_vendor && override == true) toObject.sp_vendor = fromObject.sp_vendor
+        if(fromObject.sp_speed && override == true) toObject.sp_speed = fromObject.sp_speed
+        if(fromObject.sp_pop && override == true) toObject.sp_pop = fromObject.sp_pop
+        if(fromObject.sp_fwType && override == true) toObject.sp_fwType = fromObject.sp_fwType
+        if(fromObject.sp_serviceType && override == true) toObject.sp_serviceType = fromObject.sp_serviceType
+        if(fromObject.sp_ipType && override == true) toObject.sp_ipType = fromObject.sp_ipType
+        if(fromObject.sp_siteCode) toObject.sp_siteCode = fromObject.sp_siteCode
+        if(fromObject.sp_connType && override == true) toObject.sp_connType = fromObject.sp_connType
+        if(fromObject.sp_emsOrder && override == true) toObject.sp_emsOrder = fromObject.sp_emsOrder
+        if(fromObject.sp_connectedBW && override == true) toObject.sp_connectedBW = fromObject.sp_connectedBW
+        if(fromObject.sp_preNumber && override == true) toObject.sp_preNumber = fromObject.sp_preNumber
+        if(fromObject.sp_dpiName && override == true) toObject.sp_dpiName = fromObject.sp_dpiName
+        if(fromObject.sp_portID && override == true) toObject.sp_portID = fromObject.sp_portID
+        if(fromObject.unknownFlag) toObject.unknownFlag     = fromObject.unknownFlag    
+        if(fromObject.adminStatus) toObject.adminStatus = fromObject.adminStatus
+        if(fromObject.operStatus) toObject.operStatus = fromObject.operStatus
+        if(fromObject.actualspeed && override == true) toObject.actualspeed = fromObject.actualspeed
+        if(fromObject.hostname) toObject.hostname = fromObject.hostname
+        if(fromObject.ipaddress) toObject.ipaddress = fromObject.ipaddress
+        if(fromObject.pop && override == true) toObject.pop = fromObject.pop
+    };
     self.ifXTableResponseCb = function  (error, table) {
         if (error) {
             logger.error ("device "+self.name+ " has " +error.toString () + " while reading ifXTable");
@@ -865,9 +923,9 @@ function discoveredDevice(device,linkEnrichmentData) {
                     interface.syncCycles = syncCycles + 1;
                     // if: current interface index found in interestInterfaces and interface not updated, then: update interface
                     if(self.interestInterfacesIndices.includes(interface.ifIndex) && (interface.lastUpdate === undefined)){
+                        console.log("can't find update date for interface: "+interface.ifIndex);
                         var intf = self.getInterfaceFromInterestList(interface.ifIndex);
-                        interface = Object.assign(interface,intf);
-                        interface.lastUpdate = new Date();
+                        self.copyObject(interface,intf,true);
                         // interface.delete = false;
                         interface.syncCycles = 0;
                         self.interfaceUpdateList.push(interface);
@@ -887,7 +945,7 @@ function discoveredDevice(device,linkEnrichmentData) {
                         (interface.updated instanceof Date) && 
                         (self.getDateDifference(new Date(),interface.lastUpdate) <= DifferenceInUpdateDates) &&
                         (interface.syncCycles <= syncCyclesThreshold)){
-                        interface.lastUpdate = new Date();
+                        // interface.lastUpdate = new Date();
                         self.interfaceUpdateList.push(interface);
                     }
                     // if: current interface index not found and not updated and syncCyles > threshold, then: delete interface
@@ -906,10 +964,11 @@ function discoveredDevice(device,linkEnrichmentData) {
                 //     // if: current interface index found in interestInterfaces and interface updated, then: skip
                     else if(self.interestInterfacesIndices.includes(interface.ifIndex) && (interface.lastUpdate instanceof Date)){
                         //remove interface from list of interest interfaces as it is already exists
+                        console.log("SYNCHRONZING DATTTTTA");
                         var intf = self.getInterfaceFromInterestList(interface.ifIndex);
+                        self.copyObject(interface,intf,false);
                         // delete intf.createdAt;
-                        interface = Object.assign(interface,intf);
-                        interface.lastUpdate = new Date();
+                        // interface.lastUpdate = new Date();
                         interface.syncCycles = 0;
                         self.interfaceUpdateList.push(interface);
                         self.removeInterfaceFromInterestList(interface.ifIndex);
@@ -1428,6 +1487,8 @@ router.get("/sync/:id",  middleware.isLoggedIn ,function(request, response) {
             getDeviceFarLinks(foundDevice.hostname)
             .then(function(linkEnrichmentData){
                 discoDevice.linkEnrichmentData = linkEnrichmentData;
+                console.log("-----------> discoDevice.linkEnrichmentData: ");
+                console.log(discoDevice.linkEnrichmentData);
                 for(var i=0; i<1;i++) discoDevice.syncInterfaces();
             })
             .catch();
