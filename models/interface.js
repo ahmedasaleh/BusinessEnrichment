@@ -37,7 +37,7 @@ var interfaceSchema = new mongoose.Schema({
     sp_sourceCore: String,
     sp_destCore: String,
     sp_vendor: String,
-    sp_speed: Number,
+    sp_speed: String,
     sp_pop: String,
     sp_fwType: String,
     sp_serviceType: String,
@@ -52,10 +52,11 @@ var interfaceSchema = new mongoose.Schema({
     unknownFlag: Number,    
     adminStatus: String,
     operStatus: String,
-    actualspeed: Number,
+    actualspeed: String,
     syncCycles: {type: Number, default: 0},//used to track number of sync cycles where interface was missed
     createdAt: { type: Date, default: Date.now },
     lastUpdate: Date,
+    lastSyncTime: Date,
     hostname:  String,
     ipaddress:  String,
     pop: String //device pop
