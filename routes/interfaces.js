@@ -166,12 +166,13 @@ router.delete("/:id", middleware.isLoggedIn,  function(request,response){
     console.log(request.params);
     Interface.findById(request.params.id,function(error,foundInterface){
         if(error){
-            logger.error.log(error);
+            logger.error(error);
             request.flash("error","something went wrong while deleting the interface");
         }
         else{
+            console.log(foundInterface);
             var device = foundInterface.hostname;
-            // console.log(device);
+            console.log("device: "+device);
 
             Interface.findByIdAndRemove(request.params.id,function(error){
                 // logger.info("deleted interface from Interfaces table");
@@ -180,25 +181,35 @@ router.delete("/:id", middleware.isLoggedIn,  function(request,response){
                 }
             });
 
-            Device.findOne({hostname: device},function(error,foundDevice){
-                if(error){
-                    request.flash("error","Can't find containing device");
-                    logger.error("Can't find containing device");
-                }
-                else{
-                    for(var i=0; i<foundDevice.interfaces.length;i++){
-                        if(foundDevice.interfaces[i].index ==  foundInterface.index){
-                            //remove interface from the device
-                            foundDevice.interfaces.splice(i,1);
-                            // console.log(foundDevice.interfaces);
-                            Device.update({_id: foundDevice._id},foundDevice,function(error,device){
-                                 if(error) logger.error(error);
-                            });
-                            break;
+                    // var subdoc = foundDevice.interfaces.id(request.params.id);
+                    Device.findOneAndUpdate(
+                        { "hostname": device },
+                        { "$pull": {"interfaces": { _id:request.params.id}} },
+                        { safe: true },
+                        function(err,doc) {
+                            if(error) logger.error(err);
                         }
-                    }
-                }
-            });
+                    );                    
+
+            // Device.findOne({hostname: device},function(error,foundDevice){
+            //     if(error){
+            //         request.flash("error","Can't find containing device");
+            //         logger.error("Can't find containing device");
+            //     }
+            //     else{
+            //         // for(var i=0; i<foundDevice.interfaces.length;i++){
+            //         //     if(foundDevice.interfaces[i].index ==  foundInterface.index){
+            //         //         //remove interface from the device
+            //         //         foundDevice.interfaces.splice(i,1);
+            //         //         // console.log(foundDevice.interfaces);
+            //         //         Device.update({_id: foundDevice._id},foundDevice,function(error,device){
+            //         //              if(error) logger.error(error);
+            //         //         });
+            //         //         break;
+            //         //     }
+            //         // }
+            //     }
+            // });
         }
         response.redirect("back");
     });
@@ -228,6 +239,42 @@ router.get("/:id/edit", middleware.isLoggedIn, function(request,response){
         }
     });
 });
+
+var copyObject = function(toObject,fromObject,override){
+        if(fromObject.pollInterval && override == true) toObject.pollInterval = fromObject.pollInterval
+        if(fromObject.type && override == true) toObject.type  = fromObject.type 
+        if(fromObject.specialService) toObject.specialService = fromObject.specialService
+        if(fromObject.secondPOP && override == true) toObject.secondPOP = fromObject.secondPOP
+        if(fromObject.secondHost && override == true) toObject.secondHost = fromObject.secondHost
+        if(fromObject.secondInterface && override == true) toObject.secondInterface = fromObject.secondInterface
+        if(fromObject.sp_service && override == true) toObject.sp_service = fromObject.sp_service
+        if(fromObject.sp_provider && override == true) toObject.sp_provider = fromObject.sp_provider
+        if(fromObject.sp_termination && override == true) toObject.sp_termination = fromObject.sp_termination
+        if(fromObject.sp_bundleId && override == true) toObject.sp_bundleId = fromObject.sp_bundleId
+        if(fromObject.sp_linkNumber && override == true) toObject.sp_linkNumber = fromObject.sp_linkNumber
+        if(fromObject.sp_CID && override == true) toObject.sp_CID = fromObject.sp_CID
+        if(fromObject.sp_TECID && override == true) toObject.sp_TECID = fromObject.sp_TECID
+        if(fromObject.sp_subCable && override == true) toObject.sp_subCable = fromObject.sp_subCable
+        if(fromObject.sp_customer && override == true) toObject.sp_customer = fromObject.sp_customer
+        if(fromObject.sp_sourceCore && override == true) toObject.sp_sourceCore = fromObject.sp_sourceCore
+        if(fromObject.sp_destCore && override == true) toObject.sp_destCore = fromObject.sp_destCore
+        if(fromObject.sp_vendor && override == true) toObject.sp_vendor = fromObject.sp_vendor
+        if(fromObject.sp_speed && override == true) toObject.sp_speed = fromObject.sp_speed
+        if(fromObject.sp_pop && override == true) toObject.sp_pop = fromObject.sp_pop
+        if(fromObject.sp_fwType && override == true) toObject.sp_fwType = fromObject.sp_fwType
+        if(fromObject.sp_serviceType && override == true) toObject.sp_serviceType = fromObject.sp_serviceType
+        if(fromObject.sp_ipType && override == true) toObject.sp_ipType = fromObject.sp_ipType
+        if(fromObject.sp_siteCode) toObject.sp_siteCode = fromObject.sp_siteCode
+        if(fromObject.sp_connType && override == true) toObject.sp_connType = fromObject.sp_connType
+        if(fromObject.sp_emsOrder && override == true) toObject.sp_emsOrder = fromObject.sp_emsOrder
+        if(fromObject.sp_connectedBW && override == true) toObject.sp_connectedBW = fromObject.sp_connectedBW
+        if(fromObject.sp_preNumber && override == true) toObject.sp_preNumber = fromObject.sp_preNumber
+        if(fromObject.sp_dpiName && override == true) toObject.sp_dpiName = fromObject.sp_dpiName
+        if(fromObject.sp_portID && override == true) toObject.sp_portID = fromObject.sp_portID
+        if(fromObject.actualspeed && override == true) toObject.actualspeed = fromObject.actualspeed
+        if(fromObject.pop && override == true) toObject.pop = fromObject.pop
+    };
+
 //UPDATE INTERFACE ROUTE
 router.put("/:id", middleware.isLoggedIn,function(request,response){
     //find and update the correct DEVICE
@@ -322,9 +369,9 @@ router.put("/:id", middleware.isLoggedIn,function(request,response){
                 if(request.body.interface.pop) foundInterface.pop = request.body.interface.pop ;
             }
 
-            foundInterface.lastUpdate = new Date();
             // foundInterface.lastUpdatedBy = {id: request.user._id, email: request.user.email};
-
+            copyObject(foundInterface,request.body.interface,true);
+            foundInterface.lastUpdate = new Date();
             foundInterface.save(function(error,intf){
                 if(error) console.log(error);
             });
@@ -337,7 +384,7 @@ router.put("/:id", middleware.isLoggedIn,function(request,response){
                 }
                 else{
                     var subdoc = foundDevice.interfaces.id(request.params.id);
-                    subdoc.actualspeed = request.body.interface.actualspeed;
+                    copyObject(subdoc,request.body.interface,true);
                     subdoc.lastUpdate = new Date();
                     Device.findOneAndUpdate(
                         { "hostname": foundInterface.hostname, "interfaces._id": request.params.id },

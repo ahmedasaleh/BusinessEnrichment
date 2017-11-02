@@ -101,3 +101,9 @@ following are Table search CSS
 .table-hover tbody tr:hover td, .table-hover tbody tr:hover th {
   background-color: #00bbff;
 }
+.form-inline {
+    padding:10px;
+}
+.form-inline > * {
+    margin:15px 3px !important;
+}

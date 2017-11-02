@@ -9,3 +9,9 @@
 .thumbnail .caption-full{
     padding: 9px;
 }
+.form-inline {
+    padding:10px;
+}
+.form-inline > * {
+    margin:15px 3px !important;
+}

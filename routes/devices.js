@@ -853,6 +853,10 @@ function discoveredDevice(device,linkEnrichmentData) {
         }
     };
     self.copyObject = function(toObject,fromObject,override){
+        console.log("self.copyObject\n\n");
+        console.log(override == true);
+        console.log(fromObject.sp_termination);
+        console.log(toObject.sp_termination);
         if(fromObject.ifName) toObject.ifName = fromObject.ifName;
         if(fromObject.ifAlias) toObject.ifAlias = fromObject.ifAlias;
         if(fromObject.ifDescr) toObject.ifDescr = fromObject.ifDescr
@@ -1303,7 +1307,15 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
                                                              logger.info("new device created and saved");
                                                             request.flash("success","Successfully added device, will start device discovery now");
                                                             var discoDevice = new discoveredDevice(device);
-                                                            discoDevice.discoverInterfaces();
+                                                            getDeviceFarLinks(device.hostname)
+                                                            .then(function(linkEnrichmentData){
+                                                                discoDevice.linkEnrichmentData = linkEnrichmentData;
+                                                                console.log("-----------> discoDevice.linkEnrichmentData: ");
+                                                                console.log(discoDevice.linkEnrichmentData);
+                                                                discoDevice.discoverInterfaces();
+                                                            })
+                                                            .catch();
+                                                            // discoDevice.discoverInterfaces();
                                                         }
                                                         response.redirect("/devices"); //will redirect as a GET request
                                                     });
@@ -1349,7 +1361,16 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
                                      logger.info("new device created and saved");
                                     request.flash("success","Successfully added device, will start device discovery now");
                                     var discoDevice = new discoveredDevice(device);
-                                    discoDevice.discoverInterfaces();
+                                    getDeviceFarLinks(device.hostname)
+                                    .then(function(linkEnrichmentData){
+                                        discoDevice.linkEnrichmentData = linkEnrichmentData;
+                                        console.log("-----------> discoDevice.linkEnrichmentData: ");
+                                        console.log(discoDevice.linkEnrichmentData);
+                                        discoDevice.discoverInterfaces();
+                                    })
+                                    .catch();
+
+                                    // discoDevice.discoverInterfaces();
                                 }
                                 response.redirect("/devices"); //will redirect as a GET request
                             });
@@ -1385,7 +1406,16 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
                              logger.info("new device created and saved");
                             request.flash("success","Successfully added device, will start device discovery now");
                             var discoDevice = new discoveredDevice(device);
-                            discoDevice.discoverInterfaces();
+                            getDeviceFarLinks(device.hostname)
+                            .then(function(linkEnrichmentData){
+                                discoDevice.linkEnrichmentData = linkEnrichmentData;
+                                console.log("-----------> discoDevice.linkEnrichmentData: ");
+                                console.log(discoDevice.linkEnrichmentData);
+                                discoDevice.discoverInterfaces();
+                            })
+                            .catch();
+
+                            // discoDevice.discoverInterfaces();
                         }
                         response.redirect("/devices"); //will redirect as a GET request
                     });
@@ -1405,6 +1435,27 @@ router.get("/new", middleware.isLoggedIn ,function(request, response) {
         seedDB(request.user);
     }
     response.render("devices/new");
+});
+
+var getDeviceModel = __async__ (function(sysOID,communityString){
+    session = snmp.createSession(ipaddress, S(communityString).trim().s,{ timeout: 10000, retries: 1});
+    session.get (sysOID, function (error, varbinds) {
+        if (error) {
+            logger.error (error.toString ());
+            response.redirect("/devices"); 
+        } else {
+            for (var i = 0; i < varbinds.length; i++) {
+                // for version 1 we can assume all OIDs were successful
+                modelOID = varbinds[i].value;
+            
+                // for version 2c we must check each OID for an error condition
+                if (snmp.isVarbindError (varbinds[i]))
+                     logger.error (snmp.varbindError (varbinds[i]));
+                else
+                    modelOID = varbinds[i].value;
+            }
+        }
+    });
 });
 
 var getDeviceFarLinks = __async__ (function(ahostname){
