@@ -109,55 +109,55 @@
                     <label for="sp_connectedBW">Connected Bandwidth</label>
                     <input class="form-control" type="text" name="interface[sp_connectedBW]" value="<%= interface.sp_connectedBW %>">
                 </div>
-                <div id="sp_emsOrder" class="form-group" style="display:none;">
+                <div id="sp_emsOrder" class="form-group" >
                     <label for="sp_emsOrder">EMS Order</label>
                     <input class="form-control" type="text" name="interface[sp_emsOrder]" value="<%= interface.sp_emsOrder %>">
                 </div>
-                <div id="sp_fwType" class="form-group" style="display:none;">
+                <div id="sp_fwType" class="form-group" >
                     <label for="sp_fwType">Firewall Type</label>
                     <input class="form-control" type="text" name="interface[sp_fwType]" value="<%= interface.sp_fwType %>">
                 </div>
-                <div id="sp_serviceType" class="form-group" style="display:none;">
+                <div id="sp_serviceType" class="form-group" >
                     <label for="sp_serviceType">Service Type</label>
                     <input class="form-control" type="text" name="interface[sp_serviceType]" value="<%= interface.sp_serviceType %>">
                 </div>
-                <div id="sp_ipType" class="form-group" style="display:none;">
+                <div id="sp_ipType" class="form-group" >
                     <label for="sp_ipType">IP Type</label>
                     <input class="form-control" type="text" name="interface[sp_ipType]" value="<%= interface.sp_ipType %>">
                 </div>
-                <div id="sp_vendor" class="form-group" style="display:none;">
+                <div id="sp_vendor" class="form-group" >
                     <label for="sp_vendor">Vendor</label>
                     <input class="form-control" type="text" name="interface[sp_vendor]" value="<%= interface.sp_vendor %>">
                 </div>
-                <div id="sp_sourceCore" class="form-group" style="display:none;">
+                <div id="sp_sourceCore" class="form-group" >
                     <label for="sp_sourceCore">Source Core</label>
                     <input class="form-control" type="text" name="interface[sp_sourceCore]" value="<%= interface.sp_sourceCore %>">
                 </div>
-                <div id="sp_destCore" class="form-group" style="display:none;">
+                <div id="sp_destCore" class="form-group" >
                     <label for="sp_destCore">Destination Core</label>
                     <input class="form-control" type="text" name="interface[sp_destCore]" value="<%= interface.sp_destCore %>">
                 </div>
-                <div id="sp_siteCode" class="form-group" style="display:none;">
+                <div id="sp_siteCode" class="form-group" >
                     <label for="sp_siteCode">Site Code</label>
                     <input class="form-control" type="text" name="interface[sp_siteCode]" value="<%= interface.sp_siteCode %>">
                 </div>
-                <div id="sp_preNumber" class="form-group" style="display:none;">
+                <div id="sp_preNumber" class="form-group" >
                     <label for="sp_preNumber">Pre Number</label>
                     <input class="form-control" type="text" name="interface[sp_preNumber]" value="<%= interface.sp_preNumber %>">
                 </div>
-                <div id="sp_portID" class="form-group" style="display:none;">
+                <div id="sp_portID" class="form-group" >
                     <label for="sp_portID">Port ID</label>
                     <input class="form-control" type="text" name="interface[sp_portID]" value="<%= interface.sp_portID %>">
                 </div>
-                <div id="secondHost" class="form-group" style="display:none;">
+                <div id="secondHost" class="form-group" >
                     <label for="secondHost">Second Host</label>
                     <input class="form-control" type="text" name="interface[secondHost]" value="<%= interface.secondHost %>">
                 </div>
-                <div id="secondPOP" class="form-group" style="display:none;">
+                <div id="secondPOP" class="form-group" >
                     <label for="secondPOP">Second POP</label>
                     <input class="form-control" type="text" name="interface[secondPOP]" value="<%= interface.secondPOP %>">
                 </div>
-                <div id="secondInterface" class="form-group" style="display:none;">
+                <div id="secondInterface" class="form-group" >
                     <label for="secondInterface">Second Interface</label>
                     <input class="form-control" type="text" name="interface[secondInterface]" value="<%= interface.secondInterface %>">
                 </div>
@@ -165,11 +165,38 @@
                     <label for="pop">POP</label>
                     <input class="form-control" type="text" name="interface[pop]" value="<%= interface.pop %>">
                 </div>
-                <div id="linkType" class="form-group" style="display:none;">
+                <div id="linkType" class="form-group" >
                     <label for="linkType">Link Type</label>
                     <select class="form-control" type="text" name="interface[type]" value="<%= interface.type %>">
-                        <option value="Local">Local</option>
+                    <% if(interface.type === undefined) { %>
+                        <option value="Local" >Local</option>
                         <option value="WAN">WAN</option>
+                        <option value="NONE" selected="selected">NONE</option>
+                    <% } else if(interface.type == null) {%>
+                        <option value="NONE" selected="selected">NONE</option>
+                        <option value="Local" >Local</option>
+                        <option value="WAN">WAN</option>
+                    <% } else if(interface.type == "Local") {%>
+                        <option value="Local" selected="selected">Local</option>
+                        <option value="WAN">WAN</option>
+                        <option value="NONE">NONE</option>
+                    <% } else if(interface.type == "WAN"){%>
+                        <option value="WAN" selected="selected">WAN</option>
+                        <option value="Local">Local</option>
+                        <option value="NONE">NONE</option>
+                        <% } %>
+                    </select>
+                </div>
+                <div id="pollInterval" class="form-group" >
+                    <label for="pollInterval">Poll Interval</label>
+                    <select class="form-control" type="text" name="interface[pollInterval]" value="<%= interface.pollInterval %>">
+                    <% if(interface.pollInterval === "15min") { %>
+                        <option value="15min" selected="selected">"15min"</option>
+                        <option value="02min"> "02min"</option>
+                    <% } else {%>
+                        <option value="02min" selected="selected"> "02min"</option>
+                        <option value="15min" >"15min"</option>
+                        <% } %>
                     </select>
                 </div>
                 <div class="form-group">

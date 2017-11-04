@@ -35,7 +35,9 @@ var deviceSchema = new mongoose.Schema({
     community: { type: String, default: 'public' },
     createdAt: { type: Date, default: Date.now },
     updatedAt: Date,
+    lastSyncTime: Date,
     sysDescr: String,
+    deviceSyncCycles: {type: Number, default: 0},
     discovered: {type: Boolean, default: false},//used to mark device as discovered, useful during sync process
     // defaultCollector: {type: Number, default: 1},
     popName: {

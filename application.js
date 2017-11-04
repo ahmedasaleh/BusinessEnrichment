@@ -74,7 +74,7 @@ app.use(flash());
 app.use(bodyParser.urlencoded({extended: true}));
 mongoose.Promise = global.Promise; //to vercome the warning about Mongoose mpromise
 
-mongoose.connect("mongodb://localhost/"+process.env.DEV_DB, {useMongoClient: true});
+mongoose.connect("mongodb://localhost/"+process.env.PROD_DB, {useMongoClient: true});
 // mongoose.connect("mongodb://localhost/auth_demo_app", {useMongoClient: true});
 // mongoose.connect(mongoURI, option).then(function(){
 //     logger.info("connected successfully to mongo server");
@@ -143,7 +143,7 @@ new CronJob('0 0 0 */2 * *', function() {
   deviceRoutes.syncDevices();
 }, null, true, 'Africa/Cairo');
 
-
+process.env.UV_THREADPOOL_SIZE = 64;
 app.listen(process.env.PORT, process.env.IP, function() {
     console.log("Business Enrichment V"+ applicationVersion +" Server Started on "+process.env.IP+":"+process.env.PORT);
     console.log("current time is: "+ new Date());
