@@ -57,7 +57,15 @@ function discoveredDevice(device,linkEnrichmentData) {
     self.allowedFields =  enrichmentData.interfaceAllowedFields ;//['ifName','ifAlias','ifIndex','ifDescr','ifType','ifSpeed','ifHighSpeed','counters','type',' specialService','secondPOP','secondHost','secondInterface','label','provisoFlag','noEnrichFlag','sp_service','sp_provider','sp_termination','sp_bundleId','sp_linkNumber','sp_CID','sp_TECID','sp_subCable','sp_customer','sp_sourceCore','sp_destCore','sp_vendor','sp_speed','sp_pop','sp_fwType','sp_serviceType','sp_ipType','sp_siteCode','sp_connType','sp_emsOrder','sp_connectedBW','sp_dpiName','sp_portID','unknownFlag','adminStatus','operStatus','actualspeed','syncCycles','lastUpdate','hostname','ipaddress','pop'];
 
     self.session = snmp.createSession(self.device.ipaddress, S(self.device.community).trim().s,{ sourceAddress: "213.158.183.140",timeout: 10000, version: snmp.Version2c ,retries: 1});
-
+    self.session.on("close", function () {
+        doneDevices = doneDevices + 1;   
+        throttle = throttle + 1;
+        logger.info("snmp socket closed for "+self.name);
+    });
+    self.session.on("error", function (error) {
+        logger.error(error.toString ());
+        self.session.close();
+    });
     self.setActualSpeed = function(sp_speed,ifSpeed,ifHighSpeed){
         var tmpActualSpeed;
         if( sp_speed > 0)
@@ -657,16 +665,18 @@ function discoveredDevice(device,linkEnrichmentData) {
     }
 
     self.saveDevice = function(device){
+        //now the device will use interestInterfaces array during save action, so modify it to include only new and updated
+        //interfaces
+        self.interestInterfaces = self.interestInterfaces.concat(self.interfaceUpdateList);
         Device.findByIdAndUpdate(device._id,{interfaces: self.interestInterfaces, discovered: true, updatedAt: new Date()},function(error,updatedDevice){
             if(error){
                  logger.error(error);
             }
             else{
                 self.session.close();
-                doneDevices = doneDevices + 1;
                 logger.info(self.name+" done, total done: "+doneDevices);
             }
-            throttle = throttle + 1;
+            // throttle = throttle + 1;
 
         });
     };
@@ -689,7 +699,6 @@ function discoveredDevice(device,linkEnrichmentData) {
             }
         }
     };    
-
 
     self.retrieveIfTable = function( table,callback){
         var indexes = [];
@@ -818,23 +827,30 @@ function discoveredDevice(device,linkEnrichmentData) {
         return self.interestInterfaces;
     };    
     self.createInterfaces  = function(interfaceList){
-        for(var i=0;i<interfaceList.length;i++){
-            Interface.create(interfaceList[i],function(error,interface){
+        interfaceList.forEach(function(interface,i){
+            Interface.create(interface,function(error,createdInterface){
                 if(error){
                      logger.error(error);
                 }
             });
+        });
+        // for(var i=0;i<interfaceList.length;i++){
+        //     Interface.create(interfaceList[i],function(error,interface){
+        //         if(error){
+        //              logger.error(error);
+        //         }
+        //     });
             
-        }
+        // }
     };
     self.updateInterfaces  = function(interfaceList){
         var ignoreMissing = true;
-        interfaceList.forEach((interface, i) => {
+        interfaceList.forEach(function(interface, i){
             // Interface.findOneAndUpdate({"hostname" : S(interfaceList[i].hostname).s , "ifIndex" : S(interfaceList[i].ifIndex).toInt() },{lastUpdate:new Date()},function(error,updatedInterface){
-            Interface.findOneAndUpdate({"hostname" : S(interfaceList[i].hostname).s , "ifIndex" : S(interfaceList[i].ifIndex).toInt() },{syncCycles:interfaceList[i].syncCycles},function(error,updatedInterface){
+            Interface.findOneAndUpdate({"ipaddress" : S(interface.ipaddress).s , "ifIndex" : S(interface.ifIndex).toInt() },{syncCycles:interface.syncCycles},function(error,updatedInterface){
                 self.allowedFields.forEach(function(field) {
-                    if ((typeof interfaceList[i][field] !== 'undefined' && ignoreMissing) ) {
-                        updatedInterface[field] = interfaceList[i][field];
+                    if ((typeof interface[field] !== 'undefined' && ignoreMissing) ) {
+                        updatedInterface[field] = interface[field];
                     }
                 });
                 updatedInterface.save();
@@ -842,15 +858,23 @@ function discoveredDevice(device,linkEnrichmentData) {
         });
     };
     self.removeInterfaces  = function(interfaceList){
-        for(var i=0;i<interfaceList.length;i++){
-            console.log("deleting interface with ifIndex: "+interfaceList[i].ifIndex);
-        Interface.findByIdAndRemove(interfaceList[i]._id,function(error){
-            if(error){
-                 logger.error(error);
-            }
+        interfaceList.forEach(function(interface){
+            onsole.log("deleting interface with ifIndex: "+interface.ifIndex);
+            Interface.findByIdAndRemove(interface._id,function(error){
+                if(error){
+                     logger.error(error);
+                }
+            });
         });
 
-        }
+        // for(var i=0;i<interfaceList.length;i++){
+        //     console.log("deleting interface with ifIndex: "+interfaceList[i].ifIndex);
+        //     Interface.findByIdAndRemove(interfaceList[i]._id,function(error){
+        //         if(error){
+        //              logger.error(error);
+        //         }
+        //     });
+        // }
     };
     self.copyObject = function(toObject,fromObject,override){
         if(fromObject.ifName) toObject.ifName = fromObject.ifName;
@@ -907,89 +931,86 @@ function discoveredDevice(device,linkEnrichmentData) {
         if(fromObject.ipaddress) toObject.ipaddress = fromObject.ipaddress
         if(fromObject.pop && override == true) toObject.pop = fromObject.pop
     };
+    self.applySyncRules = function(){
+        async.forEachOf(self.device.interfaces,function(interface,key,callback){
+            var syncCycles = S(interface.syncCycles).toInt();
+            interface.syncCycles = syncCycles + 1;
+            // if: current interface index found in interestInterfaces and interface not updated, then: update interface
+            if(self.interestInterfacesIndices.includes(interface.ifIndex) && (interface.lastUpdate === undefined)){
+                console.log("can't find update date for interface: "+interface.ifIndex);
+                var intf = self.getInterfaceFromInterestList(interface.ifIndex);
+                self.copyObject(interface,intf,true);
+                interface.syncCycles = 0;
+                interface.lastSyncTime = new Date();
+                self.interfaceUpdateList.push(interface);
+                //remove interface from list of interest interfaces as it is already exists
+                self.removeInterfaceFromInterestList(interface.ifIndex);
+            }
+            // if: current interface index found in interestInterfaces and interface updated, then: skip
+            else if(self.interestInterfacesIndices.includes(interface.ifIndex) && (interface.lastUpdate instanceof Date)){
+                //remove interface from list of interest interfaces as it is already exists
+                console.log("SYNCHRONZING DATTTTTA");
+                var intf = self.getInterfaceFromInterestList(interface.ifIndex);
+                self.copyObject(interface,intf,false);
+                interface.lastSyncTime = new Date();
+                interface.syncCycles = 0;
+                self.interfaceUpdateList.push(interface);
+                self.removeInterfaceFromInterestList(interface.ifIndex);
+            }
+            // if: current interface index not found and updated and syncCyles > threshold, then: let "delete = true" and update interface
+            else if((!self.interestInterfacesIndices.includes(interface.ifIndex)) && 
+                (interface.lastSyncTime instanceof Date) && 
+                (self.getDateDifference(new Date(),interface.lastSyncTime) > DifferenceInUpdateDates) &&
+                (interface.syncCycles > syncCyclesThreshold)){
+                // self.interfaceUpdateList.push(interface);
+                console.log("will remove 1");
+                self.interfaceRemoveList.push(interface);//we will remove directly
+            }
+             else if((!self.interestInterfacesIndices.includes(interface.ifIndex)) && 
+                (interface.lastSyncTime instanceof Date) && 
+                (self.getDateDifference(new Date(),interface.lastSyncTime) <= DifferenceInUpdateDates) &&
+                (interface.syncCycles <= syncCyclesThreshold)){
+                interface.lastSyncTime = new Date();
+                console.log("will update 1");
+                self.interfaceUpdateList.push(interface);
+            }
+            // if: current interface index not found and not updated and syncCyles > threshold, then: delete interface
+            else if((!self.interestInterfacesIndices.includes(interface.ifIndex)) && 
+                (interface.lastSyncTime === undefined) && 
+                (interface.syncCycles > syncCyclesThreshold)){
+                console.log("will remove 2")
+                self.interfaceRemoveList.push(interface);
+            }else if((!self.interestInterfacesIndices.includes(interface.ifIndex)) && 
+                (interface.lastSyncTime === undefined) && 
+                (interface.syncCycles <= syncCyclesThreshold)){
+                interface.lastSyncTime = new Date();
+                console.log("will update 2");
+                self.interfaceUpdateList.push(interface);
+            }
+        //     // if: new interface index, then create interface 
+        //     else {
+        //     }
+        });//end of async.forEachOf
+
+    };
+    self.saveInterfacesView = function(){
+        if(self.interestInterfaces.length > 0) self.createInterfaces(self.interestInterfaces);
+        if(self.interfaceUpdateList.length > 0) self.updateInterfaces(self.interfaceUpdateList);
+        if(self.interfaceRemoveList.length > 0) self.removeInterfaces(self.interfaceRemoveList);
+    };
     self.ifXTableResponseCb = function  (error, table) {
         if (error) {
             logger.error ("device "+self.name+ " has " +error.toString () + " while reading ifXTable");
             self.ifTableError = true;
             self.ifXTableError = true;
-            self.session.close();
-            throttle = throttle + 1;
+            // self.session.close();
+            // throttle = throttle + 1;
         }
         else{
             if(self.inSyncMode){
                 self.retrieveIfXTable(table,function(){});
-                async.forEachOf(self.device.interfaces,function(interface,key,callback){
-                    var syncCycles = S(interface.syncCycles).toInt();
-                    interface.syncCycles = syncCycles + 1;
-                    // if: current interface index found in interestInterfaces and interface not updated, then: update interface
-                    if(self.interestInterfacesIndices.includes(interface.ifIndex) && (interface.lastUpdate === undefined)){
-                        console.log("can't find update date for interface: "+interface.ifIndex);
-                        var intf = self.getInterfaceFromInterestList(interface.ifIndex);
-                        self.copyObject(interface,intf,true);
-                        // interface.delete = false;
-                        interface.syncCycles = 0;
-                        interface.lastSyncTime = new Date();
-                        self.interfaceUpdateList.push(interface);
-                        //remove interface from list of interest interfaces as it is already exists
-                        self.removeInterfaceFromInterestList(interface.ifIndex);
-                    }
-                //     // if: current interface index found in interestInterfaces and interface updated, then: skip
-                    else if(self.interestInterfacesIndices.includes(interface.ifIndex) && (interface.lastUpdate instanceof Date)){
-                        //remove interface from list of interest interfaces as it is already exists
-                        console.log("SYNCHRONZING DATTTTTA");
-                        var intf = self.getInterfaceFromInterestList(interface.ifIndex);
-                        self.copyObject(interface,intf,false);
-                        // delete intf.createdAt;
-                        // interface.lastUpdate = new Date();
-                        interface.lastSyncTime = new Date();
-                        interface.syncCycles = 0;
-                        self.interfaceUpdateList.push(interface);
-                        self.removeInterfaceFromInterestList(interface.ifIndex);
-                    }
-                    // if: current interface index not found and updated and syncCyles > threshold, then: let "delete = true" and update interface
-                    else if((!self.interestInterfacesIndices.includes(interface.ifIndex)) && 
-                        (interface.lastSyncTime instanceof Date) && 
-                        (self.getDateDifference(new Date(),interface.lastSyncTime) > DifferenceInUpdateDates) &&
-                        (interface.syncCycles > syncCyclesThreshold)){
-                        // interface.delete = true;
-                        // self.interfaceUpdateList.push(interface);
-                        console.log("will remove 1");
-                        self.interfaceRemoveList.push(interface);//we will remove directly
-                    }
-                     else if((!self.interestInterfacesIndices.includes(interface.ifIndex)) && 
-                        (interface.lastSyncTime instanceof Date) && 
-                        (self.getDateDifference(new Date(),interface.lastSyncTime) <= DifferenceInUpdateDates) &&
-                        (interface.syncCycles <= syncCyclesThreshold)){
-                        // interface.lastUpdate = new Date();
-                        interface.lastSyncTime = new Date();
-                        console.log("will update 1");
-                        self.interfaceUpdateList.push(interface);
-                    }
-                    // if: current interface index not found and not updated and syncCyles > threshold, then: delete interface
-                    else if((!self.interestInterfacesIndices.includes(interface.ifIndex)) && 
-                        (interface.lastSyncTime === undefined) && 
-                        (interface.syncCycles > syncCyclesThreshold)){
-                        console.log("will remove 2")
-                        self.interfaceRemoveList.push(interface);
-                        //  logger.info("interface:"+ interface.name + " will be deleted automatically, it's syncCycle= "+interface.syncCycles);
-                    }else if((!self.interestInterfacesIndices.includes(interface.ifIndex)) && 
-                        (interface.lastSyncTime === undefined) && 
-                        (interface.syncCycles <= syncCyclesThreshold)){
-                        //  logger.info("interface:"+ interface.name + " wasn't found during this sync cycle, it's syncCycle= "+interface.syncCycles);
-                        interface.lastSyncTime = new Date();
-                        console.log("will update 2");
-                        self.interfaceUpdateList.push(interface);
-                    }
-                //     // if: new interface index, then create interface 
-                //     else {
-                //     }
-                });//end of async.forEachOf
-                if(self.interestInterfaces.length > 0) self.createInterfaces(self.interestInterfaces);
-                if(self.interfaceUpdateList.length > 0) self.updateInterfaces(self.interfaceUpdateList);
-                if(self.interfaceRemoveList.length > 0) self.removeInterfaces(self.interfaceRemoveList);
-                //now the device will use interestInterfaces array during save action, so modify it to include only new and updated
-                //interfaces
-                self.interestInterfaces = self.interestInterfaces.concat(self.interfaceUpdateList);
+                self.applySyncRules();
+                self.saveInterfacesView();
                 self.saveDevice(self.device); 
             }else{
                 self.createInterfaces(self.retrieveIfXTable(table,function(){}));
@@ -1000,13 +1021,11 @@ function discoveredDevice(device,linkEnrichmentData) {
     };    
     self.ifTableResponseCb = function  (error, table) {
         if (error) {
-            snmpError = error.toString ();
             logger.error ("device "+self.name+ " has " +error.toString () + " while reading ifTable");
             self.ifTableError = true;
             self.ifXTableError = true;
-            // return;
             // self.session.close();
-            throttle = throttle + 1;
+            // throttle = throttle + 1;
         }
         else{
             self.retrieveIfTable(table,function(){});
