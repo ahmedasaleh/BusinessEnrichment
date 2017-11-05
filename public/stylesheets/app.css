@@ -43,6 +43,18 @@
 /*html {*/
 /*	height: 100%;*/
 /*}*/
+/*@container-desktop (940px + @grid-gutter-width)*/
+/*@container-large-desktop (1140px + @grid-gutter-width)*/
+
+/*@media only screen and (min-width : 1200px) {
+
+    .container { width: 2125px; hight: 1900px;} 
+
+}
+*/
+.container {
+  width: 95%;
+}
 #content {
 	text-align: center;
 	padding-top: 25%;

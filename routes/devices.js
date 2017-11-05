@@ -231,7 +231,7 @@ function discoveredDevice(device,linkEnrichmentData) {
         }
 
           
-        if(alias && S(alias).startsWith("INT-")){
+        if(alias && S(alias.toLowerCase()).startsWith("int-")){
             // # Patterns   INT-P1-P2-P3-P4-P5-P6-P7-P8-P9
             // # Patterns description   
             // # P1: Service
@@ -279,7 +279,7 @@ function discoveredDevice(device,linkEnrichmentData) {
                         actualspeed:actualspeed,pollInterval:pollInterval
             }
         }
-        else if(alias && S(alias).startsWith("Cache-")){
+        else if(alias && S(alias.toLowerCase()).startsWith("cache-")){
             // # Condition Start with (Cache-)
             // # Patterns  Cache-P1-P2-P3-P4-P5---P6
             // # Patterns description  P1: Provider Name
@@ -322,7 +322,7 @@ function discoveredDevice(device,linkEnrichmentData) {
                         actualspeed:actualspeed,pollInterval:pollInterval
             }
         }
-        else if(alias && S(alias).contains("-ALPHA-BITSTREAM")){
+        else if(alias && S(alias.toLowerCase()).contains("-alpha-bitstream")){
             // # Condition  Contain (_ALPHA-BITSTREAM)
             // # Patterns   P1-ALPHA-BITSTREAM P2 P3
             // # Patterns description   
@@ -354,7 +354,7 @@ function discoveredDevice(device,linkEnrichmentData) {
                     sp_speed : sp_speed,noEnrichFlag:noEnrichFlag,label : label,actualspeed:actualspeed,pollInterval:pollInterval
             }
         }
-        else if(alias && S(alias).contains("-ESP-BITSTREAM")){
+        else if(alias && S(alias.toLowerCase()).contains("-esp-bitstream")){
             // # Condition  Contain (-ESP-BITSTREAM)
             // # Patterns   P1-ESP-BITSTREAM P2 P3
             // # Patterns description   P1: Customer
@@ -383,7 +383,7 @@ function discoveredDevice(device,linkEnrichmentData) {
                     sp_speed : sp_speed,noEnrichFlag:noEnrichFlag,label : label,pollInterval:pollInterval
             }
         }
-        else if(alias && S(alias).contains("-BITSTREAM")){
+        else if(alias && S(alias.toLowerCase()).contains("-bitstream")){
             // # Condition  Contain (-BITSTREAM)
             // # Patterns   P1-BITSTREAM P2 P3
             // # Patterns description   P1: Customer
@@ -414,7 +414,7 @@ function discoveredDevice(device,linkEnrichmentData) {
                     sp_speed:sp_speed,noEnrichFlag:noEnrichFlag,label : label,pollInterval:pollInterval
             }
         }
-        else if(alias && S(alias).startsWith("ESP-")){
+        else if(alias && S(alias.toLowerCase()).startsWith("esp-")){
             // # Condition  Start with (ESP-*)
             // # Patterns   ESP-P1-P2-P3-P4-P5
             // # Patterns description   
@@ -447,7 +447,7 @@ function discoveredDevice(device,linkEnrichmentData) {
                     sp_speed:sp_speed,actualspeed:actualspeed,pollInterval:pollInterval
             }
         }
-        else if(alias && S(alias).contains("-FW") && S(alias).contains("-EG")){
+        else if(alias && S(alias.toLowerCase()).contains("-fw") && S(alias.toLowerCase()).contains("-eg")){
             // #Condition   Contain (*-FW*-*-EG)
             // #Patterns    P1_P2_P3_P4-FW00P5-*-EG
             // #Patterns description    
@@ -481,7 +481,7 @@ function discoveredDevice(device,linkEnrichmentData) {
                     pollInterval:pollInterval
             }
         }
-        else if(alias && S(alias).startsWith("NR_") ){
+        else if(alias && S(alias.toLowerCase()).startsWith("nr_") ){
             ///////////////////////////////////////
             // # Condition  Start with (NR_)
             // # Patterns   NR_P1_P2_P3_P4-N00P5-*-EG P6 P7
@@ -525,7 +525,7 @@ function discoveredDevice(device,linkEnrichmentData) {
             }
         }
         // # LTE Interfaces
-        else if(alias && S(alias).contains("ENP")){      
+        else if(alias && S(alias.toLowerCase()).contains("enp")){      
             // # Condition  Contain (*_ENB*-E*-*-EG) or Contain (ENB)
             // # Patterns   P1_ENB_P2-E00P3-*-EG P4 P5
             // # Patterns description   
@@ -561,7 +561,7 @@ function discoveredDevice(device,linkEnrichmentData) {
             }
         }
         // # EPC
-        else if(alias && S(alias).contains("EPC")){      
+        else if(alias && S(alias.toLowerCase()).contains("epc")){      
             // # Condition  Contain (* EPC*)
             // # Patterns   P1 EPC P2 P3
             // # Patterns description   
@@ -592,7 +592,7 @@ function discoveredDevice(device,linkEnrichmentData) {
             }
         }
         // # DPI
-        else if(alias && S(alias).contains("PRE1") ){        
+        else if(alias && S(alias.toLowerCase()).contains("pre1") ){        
             // # Condition  Start with (POP Name-PRE1*) OR Contain (PRE1)
             // # Patterns   P1-P2-P3
             // # Patterns description   
@@ -847,7 +847,7 @@ function discoveredDevice(device,linkEnrichmentData) {
 
                 var hcInOctets = value[ifXTableColumns.ifHCInOctets];
                 var hcOutOctets = value[ifXTableColumns.ifHCOutOctets];
-                var hcInOctetsLarge, hcOutOctetsLarge;
+                var hcInOctetsLarge = false, hcOutOctetsLarge =false;
 
                 var bufInt , hcInOctetsBufferLength = 0 , hcOutOctetsBufferLength = 0;
                 if(hcInOctets && hcInOctets.toString("hex").length > 2) hcInOctetsLarge=true;//has traffic 
@@ -856,7 +856,7 @@ function discoveredDevice(device,linkEnrichmentData) {
                 var rawInterface = new RawInterface();
                 rawInterface.ifHCInOctets = hcInOctetsLarge;
                 rawInterface.ifHCOutOctets = hcOutOctetsLarge;
-                if(hcInOctetsLarge || hcOutOctetsLarge || (intf.ifInOctets > 0) || (intf.ifOutOctets > 0)){
+                if((hcInOctetsLarge == true) || (hcOutOctetsLarge == true) || (intf.ifInOctets > 0) || (intf.ifOutOctets > 0)){
                     if( ((intf.devType =="router") || (intf.devType =="switch")) && !S(lowerCaseName).isEmpty() && !S(lowerCaseName).contains('pppoe') && !S(lowerCaseName).startsWith("vi")
                         )//&& !(intf.ifName == S("Gi0/3").s) && !(intf.ifName == S("Gi0/1").s) && !(self.name == S("HELWAN-S02C-C-EG").s)) 
                     {
@@ -1173,7 +1173,7 @@ router.get("/pagination?", middleware.isLoggedIn ,function(request, response) {
 
         if(S(searchQuery).isEmpty()){
             Device.count({}, function(err, devicesCount) {
-                Device.find({},'hostname ipaddress popName.name sector.name governorate.name type model vendor community createdAt updatedAt author lastUpdatedBy sysObjectID sysName sysDescr',{lean:true,skip:skip,limit:limit}, function(err, foundDevices) {
+                Device.find({},'hostname ipaddress popName.name sector.name governorate.name type model vendor community createdAt updatedAt lastSyncTime author lastUpdatedBy sysObjectID sysName sysDescr',{lean:true,skip:skip,limit:limit}, function(err, foundDevices) {
                     if (err) {
                          logger.error(err);
                     }
@@ -1206,7 +1206,7 @@ router.get("/pagination?", middleware.isLoggedIn ,function(request, response) {
                 {type: new RegExp(searchQuery,'i')},
                 {model: new RegExp(searchQuery,'i')},
                 {vendor: new RegExp(searchQuery,'i')},
-                {"popName.name": new RegExp(searchQuery,'i')}]},'hostname ipaddress popName.name sector.name governorate.name type model vendor community createdAt updatedAt author lastUpdatedBy sysObjectID sysName sysDescr',{lean:true,skip:skip,limit:limit}, function(err, foundDevices) {
+                {"popName.name": new RegExp(searchQuery,'i')}]},'hostname ipaddress popName.name sector.name governorate.name type model vendor community createdAt updatedAt lastSyncTime author lastUpdatedBy sysObjectID sysName sysDescr',{lean:true,skip:skip,limit:limit}, function(err, foundDevices) {
                     if (err) {
                          logger.error(err);
                     }
