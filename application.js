@@ -143,7 +143,7 @@ new CronJob('0 0 0 */2 * *', function() {
   deviceRoutes.syncDevices();
 }, null, true, 'Africa/Cairo');
 
-process.env.UV_THREADPOOL_SIZE = 64;
+process.env.UV_THREADPOOL_SIZE = 10;
 app.listen(process.env.PORT, process.env.IP, function() {
     console.log("Business Enrichment V"+ applicationVersion +" Server Started on "+process.env.IP+":"+process.env.PORT);
     console.log("current time is: "+ new Date());

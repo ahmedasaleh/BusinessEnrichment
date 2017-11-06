@@ -8,6 +8,7 @@ var async           = require('async');
 var S               = require('string');
 var responseHandler = require('express-response-handler');
 var logger          = require("../middleware/logger");
+var interfaceDeviceID;
 
 //Mongoose PAGINATION
 
@@ -246,6 +247,13 @@ var copyObject = function(toObject,fromObject,override){
         if(toObject.type == "NONE") toObject.type = null;
     };
 
+var setDeviceID = function(anID){
+    interfaceDeviceID = anID;
+};
+var getDeviceID = function(anID){
+    return interfaceDeviceID ;
+};
+
 //UPDATE INTERFACE ROUTE
 router.put("/:id", middleware.isLoggedIn,function(request,response){
     //find and update the correct DEVICE
@@ -253,9 +261,11 @@ router.put("/:id", middleware.isLoggedIn,function(request,response){
     request.body.interface.lastUpdatedBy = {id: request.user._id, email: request.user.email};
 
     Interface.findById(request.params.id,function(error,foundInterface){
+        
         if(error){
             logger.error(error);
             request.flash("error","something went wrong while updating the interface");
+            response.redirect("/devices/");
         }
         else{
             copyObject(foundInterface,request.body.interface,true);
@@ -266,12 +276,18 @@ router.put("/:id", middleware.isLoggedIn,function(request,response){
             
 
             Device.findOne({hostname: foundInterface.hostname},function(error,foundDevice){
+
                 if(error){
                     request.flash("error","Can't find containing device");
                     logger.error("Can't find containing device");
+                    response.redirect("/devices/");
                 }
                 else{
                     var subdoc = foundDevice.interfaces.id(request.params.id);
+                    setDeviceID(foundDevice._id);
+                    console.log("deviceID:\n");
+                    console.log(interfaceDeviceID);
+                    console.log(getDeviceID());
                     copyObject(subdoc,request.body.interface,true);
                     subdoc.lastUpdate = new Date();
                     Device.findOneAndUpdate(
@@ -285,10 +301,12 @@ router.put("/:id", middleware.isLoggedIn,function(request,response){
 
                         }
                     );                    
+                    console.log("finished updating interface, will redirect to its device with id: "+getDeviceID());
+                    if(!interfaceDeviceID) response.redirect("/devices/");
+                    else response.redirect("/devices/"+interfaceDeviceID);
                 }
             });
         }
-        response.redirect("/devices/");
     });
 });
 module.exports = router;

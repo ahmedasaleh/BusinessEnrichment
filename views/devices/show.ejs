@@ -16,7 +16,7 @@
         <div class="col-md-9">
             <h1><%=device.name  %></h1>
             <div class="thumbnail">
-                <img class="img-responsive" src="/images/router.png">
+                <!-- <img class="img-responsive" src="/images/router.png"> -->
                 <div class="caption-full">
                     <h4 class="pull-right">IP: <%=device.ipaddress  %></h4>
                     <h4><a href="/devices/<%= device._id %>"><%=device.hostname  %></a></h4>
@@ -55,19 +55,19 @@
                             <tr>
                                 <th data-field="state" data-checkbox="true"> </th>
                                 <th data-field="_id" data-visible="false">ID</th>
-                                <th data-field="ifIndex">Index</th>
-                                <th data-field="ifName" data-sortable="true">Name</th>
-                                <th data-field="ifAlias" data-sortable="true">Alias</th>
+                                <th data-field="ifIndex">ifIndex</th>
+                                <th data-field="ifName" data-sortable="true">ifName</th>
+                                <th data-field="ifAlias" data-sortable="true">ifAlias</th>
                                 <th data-field="hostname" data-sortable="true">Hostname</th>
                                 <th data-field="ipaddress" data-sortable="true">IP Address</th>
-                                <th data-field="ifDescr">Description</th>
+                                <th data-field="ifDescr">ifDescr</th>
                                 <th data-field="ifType" data-sortable="true">ifType</th>
                                 <th data-field="ifTypeStr" data-sortable="true">ifTypeStr</th>
                                 <th data-field="devType" data-sortable="true">devType</th>
                                 <th data-field="devVendor" data-sortable="true">devVendor</th>
                                 <th data-field="devModel" data-sortable="true">devModel</th>
-                                <th data-field="ifSpeed" data-sortable="true">Speed</th>
-                                <th data-field="ifHighSpeed" data-sortable="true">High Speed</th>
+                                <th data-field="ifSpeed" data-sortable="true">ifSpeed</th>
+                                <th data-field="ifHighSpeed" data-sortable="true">ifHighSpeed</th>
                                 <th data-field="adminStatus" data-sortable="true">Admin Status</th>
                                 <th data-field="operStatus" data-sortable="true">Operational Status</th>
                                 <th data-field="actualspeed" data-sortable="true">Actual Speed</th>
@@ -108,7 +108,7 @@
                                 <th data-field="adminStatus" data-visible="false"> adminStatus  </th>
                                 <th data-field="operStatus" data-visible="false"> operStatus  </th>
                                 <th data-field="pop"> POP  </th>
-                                <th data-field="createdAt" data-sortable="true">Date Created</th>
+                                <th data-field="lastSyncTime" data-sortable="true">Last Sync Time</th>
                                 <th data-field="lastUpdate" data-sortable="true">Date Updated</th>
                             </tr>
                         </thead>
@@ -171,12 +171,12 @@
                                     <td><%= interface.operStatus %></td>
                                     <td><%= interface.pop %></td>
                                     <td><% if(interface.lastSyncTime) { %>
-                                            <%= interface.lastSyncTime.toLocaleString()() %>
+                                            <%= interface.lastSyncTime.toLocaleString() %>
                                         <% } %>
                                     </td>
                                     <td>
                                         <% if(interface.lastUpdate) { %>
-                                            <%= interface.lastUpdate.toLocaleString()() %>
+                                            <%= interface.lastUpdate.toLocaleString() %>
                                         <% } %>
                                     </td>
                                 </tr>
@@ -185,7 +185,11 @@
                     </table>
                 </div>
             </div>
+               <a href="/devices/">Go Back</a>
         </div>               
+            
+            
+
     </div>
 </div>
 <% include ../partials/footer %>

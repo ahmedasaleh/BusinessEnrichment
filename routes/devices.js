@@ -111,7 +111,7 @@ function discoveredDevice(device,linkEnrichmentData) {
     });
     self.session.on("error", function (error) {
         logger.error(error.toString ());
-        self.session.close();
+        if(self.session) self.session.close();
     });
     self.setActualSpeed = function(sp_speed,ifSpeed,ifHighSpeed){
         var tmpActualSpeed;
@@ -902,7 +902,7 @@ function discoveredDevice(device,linkEnrichmentData) {
                     }
                 }
                 else{
-                    logger.warn("interface "+lowerCaseName+ " on device "+self.name+ "has no traffic");
+                    // logger.warn("interface "+lowerCaseName+ " on device "+self.name+ " has no traffic");
                 }
             }
         }); 
@@ -1115,7 +1115,7 @@ function discoveredDevice(device,linkEnrichmentData) {
             logger.error ("device "+self.name+ " has " +error.toString () + " while reading ifTable");
             self.ifTableError = true;
             self.ifXTableError = true;
-            // self.session.close();
+            self.session.close();
             // throttle = throttle + 1;
         }
         else{
@@ -1134,8 +1134,6 @@ function discoveredDevice(device,linkEnrichmentData) {
         // if: new interface index, then create interface 
         logger.info("in sync mode for: "+self.name+" "+self.device.ipaddress+" "+self.device.community);
         self.session.tableColumnsAsync(oids.ifTable.OID, oids.ifTable.Columns, self.maxRepetitions, self.ifTableResponseCb);
-        // self.getOIDs();//.then(self.getOtherOids).catch();
-
     };
     self.discoverInterfaces = function(){
         logger.info(self.name+" "+self.device.ipaddress+" "+self.device.community);
@@ -1586,16 +1584,23 @@ var syncDevices = function(){
             }
             deviceList[i].syncInterfaces();
         }
+        bulkSyncInProgress = false;  
+        doneDevices = 0;  
+        throttle = MAX_PARALLEL_DEVICES;
     })
     .catch(); 
-    bulkSyncInProgress = false;    
 }
 
 router.get("/sync",  middleware.isLoggedIn ,function(request, response) {
-    throttle = MAX_PARALLEL_DEVICES;
-    doneDevices = 0;
-    bulkSyncInProgress = true;
-    syncDevices();
+    if(bulkSyncInProgress == false){
+        throttle = MAX_PARALLEL_DEVICES;
+        doneDevices = 0;
+        bulkSyncInProgress = true;
+        syncDevices();        
+    }
+    else{
+        request.flash("error","Bulk synchronization process is already in background");
+    }
     response.redirect("/devices");
 });
 
@@ -1603,9 +1608,7 @@ router.get("/sync",  middleware.isLoggedIn ,function(request, response) {
 
 
 router.get("/sync/:id",  middleware.isLoggedIn ,function(request, response) {
-    // syncDevices();
-    throttle = MAX_PARALLEL_DEVICES;
-    doneDevices = 0;
+    console.log("/sync/:id --> bulkSyncInProgress: "+bulkSyncInProgress);
     if(bulkSyncInProgress == false){
         Device.findById(request.params.id, function(err, foundDevice) {
             if (err) {
@@ -1625,7 +1628,7 @@ router.get("/sync/:id",  middleware.isLoggedIn ,function(request, response) {
         });
     }
     else{
-        request.flash("warn","Bulk synchronization process is already in background, will not sync device now");
+        request.flash("error","Bulk synchronization process is already in background, will not sync device now");
     }
 
     response.redirect("/devices");
@@ -1641,7 +1644,7 @@ router.get("/:id", middleware.isLoggedIn ,function(request,response){
         }
         else{
             //render show template with that device
-            response.render("devices/show",{device: foundDevice});
+            response.render("devices/show",{device: foundDevice,id:foundDevice._id});
         }
     });
 });
@@ -1725,6 +1728,178 @@ router.delete("/:id",  middleware.isLoggedIn , function(request,response){
     //     }
     //     response.redirect("/devices");
     // });
+});
+
+//DESTROY from NNM- Device ROUTE
+router.delete("/api/:hostname",  function(request,response){
+    var hostname = request.params.hostname;
+    logger.warn("Deleting device with hostname: "+hostname);
+    if(hostname){
+        //find device
+        Device.remove({"hostname":hostname},function(error){
+            if(error) logger.error(error);
+        });
+        response.redirect("/devices");
+    }
+    else{
+    response.redirect("/devices");
+
+    }
+});
+
+//CREATE from NNM- add new device to DB through NM
+router.post("/api/:hostname/:ipaddress/:communitystring/:popname",  function(request, response) {
+    throttle = MAX_PARALLEL_DEVICES;
+    doneDevices = 0;
+    //get data from a form and add to devices array
+    var hostname = request.params.hostname;
+    var ipaddress = request.params.ipaddress;
+    var communityString = request.params.community || "public";
+    var parsedHostName = Parser.parseHostname(S(hostname));
+    var type ;//= request.body.device.type;
+    var model ;//= request.body.device.model;
+    var modelOID = "";
+    var vendor ;//= request.body.device.vendor;
+
+    var popId =  "NONE";
+    var sectorId = "NONE";
+    var governorateId = "NONE";
+    ///
+    var aPOP = request.params.popname;
+    var aSector = new Sector();
+    var aGove = new Governorate();
+    var emptySector = false;
+    var emptyPOP = false;
+    var emptyGove = false;
+
+    if(sectorId === 'NONE') {
+        emptySector = true;
+        Sector.findOne({name : "NONE" }, function(error,foundSector){
+            aSector = foundSector;
+        });
+    }
+
+    if(governorateId === 'NONE') {
+        emptyGove = true;
+        if(parsedHostName){
+            Governorate.findOne({acronym : parsedHostName.popGove }, function(error,foundGove){
+                aGove = foundGove;
+                emptyGove = false;
+                governorateId = foundGove._id;
+            });
+        }
+    }
+
+    if(S(emptySector).toBoolean()){
+        sectorId = aSector._id   ;
+    }
+    if(S(emptyPOP).toBoolean()){
+        popId = aPOP._id   ;
+    }
+    if(S(emptyGove).toBoolean()){
+        governorateId = aGove._id   ;
+    }
+    session = snmp.createSession(ipaddress, S(communityString).trim().s,{ timeout: 10000, retries: 1});
+    session.get (sysOID, function (error, varbinds) {
+        if (error) {
+            logger.error (error.toString ());
+            response.redirect("/devices"); 
+        } else {
+            for (var i = 0; i < varbinds.length; i++) {
+                // for version 1 we can assume all OIDs were successful
+                modelOID = varbinds[i].value;
+            
+                // for version 2c we must check each OID for an error condition
+                if (snmp.isVarbindError (varbinds[i]))
+                     logger.error (snmp.varbindError (varbinds[i]));
+                else
+                    modelOID = varbinds[i].value;
+            }
+                console.log("MODELOID IS: "+modelOID);
+                modelOID = "."+modelOID;
+            DeviceModel.findOne({oid: modelOID},function(error,foundModel){
+                console.log("MODELOID inside query IS: "+modelOID);
+                if(error){
+                     logger.error(error);
+                }
+                else if(foundModel != null){
+                    vendor = foundModel.vendor;
+                    type = foundModel.type;
+                    model = foundModel.model ;
+                    console.log(foundModel);
+                }
+                else{
+                    console.log("couldn't find OID");
+                    model = model ;
+                }
+
+                if(!(sectorId === 'NONE')){
+                    Sector.findById(sectorId,function(error,foundSector){
+                        if(error) {
+                             logger.error(error);
+                        }
+                        else {
+
+                            if(!(governorateId === undefined)){
+                                Governorate.findById(governorateId,function(error,foundGove){
+                                    if(error){
+                                         logger.error(error);
+
+                                    }else{
+                                        ///here goes correct values
+                                        aDevice = {
+                                                hostname: hostname.trim(),
+                                                ipaddress: ipaddress.trim(),
+                                                author: {id: request.user._id, email: request.user.email},
+                                                community: communityString.trim(),
+                                                type: foundModel.type.trim(),
+                                                model: foundModel.model.trim(),
+                                                vendor: foundModel.vendor.trim(),
+                                                sysObjectID: modelOID,
+                                                "popName.name":  aPOP,
+                                                "sector.name": "foundPOP.sector",
+                                                "governorate.name":  foundGove.name
+                                        };
+                                        aDevice.interfaces = [];
+                                         logger.info("Device discovery started");
+                                         logger.info(aDevice.hostname + " "+ aDevice.ipaddress + " "+aDevice.community);
+                                        Device.create(aDevice, function(error, device) {
+                                            if (error) {
+                                                logger.log(error.errors);
+                                                for (field in error.errors) {
+                                                    request.flash("error",error.errors[field].message);
+                                                }
+                                                
+                                            }
+                                            else {
+                                                 logger.info("new device created and saved");
+                                                request.flash("success","Successfully added device, will start device discovery now");
+                                                var discoDevice = new discoveredDevice(device);
+                                                getDeviceFarLinks(device.hostname)
+                                                .then(function(linkEnrichmentData){
+                                                    discoDevice.linkEnrichmentData = linkEnrichmentData;
+                                                    discoDevice.discoverInterfaces();
+                                                })
+                                                .catch();
+                                                // discoDevice.discoverInterfaces();
+                                            }
+                                            response.redirect("/devices"); //will redirect as a GET request
+                                        });
+                                    }
+
+                                });
+
+                            }
+
+                        }
+
+                    });
+                }
+
+            });
+        }
+    });////---
+
 });
 
 module.exports = router;
