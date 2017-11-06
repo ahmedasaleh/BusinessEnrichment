@@ -58,6 +58,8 @@
                                 <th data-field="ifIndex">Index</th>
                                 <th data-field="ifName" data-sortable="true">Name</th>
                                 <th data-field="ifAlias" data-sortable="true">Alias</th>
+                                <th data-field="hostname" data-sortable="true">Hostname</th>
+                                <th data-field="ipaddress" data-sortable="true">IP Address</th>
                                 <th data-field="ifDescr">Description</th>
                                 <th data-field="ifType" data-sortable="true">ifType</th>
                                 <th data-field="ifTypeStr" data-sortable="true">ifTypeStr</th>
@@ -118,6 +120,8 @@
                                     <td><%= interface.ifIndex %></td>
                                     <td><%= interface.ifName %></a></td>
                                     <td><%= interface.ifAlias %></td>
+                                    <td><%= interface.hostname %></a></td>
+                                    <td><%= interface.ipaddress %></td>
                                     <td><%= interface.ifDescr %></td>
                                     <td><%= interface.ifType %></td>
                                     <td><%= interface.ifTypeStr %></td>
@@ -166,13 +170,13 @@
                                     <td><%= interface.adminStatus %></td>
                                     <td><%= interface.operStatus %></td>
                                     <td><%= interface.pop %></td>
-                                    <td><% if(interface.createdAt) { %>
-                                            <%= interface.createdAt.toDateString() %>
+                                    <td><% if(interface.lastSyncTime) { %>
+                                            <%= interface.lastSyncTime.toLocaleString()() %>
                                         <% } %>
                                     </td>
                                     <td>
                                         <% if(interface.lastUpdate) { %>
-                                            <%= interface.lastUpdate.toDateString() %>
+                                            <%= interface.lastUpdate.toLocaleString()() %>
                                         <% } %>
                                     </td>
                                 </tr>

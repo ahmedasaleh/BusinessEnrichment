@@ -25,7 +25,7 @@ var deasync         = require('deasync');
 var enrichmentData  = require("../lookUps/enrich");
 var dateFormat      = require('dateformat');
 var ObjectId        = require('mongodb').ObjectID;
-
+var bulkSyncInProgress = false;
 var aDevice = new Device() ;
 var targets = [];
 var MAX_PARALLEL_DEVICES = 200;//500;
@@ -1588,12 +1588,13 @@ var syncDevices = function(){
         }
     })
     .catch(); 
-    
+    bulkSyncInProgress = false;    
 }
 
 router.get("/sync",  middleware.isLoggedIn ,function(request, response) {
     throttle = MAX_PARALLEL_DEVICES;
     doneDevices = 0;
+    bulkSyncInProgress = true;
     syncDevices();
     response.redirect("/devices");
 });
@@ -1605,22 +1606,27 @@ router.get("/sync/:id",  middleware.isLoggedIn ,function(request, response) {
     // syncDevices();
     throttle = MAX_PARALLEL_DEVICES;
     doneDevices = 0;
-    Device.findById(request.params.id, function(err, foundDevice) {
-        if (err) {
-             logger.error(err);
-        }
-        else {
-            logger.info("single sync mode, device " + foundDevice.hostname +" will be synced now");
-            // perform interface sync
-            var discoDevice = new discoveredDevice(foundDevice,{});
-            getDeviceFarLinks(foundDevice.hostname)
-            .then(function(linkEnrichmentData){
-                discoDevice.linkEnrichmentData = linkEnrichmentData;
-                for(var i=0; i<1;i++) discoDevice.syncInterfaces();
-            })
-            .catch();
-        }
-    });
+    if(bulkSyncInProgress == false){
+        Device.findById(request.params.id, function(err, foundDevice) {
+            if (err) {
+                 logger.error(err);
+            }
+            else {
+                logger.info("single sync mode, device " + foundDevice.hostname +" will be synced now");
+                // perform interface sync
+                var discoDevice = new discoveredDevice(foundDevice,{});
+                getDeviceFarLinks(foundDevice.hostname)
+                .then(function(linkEnrichmentData){
+                    discoDevice.linkEnrichmentData = linkEnrichmentData;
+                    for(var i=0; i<1;i++) discoDevice.syncInterfaces();
+                })
+                .catch();
+            }
+        });
+    }
+    else{
+        request.flash("warn","Bulk synchronization process is already in background, will not sync device now");
+    }
 
     response.redirect("/devices");
 });
@@ -1645,7 +1651,7 @@ router.get("/:id/edit",  middleware.isLoggedIn , function(request,response){
     //is user logged in?
      logger.warn("Update a device");
     Device.findById(request.params.id,function(error,foundDevice){
-        response.render("devices/edit",{device: foundDevice});
+        response.render("devices/edit",{device: foundDevice,id:foundDevice._id});
     });
     
 });
