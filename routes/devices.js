@@ -31,10 +31,10 @@ var targets = [];
 var MAX_PARALLEL_DEVICES = 200;//500;
 var throttle = MAX_PARALLEL_DEVICES;
 var doneDevices = 0;
-var syncCyclesThreshold = 1;
-var SYNC_DIFFERENCE_IN_DAYS = 1;//difference in days
-var SYNC_DIFFERENCE_IN_HOURS = 1;//difference in hours
-var SYNC_DIFFERENCE_IN_MINUTES = 3;//difference in minutes
+var syncCyclesThreshold = 3;
+var SYNC_DIFFERENCE_IN_DAYS = 7;//difference in days
+var SYNC_DIFFERENCE_IN_HOURS = 168;//difference in hours
+var SYNC_DIFFERENCE_IN_MINUTES = 10080;//difference in minutes
 //*********************
 //  SNMP HANDLER
 //*********************
@@ -104,9 +104,11 @@ function discoveredDevice(device,linkEnrichmentData) {
 
     self.session = snmp.createSession(self.device.ipaddress, S(self.device.community).trim().s,{ sourceAddress: "213.158.183.140",timeout: 10000, version: snmp.Version2c ,retries: 1});
     self.session.on("close", function () {
-        throttle = throttle + 1;
-        doneDevices = doneDevices + 1;                   
-        logger.info(self.name+" done, total done: "+doneDevices);
+        if(self.inSyncMode){
+            throttle = throttle + 1;
+            doneDevices = doneDevices + 1;                   
+            logger.info(self.name+" done, total done: "+doneDevices);            
+        }
         logger.info("snmp socket closed for "+self.name);
     });
     self.session.on("error", function (error) {
@@ -212,7 +214,6 @@ function discoveredDevice(device,linkEnrichmentData) {
         //     sp_emsOrder : '' , sp_connectedBW : '', sp_fwType : '' , sp_serviceType : '' , sp_ipType : '' , sp_vendor : '', sp_sourceCore : '', sp_destCore : '', 
         //     sp_siteCode: '', sp_preNumber: '', sp_portID: '', noEnrichFlag: '',actualspeed: ''
         // }
-        logger.info("processing interfaces of: "+hostname+" , current serving interface with name: "+ifName);
         var anErichment = null;
         var skipNextCheck = false;
         var interfaceName = S(ifName).trim().s;
@@ -748,7 +749,7 @@ function discoveredDevice(device,linkEnrichmentData) {
                  logger.error(error);
             }
             else{
-                self.session.close();
+                if(self.session) self.session.close();
             }
             // throttle = throttle + 1;
 
@@ -757,7 +758,7 @@ function discoveredDevice(device,linkEnrichmentData) {
     self.deleteDevice = function(device){
         Device.findByIdAndRemove(device._id,function(error){
             if(error) logger.error(error);
-            self.session.close();
+            if(self.session) self.session.close();
         });
     };
     self.getInterfaceFromInterestList = function(interfaceIndex){
@@ -1070,7 +1071,7 @@ function discoveredDevice(device,linkEnrichmentData) {
             logger.info(" device decommissioning conditions are : "+self.getMinutesDifference(new Date(),self.device.lastSyncTime)+"\t"+SYNC_DIFFERENCE_IN_MINUTES+"\t"+self.deviceSyncCycles+"\t"+syncCyclesThreshold);
             if( ( self.getMinutesDifference(new Date(),self.device.lastSyncTime) > SYNC_DIFFERENCE_IN_MINUTES) && self.deviceSyncCycles > syncCyclesThreshold){
                 self.deviceToBeDeleted = true;
-                logger.warn.log("device "+self.name+" will be decommissioned");
+                logger.warn("device "+self.name+" will be decommissioned");
             }
             else{
                 self.deviceSyncCycles = self.deviceSyncCycles + 1;
@@ -1092,7 +1093,7 @@ function discoveredDevice(device,linkEnrichmentData) {
             logger.error ("device "+self.name+ " has " +error.toString () + " while reading ifXTable");
             self.ifTableError = true;
             self.ifXTableError = true;
-            self.session.close();
+            if(self.session) self.session.close();
             // throttle = throttle + 1;
         }
         else{
@@ -1115,7 +1116,7 @@ function discoveredDevice(device,linkEnrichmentData) {
             logger.error ("device "+self.name+ " has " +error.toString () + " while reading ifTable");
             self.ifTableError = true;
             self.ifXTableError = true;
-            self.session.close();
+            if(self.session) self.session.close();
             // throttle = throttle + 1;
         }
         else{
@@ -1237,8 +1238,6 @@ router.get("/", middleware.isLoggedIn , function(request, response) {
 
 //CREATE - add new device to DB
 router.post("/",  middleware.isLoggedIn ,function(request, response) {
-    throttle = MAX_PARALLEL_DEVICES;
-    doneDevices = 0;
     //get data from a form and add to devices array
     var hostname = request.body.device.hostname;
     var ipaddress = request.body.device.ipaddress;
@@ -1376,7 +1375,7 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
                                                      logger.info(aDevice.hostname + " "+ aDevice.ipaddress + " "+aDevice.community);
                                                     Device.create(aDevice, function(error, device) {
                                                         if (error) {
-                                                            logger.log(error.errors);
+                                                            logger.error(error);
                                                             for (field in error.errors) {
                                                                 request.flash("error",error.errors[field].message);
                                                             }
@@ -1428,7 +1427,7 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
                              logger.info(aDevice.hostname + " "+ aDevice.ipaddress + " "+aDevice.community);
                             Device.create(aDevice, function(error, device) {
                                 if (error) {
-                                    logger.log(error.errors);
+                                    logger.error(error);
                                     for (field in error.errors) {
                                         request.flash("error",error.errors[field].message);
                                     }
@@ -1471,7 +1470,7 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
                      logger.info(aDevice.hostname + " "+ aDevice.ipaddress + " "+aDevice.community);
                     Device.create(aDevice, function(error, device) {
                         if (error) {
-                            logger.log(error.errors);
+                            logger.error(error);
                             for (field in error.errors) {
                                 request.flash("error",error.errors[field].message);
                             }
@@ -1749,8 +1748,6 @@ router.delete("/api/:hostname",  function(request,response){
 
 //CREATE from NNM- add new device to DB through NM
 router.post("/api/:hostname/:ipaddress/:communitystring/:popname",  function(request, response) {
-    throttle = MAX_PARALLEL_DEVICES;
-    doneDevices = 0;
     //get data from a form and add to devices array
     var hostname = request.params.hostname;
     var ipaddress = request.params.ipaddress;
@@ -1865,7 +1862,7 @@ router.post("/api/:hostname/:ipaddress/:communitystring/:popname",  function(req
                                          logger.info(aDevice.hostname + " "+ aDevice.ipaddress + " "+aDevice.community);
                                         Device.create(aDevice, function(error, device) {
                                             if (error) {
-                                                logger.log(error.errors);
+                                                logger.error(error.errors);
                                                 for (field in error.errors) {
                                                     request.flash("error",error.errors[field].message);
                                                 }
