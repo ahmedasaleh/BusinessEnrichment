@@ -1,5 +1,7 @@
 var Device      = require("../models/device"),
     Interface   = require("../models/interface");
+var indexRoutes     = require("../routes/index"); 
+
 //all the middleware goes here
 var middlewareObj = {};
 
@@ -64,5 +66,15 @@ middlewareObj.isLoggedIn = function(request, response, next){
     response.redirect("/login");
 }
 
+middlewareObj.isAPIAuthenticated = function(request, response, next){
+    // return next();//hack
+    console.log("middlewareObj.isAPIAuthenticated "+indexRoutes.isAPIAuthenticated());
+    if(indexRoutes.isAPIAuthenticated() == true){
+      console.log("user is isAuthenticated");
+        return next();
+    }
+    // request.flash("error", "You need to be logged in to do that");
+    // response.redirect("/login");
+}
 
 module.exports = middlewareObj;

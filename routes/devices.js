@@ -25,6 +25,7 @@ var deasync         = require('deasync');
 var enrichmentData  = require("../lookUps/enrich");
 var dateFormat      = require('dateformat');
 var ObjectId        = require('mongodb').ObjectID;
+
 var bulkSyncInProgress = false;
 var aDevice = new Device() ;
 var targets = [];
@@ -1730,7 +1731,7 @@ router.delete("/:id",  middleware.isLoggedIn , function(request,response){
 });
 
 //DESTROY from NNM- Device ROUTE
-router.delete("/api/:hostname",  function(request,response){
+router.delete("/api/:hostname",  middleware.isAPIAuthenticated ,function(request,response){
     var hostname = request.params.hostname;
     logger.warn("Deleting device with hostname: "+hostname);
     if(hostname){
@@ -1747,7 +1748,7 @@ router.delete("/api/:hostname",  function(request,response){
 });
 
 //CREATE from NNM- add new device to DB through NM
-router.post("/api/:hostname/:ipaddress/:communitystring/:popname",  function(request, response) {
+router.post("/api/:hostname/:ipaddress/:communitystring/:popname", middleware.isAPIAuthenticated ,function(request, response) {
     //get data from a form and add to devices array
     var hostname = request.params.hostname;
     var ipaddress = request.params.ipaddress;

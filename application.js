@@ -13,6 +13,9 @@ var express             = require("express"),
     // deleteLogger           = require('./middleware/deleteLogger'),//logging component
     seedDB              = require("./seeds");
 
+
+// var LocalAPIKeyStrategy = require('passport-localapikey').Strategy;
+
 var winston = require('winston');
 var fileUpload = require('express-fileupload');
 var parser              = require("./middleware/parser/parser");
@@ -46,22 +49,7 @@ var indexBaseURL        = "/",
     // interfaceBaseURL      = "/devices/:id/interfaces";
 
 var applicationVersion  = 1;
-var option = {
-    server: {
-        socketOptions: {
-            keepAlive: 300000,
-            connectTimeoutMS: 60000
-        }
-    },
-    replset: {
-        socketOptions: {
-            keepAlive: 300000,
-            connectTimeoutMS: 60000
-        }
-    }
-};
-// var mongoURI = S("mongodb://localhost/"+process.env.DEV_DB).s;
-// var mongoURI = "mongodb://localhost/auth_demo_app";
+
 //inistantiate app
 customCodes = [['Unauthorized', 'error', 401]];
 dotenv.config();
@@ -75,27 +63,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 mongoose.Promise = global.Promise; //to vercome the warning about Mongoose mpromise
 
 mongoose.connect("mongodb://localhost/"+process.env.PROD_DB, {useMongoClient: true});
-// mongoose.connect("mongodb://localhost/auth_demo_app", {useMongoClient: true});
-// mongoose.connect(mongoURI, option).then(function(){
-//     logger.info("connected successfully to mongo server");
-// }, function(err) {
-//     logger.error("failed to connect to mongo server");
-// });
-//seedDB();
 
-// app.use(responseHandler(customCodes)).get('/', (req, res) => {
-//         let data = {
-//             errors: []
-//         };
- 
-//         // Recommended way 
-//         res.error.Unauthorized('permission.error.unauthorized', data);
- 
-//         // Also available with the same result 
-//         res.error('Unauthorized', 'permission.error.unauthorized', data);
-//         res.error(401, 'permission.error.unauthorized', data);
-//         res.error[401]('permission.error.unauthorized', data);
-// });
 //Passport configuration
 app.use(require("express-session")({
     secret: "should_ContainZ__nUMber851 PsUWtooN lenovo Targus w500 pM YouroPtions LImited",
@@ -109,6 +77,7 @@ app.use(passport.session());
 passport.use(User.createStrategy());
 passport.serializeUser(User.serializeUser());//read the session, take the data from the session and encode it, serialze it and put it back in the session
 passport.deserializeUser(User.deserializeUser());//read the session, taking the data from the session that's encoded and decode it
+
 
 //run this middleware for every single route, it passes the current user to the route
 //it must be after passport initialization
@@ -135,6 +104,7 @@ process.on('uncaughtException', function (err) {
   console.error(err);
   console.log("Node NOT Exiting...");
 });
+
 
 //sec min hour day month weekday
 new CronJob('0 0 0 */2 * *', function() {

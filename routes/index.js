@@ -1,6 +1,6 @@
 var express             = require("express"),
-    passport            = require("passport"),
-    LocalStrategy       = require("passport-local");
+    passport            = require("passport");
+    // LocalStrategy       = require("passport-local");
 var User                = require("../models/user");
 var S                   = require('string');
 var ValidatedUser       = require("../models/validatedUser");
@@ -14,6 +14,7 @@ var smtpConfig = {
         pass: 'yourpassword'
     }
 };
+var APIAuthenticated = false;
 var transporter = nodemailer.createTransport(smtpConfig);
 // var transporter = nodemailer.createTransport({
 //   service: 'gmail',
@@ -127,6 +128,37 @@ router.post("/login",passport.authenticate('local',{
     failureRedirect: "/login"
 }));
 
+
+router.post('/api/authenticate',  function (req, res) {
+  key=req.query['apikey']; //get key from url
+  //authenticate it
+  if(key){
+    User.findOne({ authToken: key }, function (err, user) {
+        if (err) { 
+            APIAuthenticated = false;
+            res.json({ message: "unauthorized" }); 
+        }
+        else if(!user) { 
+            APIAuthenticated = false;
+            res.json({ message: "unauthorized" });
+        }
+        else {
+            APIAuthenticated = true;
+            console.log("isAPIAuthenticated=true");
+            res.json({ message: "Authenticated" });
+        }
+    });
+
+  }else{
+    APIAuthenticated = false;
+    res.json({ message: "unauthorized" });
+  }
+});
+
+var isAPIAuthenticated = function(){
+    return APIAuthenticated;
+}
+
 //logout ROUTE
 router.get("/logout",function(request,response){
     request.logout();
@@ -181,3 +213,4 @@ function isLoggedIn(request,response,next){
 }
 
 module.exports = router;
+module.exports.isAPIAuthenticated = isAPIAuthenticated;
