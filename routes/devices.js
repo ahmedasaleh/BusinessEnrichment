@@ -527,7 +527,7 @@ function discoveredDevice(device,linkEnrichmentData) {
             }
         }
         // # LTE Interfaces
-        else if(alias && S(alias.toLowerCase()).contains("enp")){      
+        else if(alias && S(alias.toLowerCase()).contains("_enb_")){      
             // # Condition  Contain (*_ENB*-E*-*-EG) or Contain (ENB)
             // # Patterns   P1_ENB_P2-E00P3-*-EG P4 P5
             // # Patterns description   
@@ -563,7 +563,7 @@ function discoveredDevice(device,linkEnrichmentData) {
             }
         }
         // # EPC
-        else if(alias && S(alias.toLowerCase()).contains("epc")){      
+        else if(alias && S(alias.toLowerCase()).contains(" epc ")){      
             // # Condition  Contain (* EPC*)
             // # Patterns   P1 EPC P2 P3
             // # Patterns description   
@@ -1321,10 +1321,8 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
                 else
                     modelOID = varbinds[i].value;
             }
-                console.log("MODELOID IS: "+modelOID);
                 modelOID = "."+modelOID;
             DeviceModel.findOne({oid: modelOID},function(error,foundModel){
-                console.log("MODELOID inside query IS: "+modelOID);
                 if(error){
                      logger.error(error);
                 }
@@ -1332,10 +1330,8 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
                     vendor = foundModel.vendor;
                     type = foundModel.type;
                     model = foundModel.model ;
-                    console.log(foundModel);
                 }
                 else{
-                    console.log("couldn't find OID");
                     model = model ;
                 }
                 if(!(popId === undefined)){
@@ -1529,7 +1525,6 @@ var getDeviceModel = __async__ (function(ipaddress,communityString){
             }
         }
     }));
-    console.log(foundOID);
 });
 
 var getDeviceFarLinks = __async__ (function(ahostname){
@@ -1608,7 +1603,6 @@ router.get("/sync",  middleware.isLoggedIn ,function(request, response) {
 
 
 router.get("/sync/:id",  middleware.isLoggedIn ,function(request, response) {
-    console.log("/sync/:id --> bulkSyncInProgress: "+bulkSyncInProgress);
     if(bulkSyncInProgress == false){
         Device.findById(request.params.id, function(err, foundDevice) {
             if (err) {
@@ -1731,6 +1725,7 @@ router.delete("/:id",  middleware.isLoggedIn , function(request,response){
 });
 
 //DESTROY from NNM- Device ROUTE
+//http://213.158.183.140:8080/devices/api/OBORCB11-M99H-C-EG
 router.delete("/api/:hostname",  middleware.isAPIAuthenticated ,function(request,response){
     var hostname = request.params.hostname;
     logger.warn("Deleting device with hostname: "+hostname);
@@ -1748,6 +1743,7 @@ router.delete("/api/:hostname",  middleware.isAPIAuthenticated ,function(request
 });
 
 //CREATE from NNM- add new device to DB through NM
+//http://213.158.183.140:8080/devices/api/OBORCB11-M99H-C-EG/104.236.166.95/public/OBORCB11
 router.post("/api/:hostname/:ipaddress/:communitystring/:popname", middleware.isAPIAuthenticated ,function(request, response) {
     //get data from a form and add to devices array
     var hostname = request.params.hostname;
@@ -1813,10 +1809,8 @@ router.post("/api/:hostname/:ipaddress/:communitystring/:popname", middleware.is
                 else
                     modelOID = varbinds[i].value;
             }
-                console.log("MODELOID IS: "+modelOID);
                 modelOID = "."+modelOID;
             DeviceModel.findOne({oid: modelOID},function(error,foundModel){
-                console.log("MODELOID inside query IS: "+modelOID);
                 if(error){
                      logger.error(error);
                 }
@@ -1824,10 +1818,8 @@ router.post("/api/:hostname/:ipaddress/:communitystring/:popname", middleware.is
                     vendor = foundModel.vendor;
                     type = foundModel.type;
                     model = foundModel.model ;
-                    console.log(foundModel);
                 }
                 else{
-                    console.log("couldn't find OID");
                     model = model ;
                 }
 

@@ -128,7 +128,9 @@ router.post("/login",passport.authenticate('local',{
     failureRedirect: "/login"
 }));
 
-
+//prod: a67cb09f182b6b575006502894afdfb3865d84f93cfa36a7e5d3d07960d2255486fd5982154e98b7d72379a50f36d885
+//dev: 6fdfbb3c887db8ca382264c1861e83eded51313bcf9c0df9bb423541a48ea07dab00f5dd9c0d5242cb7acff8a61c2458
+//http://213.158.183.140:8080/api/authenticate?apikey=a67cb09f182b6b575006502894afdfb3865d84f93cfa36a7e5d3d07960d2255486fd5982154e98b7d72379a50f36d885
 router.post('/api/authenticate',  function (req, res) {
   key=req.query['apikey']; //get key from url
   //authenticate it
@@ -144,7 +146,6 @@ router.post('/api/authenticate',  function (req, res) {
         }
         else {
             APIAuthenticated = true;
-            console.log("isAPIAuthenticated=true");
             res.json({ message: "Authenticated" });
         }
     });
@@ -157,6 +158,9 @@ router.post('/api/authenticate',  function (req, res) {
 
 var isAPIAuthenticated = function(){
     return APIAuthenticated;
+}
+var invalidateAPIsession = function(){
+    APIAuthenticated = false;
 }
 
 //logout ROUTE
@@ -214,3 +218,4 @@ function isLoggedIn(request,response,next){
 
 module.exports = router;
 module.exports.isAPIAuthenticated = isAPIAuthenticated;
+module.exports.invalidateAPIsession = invalidateAPIsession;

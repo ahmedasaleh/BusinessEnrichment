@@ -35,7 +35,6 @@ middlewareObj.checkInterfaceOwnership = function(request, response, next) {
                response.redirect("back");
            }  else {
                // does user own the device?
-               console.log(foundInterface);
                Device.findById(foundInterface.device.id,function(error,foundDevice){
                    if(error){
                        request.flash("error", "The device that's containing the interface was not found!!!");
@@ -68,9 +67,7 @@ middlewareObj.isLoggedIn = function(request, response, next){
 
 middlewareObj.isAPIAuthenticated = function(request, response, next){
     // return next();//hack
-    console.log("middlewareObj.isAPIAuthenticated "+indexRoutes.isAPIAuthenticated());
     if(indexRoutes.isAPIAuthenticated() == true){
-      console.log("user is isAuthenticated");
         return next();
     }
     // request.flash("error", "You need to be logged in to do that");
