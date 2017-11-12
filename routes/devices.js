@@ -25,6 +25,8 @@ var deasync         = require('deasync');
 var enrichmentData  = require("../lookUps/enrich");
 var dateFormat      = require('dateformat');
 var ObjectId        = require('mongodb').ObjectID;
+var indexRoutes     = require("./index"); 
+
 
 var bulkSyncInProgress = false;
 var aDevice = new Device() ;
@@ -207,6 +209,53 @@ function discoveredDevice(device,linkEnrichmentData) {
           // Convert back to days and return
           return Math.floor(difference_ms/one_min); 
     };
+    self.interfaceLinkDetails = "";
+self.checkInterfaceInLinks = function(interfaceName){
+        var isInterfaceLink = false;
+        var secondHost,secondInterface,secondPOP;
+            if(self.linkEnrichmentData.End == "left"){
+                for (var i=0; i < self.linkEnrichmentData.length; i++) {
+                    if (S(self.linkEnrichmentData[i].interface1).s == interfaceName) {
+                        isInterfaceLink = true;
+                        secondHost = self.linkEnrichmentData[i].device2;
+                        secondInterface = self.linkEnrichmentData[i].interface2;
+                        secondPOP = S(self.linkEnrichmentData[i].device2).splitLeft('-')[0];
+                        i = self.linkEnrichmentData.length;//break only first loop 
+                    }
+                }
+            }
+            else if(self.linkEnrichmentData.End == "right"){
+                for (var i=0; i < self.linkEnrichmentData.length; i++) {
+                    if (S(self.linkEnrichmentData[i].interface2).s == S(interfaceName).s) {
+                        isInterfaceLink = true;
+                        secondHost = self.linkEnrichmentData[i].device1;
+                        secondInterface = self.linkEnrichmentData[i].interface1;
+                        secondPOP = S(self.linkEnrichmentData[i].device1).splitLeft('-')[0];
+                        i = self.linkEnrichmentData.length;//break only first loop 
+                    }
+                }
+            }
+            else{
+                for (var i=0; i < self.linkEnrichmentData.length; i++) {
+                    if (S(self.linkEnrichmentData[i].device1).s == self.name && S(self.linkEnrichmentData[i].interface1).s == interfaceName) {
+                        isInterfaceLink = true;
+                        secondHost = self.linkEnrichmentData[i].device2;
+                        secondInterface = self.linkEnrichmentData[i].interface2;
+                        secondPOP = S(self.linkEnrichmentData[i].device2).splitLeft('-')[0];
+                        i = self.linkEnrichmentData.length;//break only first loop 
+                    }
+                    else if (S(self.linkEnrichmentData[i].device2).s == self.name && S(self.linkEnrichmentData[i].interface2).s == S(interfaceName).s) {
+                        isInterfaceLink = true;
+                        secondHost = self.linkEnrichmentData[i].device1;
+                        secondInterface = self.linkEnrichmentData[i].interface1;
+                        secondPOP = S(self.linkEnrichmentData[i].device1).splitLeft('-')[0];
+                        i = self.linkEnrichmentData.length;//break only first loop 
+                    }
+                }
+            }
+        interfaceLinkDetails = {secondHost:secondHost,secondInterface:secondInterface,secondPOP:secondPOP};
+        return isInterfaceLink;
+};
     self.parseIfAlias = function(ifAlias,hostname,ifName,ifIndex,ipaddress,ifSpeed,ifHighSpeed){
         // if(S(ifAlias).isEmpty()) return null;
         // var anErichment= {
@@ -216,6 +265,7 @@ function discoveredDevice(device,linkEnrichmentData) {
         //     sp_siteCode: '', sp_preNumber: '', sp_portID: '', noEnrichFlag: '',actualspeed: ''
         // }
         var anErichment = null;
+        var linkDetails = null;
         var skipNextCheck = false;
         var interfaceName = S(ifName).trim().s;
         var alias;
@@ -226,13 +276,23 @@ function discoveredDevice(device,linkEnrichmentData) {
         var noEnrichFlag = 0;         
         var label;      
         if(alias){
-            label = hostname+" "+interfaceName+" "+alias;
+            //label = hostname+" "+interfaceName+" "+alias;
+			label = hostname+" "+interfaceName;
         }
         else{
             label = hostname+" "+interfaceName;
         }
+        var tmpIfName = S(interfaceName).s.toLowerCase();
+        var tmpAlias ;
+        if(alias) {
+            tmpAlias= S(alias).s.toLowerCase();
+        }
+        else {
+            // skipNextCheck = true;
+            tmpAlias = "";
+        }
+        console.log("ifIndex,ifName,ifAlias: "+ifIndex + " , "+ifName +" , "+ tmpAlias);
 
-          
         if(alias && S(alias.toLowerCase()).startsWith("int-")){
             // # Patterns   INT-P1-P2-P3-P4-P5-P6-P7-P8-P9
             // # Patterns description   
@@ -622,81 +682,18 @@ function discoveredDevice(device,linkEnrichmentData) {
                     sp_portID:sp_portID,noEnrichFlag:noEnrichFlag,label : label
             }
         }
-        else if((self.linkEnrichmentData && self.linkEnrichmentData.length > 0)){
+        else if((self.linkEnrichmentData && self.linkEnrichmentData.length > 0) && self.checkInterfaceInLinks(interfaceName) == true){
             var pop = S(self.name).splitLeft('-')[0];
             var secondHost,secondInterface,secondPOP,type;
-            anErichment = null;
-            if(self.linkEnrichmentData.End == "left"){
-                for (var i=0; i < self.linkEnrichmentData.length; i++) {
-                    if (S(self.linkEnrichmentData[i].interface1).s == interfaceName) {
-                        skipNextCheck = true;
-                        secondHost = self.linkEnrichmentData[i].device2;
-                        secondInterface = self.linkEnrichmentData[i].interface2;
-                        secondPOP = S(self.linkEnrichmentData[i].device2).splitLeft('-')[0];
-                        if(secondPOP == pop) type = "Local";
+            anErichment = null; 
+            console.log("isInterfaceLink");
+            console.log(interfaceLinkDetails);
+                        if(interfaceLinkDetails.secondPOP == pop) type = "Local";
                         else type = "WAN";
-                        anErichment = {secondHost:secondHost,secondInterface:secondInterface,secondPOP:secondPOP, provisoFlag:1,
+                        anErichment = {secondHost:interfaceLinkDetails.secondHost,secondInterface:interfaceLinkDetails.secondInterface,secondPOP:interfaceLinkDetails.secondPOP, provisoFlag:1,
                             noEnrichFlag:noEnrichFlag,unknownFlag:unknownFlag,type:type,pop:pop,label:label,pollInterval:pollInterval};
-                        i = self.linkEnrichmentData.length;//break only first loop 
-                    }
-                }
-            }
-            else if(self.linkEnrichmentData.End == "right"){
-                for (var i=0; i < self.linkEnrichmentData.length; i++) {
-                    if (S(self.linkEnrichmentData[i].interface2).s == S(interfaceName).s) {
-                        skipNextCheck = true;
-                        secondHost = self.linkEnrichmentData[i].device1;
-                        secondInterface = self.linkEnrichmentData[i].interface1;
-                        secondPOP = S(self.linkEnrichmentData[i].device1).splitLeft('-')[0];
-                        if(secondPOP == pop) type = "Local";
-                        else type = "WAN";
-                        anErichment = {secondHost:secondHost,secondInterface:secondInterface,secondPOP:secondPOP, provisoFlag:1,
-                            noEnrichFlag:noEnrichFlag,unknownFlag:unknownFlag,type:type,pop:pop,label:label,pollInterval:pollInterval};
-                        i = self.linkEnrichmentData.length;//break only first loop 
-                    }
-                }
-            }
-            else{
-                for (var i=0; i < self.linkEnrichmentData.length; i++) {
-                    if (S(self.linkEnrichmentData[i].device1).s == self.name && S(self.linkEnrichmentData[i].interface1).s == interfaceName) {
-                        skipNextCheck = true;
-                        secondHost = self.linkEnrichmentData[i].device2;
-                        secondInterface = self.linkEnrichmentData[i].interface2;
-                        secondPOP = S(self.linkEnrichmentData[i].device2).splitLeft('-')[0];
-                        if(secondPOP == pop) type = "Local";
-                        else type = "WAN";
-                        anErichment = {secondHost:secondHost,secondInterface:secondInterface,secondPOP:secondPOP, provisoFlag:1,
-                            noEnrichFlag:noEnrichFlag,unknownFlag:unknownFlag,type:type,pop:pop,label:label,pollInterval:pollInterval};
-                        i = self.linkEnrichmentData.length;//break only first loop 
-                    }
-                    else if (S(self.linkEnrichmentData[i].device2).s == self.name && S(self.linkEnrichmentData[i].interface2).s == S(interfaceName).s) {
-                        skipNextCheck = true;
-                        secondHost = self.linkEnrichmentData[i].device1;
-                        secondInterface = self.linkEnrichmentData[i].interface1;
-                        secondPOP = S(self.linkEnrichmentData[i].device1).splitLeft('-')[0];
-                        if(secondPOP == pop) type = "Local";
-                        else type = "WAN";
-                        anErichment = {secondHost:secondHost,secondInterface:secondInterface,secondPOP:secondPOP, provisoFlag:1,
-                            noEnrichFlag:noEnrichFlag,unknownFlag:unknownFlag,type:type,pop:pop,label:label,pollInterval:pollInterval};
-                        i = self.linkEnrichmentData.length;//break only first loop 
-                    }
-
-                }
-
-            }
-        }//else
-        var tmpIfName = S(interfaceName).s.toLowerCase();
-        var tmpAlias ;
-        if(alias) {
-            tmpAlias= S(alias).s.toLowerCase();
         }
-        else {
-            // skipNextCheck = true;
-            tmpAlias = "";
-        }
-
-        if(skipNextCheck == false){
-            if(
+		else if(
                 (S(tmpIfName).startsWith("100ge")  || 
                 S(tmpIfName).startsWith("ae") || 
                 S(tmpIfName).startsWith("at") || 
@@ -724,11 +721,19 @@ function discoveredDevice(device,linkEnrichmentData) {
                     provisoFlag=1;
                     noEnrichFlag=1; 
                     unknownFlag=0;
-                    // var label = hostname+" "+interfaceName+" "+alias;        
                     anErichment= { provisoFlag : provisoFlag, unknownFlag : unknownFlag , label : label , noEnrichFlag:noEnrichFlag,pollInterval:pollInterval };
-            }
 
         }
+		// else{
+  //           console.log("unmatched interface with ifName: "+ifName+" and ifIndex: "+ifIndex);
+		// 	provisoFlag=0;
+  //           noEnrichFlag=1; 
+  //           unknownFlag=0;
+  //           anErichment= { provisoFlag : provisoFlag, unknownFlag : unknownFlag , label : label , noEnrichFlag:noEnrichFlag,pollInterval:pollInterval };
+		// }
+		
+
+        
 
         if(!S(alias).isEmpty() && unknownFlag==1){
              logger.warn(hostname+" "+ipaddress+" : special services interface with invalid description - Service: "+specialService+" - ifAlias: "+alias+" - interfaceName: "+ifName+" - ifIndex: "+ifIndex);
