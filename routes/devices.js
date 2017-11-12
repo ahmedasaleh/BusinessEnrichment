@@ -25,7 +25,6 @@ var deasync         = require('deasync');
 var enrichmentData  = require("../lookUps/enrich");
 var dateFormat      = require('dateformat');
 var ObjectId        = require('mongodb').ObjectID;
-var indexRoutes     = require("./index"); 
 
 var bulkSyncInProgress = false;
 var aDevice = new Device() ;
@@ -150,7 +149,7 @@ function discoveredDevice(device,linkEnrichmentData) {
         else{
             multiplier = 1;
         }
-		if(tmpSpeed.match(/^[0-9]*g[ig]*$/)){
+        if(tmpSpeed.match(/^[0-9]*g[ig]*$/)){
             unit = 1000000000;
         }
         else if(tmpSpeed.match(/^[0-9]*m[eg]*$/)||tmpSpeed.match(/^[0-9]+$/)){
@@ -714,7 +713,7 @@ function discoveredDevice(device,linkEnrichmentData) {
                 S(tmpIfName).startsWith("se") || 
                 S(tmpIfName).startsWith("so-") || 
                 S(tmpIfName).startsWith("te") || 
-				S(tmpIfName).startsWith("gei_") || 
+                S(tmpIfName).startsWith("gei_") || 
                 S(tmpIfName).startsWith("xe-")) && 
                 !S(tmpIfName).contains('.') &&
                 !S(tmpAlias).contains("esp")  && 
