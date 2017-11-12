@@ -713,6 +713,7 @@ function discoveredDevice(device,linkEnrichmentData) {
                 S(tmpIfName).startsWith("se") || 
                 S(tmpIfName).startsWith("so-") || 
                 S(tmpIfName).startsWith("te") || 
+				S(tmpIfName).startsWith("gei_") || 
                 S(tmpIfName).startsWith("xe-")) && 
                 !S(tmpIfName).contains('.') &&
                 !S(tmpAlias).contains("esp")  && 
@@ -847,6 +848,9 @@ function discoveredDevice(device,linkEnrichmentData) {
                     alias = S(intf.ifAlias).trim().s;
                 }
 
+                if(name && intf.devVendor == "zte" ) name = name.toString("hex");
+                if(alias && intf.devVendor == "zte") alias = alias.toString("hex")
+
                 var hcInOctets = value[ifXTableColumns.ifHCInOctets];
                 var hcOutOctets = value[ifXTableColumns.ifHCOutOctets];
                 var hcInOctetsLarge = false, hcOutOctetsLarge =false;
@@ -872,7 +876,8 @@ function discoveredDevice(device,linkEnrichmentData) {
                             self.interestInterfacesIndices.push(intf.ifIndex); 
                         }                       
                     }
-                    else if((intf.devVendor == "huawei") && ((intf.devType =="msan") || (intf.devType =="gpon") || (intf.devType =="dslam"))  ){
+                    // else if((intf.devVendor == "huawei") && ((intf.devType =="msan") || (intf.devType =="gpon") || (intf.devType =="dslam"))  ){
+                    else if(((intf.devType =="msan") || (intf.devType =="gpon") || (intf.devType =="dslam"))  ){
                         if(((S(intf.ifType).toInt() == 6) || (S(intf.ifType).toInt() == 117))){
                             // self.interfaces[key] = anInterface;
                             // self.interestKeys.push(key);//push index to be used during ifXTable walk
@@ -887,21 +892,21 @@ function discoveredDevice(device,linkEnrichmentData) {
                             }                       
                         }
                     }
-                    else if((intf.devVendor == "alcatel") && (intf.devModel =="isam")   ){
-                        if((S(intf.ifType).toInt() == 6) || (S(intf.ifType).toInt() == 117)){
-                            // self.interfaces[key] = anInterface;
-                            // self.interestKeys.push(key);//push index to be used during ifXTable walk
-                            self.interestRawInterfaces.push(Object.assign(rawInterface,intf));
-                            intf.counters = 32;
-                            if(hcInOctetsLarge || hcOutOctetsLarge) intf.counters = 64;
-                            var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress,intf.ifSpeed ,intf.ifHighSpeed);
-                            if(enrichment) {
-                                Object.assign(intf,enrichment);
-                                self.interestInterfaces.push(intf);
-                                self.interestInterfacesIndices.push(intf.ifIndex); 
-                            }                       
-                        }
-                    }
+                    // else if((intf.devVendor == "alcatel") && (intf.devType =="dslam")   ){
+                    //     if((S(intf.ifType).toInt() == 6) || (S(intf.ifType).toInt() == 117)){
+                    //         // self.interfaces[key] = anInterface;
+                    //         // self.interestKeys.push(key);//push index to be used during ifXTable walk
+                    //         self.interestRawInterfaces.push(Object.assign(rawInterface,intf));
+                    //         intf.counters = 32;
+                    //         if(hcInOctetsLarge || hcOutOctetsLarge) intf.counters = 64;
+                    //         var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress,intf.ifSpeed ,intf.ifHighSpeed);
+                    //         if(enrichment) {
+                    //             Object.assign(intf,enrichment);
+                    //             self.interestInterfaces.push(intf);
+                    //             self.interestInterfacesIndices.push(intf.ifIndex); 
+                    //         }                       
+                    //     }
+                    // }
                 }
                 else{
                     // logger.warn("interface "+lowerCaseName+ " on device "+self.name+ " has no traffic");
@@ -1258,9 +1263,9 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
     // var sector = request.body.device.sector;
     // var governorate = request.body.device.governorate;
 
-    var popId =  request.body.device.popName.name;
-    var sectorId = request.body.device.sector.name;
-    var governorateId = request.body.device.governorate.name;
+    var popId =  request.body.device.popName.name || 'NONE';
+    var sectorId = request.body.device.sector.name || 'NONE';
+    var governorateId = request.body.device.governorate.name || 'NONE';
     ///
     var aPOP = new POP();
     var aSector = new Sector();
@@ -1604,6 +1609,7 @@ router.get("/sync",  middleware.isLoggedIn ,function(request, response) {
 
 router.get("/sync/:id",  middleware.isLoggedIn ,function(request, response) {
     if(bulkSyncInProgress == false){
+        doneDevices = 0;
         Device.findById(request.params.id, function(err, foundDevice) {
             if (err) {
                  logger.error(err);
@@ -1727,24 +1733,27 @@ router.delete("/:id",  middleware.isLoggedIn , function(request,response){
 //DESTROY from NNM- Device ROUTE
 //http://213.158.183.140:8080/devices/api/OBORCB11-M99H-C-EG
 router.delete("/api/:hostname",  middleware.isAPIAuthenticated ,function(request,response){
+    indexRoutes.invalidateAPIsession();
     var hostname = request.params.hostname;
+
     logger.warn("Deleting device with hostname: "+hostname);
     if(hostname){
         //find device
         Device.remove({"hostname":hostname},function(error){
-            if(error) logger.error(error);
+            if(error) response.json({ message: error });
+            else response.json({ message: "Successfully deleted device" });
         });
-        response.redirect("/devices");
+        // response.redirect("/devices");
     }
     else{
-    response.redirect("/devices");
-
+        response.json({ message: "invalid hostname" });
     }
 });
 
 //CREATE from NNM- add new device to DB through NM
 //http://213.158.183.140:8080/devices/api/OBORCB11-M99H-C-EG/104.236.166.95/public/OBORCB11
 router.post("/api/:hostname/:ipaddress/:communitystring/:popname", middleware.isAPIAuthenticated ,function(request, response) {
+    indexRoutes.invalidateAPIsession();
     //get data from a form and add to devices array
     var hostname = request.params.hostname;
     var ipaddress = request.params.ipaddress;
@@ -1797,7 +1806,8 @@ router.post("/api/:hostname/:ipaddress/:communitystring/:popname", middleware.is
     session.get (sysOID, function (error, varbinds) {
         if (error) {
             logger.error (error.toString ());
-            response.redirect("/devices"); 
+            response.json({ message: error.toString () });
+            // response.redirect("/devices"); 
         } else {
             for (var i = 0; i < varbinds.length; i++) {
                 // for version 1 we can assume all OIDs were successful
@@ -1812,7 +1822,8 @@ router.post("/api/:hostname/:ipaddress/:communitystring/:popname", middleware.is
                 modelOID = "."+modelOID;
             DeviceModel.findOne({oid: modelOID},function(error,foundModel){
                 if(error){
-                     logger.error(error);
+                    logger.error(error);
+                    response.json({ message: error.toString () });
                 }
                 else if(foundModel != null){
                     vendor = foundModel.vendor;
@@ -1856,14 +1867,11 @@ router.post("/api/:hostname/:ipaddress/:communitystring/:popname", middleware.is
                                         Device.create(aDevice, function(error, device) {
                                             if (error) {
                                                 logger.error(error.errors);
-                                                for (field in error.errors) {
-                                                    request.flash("error",error.errors[field].message);
-                                                }
-                                                
+                                                response.json({ message: error.toString () });                                                
                                             }
                                             else {
                                                  logger.info("new device created and saved");
-                                                request.flash("success","Successfully added device, will start device discovery now");
+                                                response.json({ message: "Successfully added device, will start device discovery now" });
                                                 var discoDevice = new discoveredDevice(device);
                                                 getDeviceFarLinks(device.hostname)
                                                 .then(function(linkEnrichmentData){
@@ -1873,7 +1881,7 @@ router.post("/api/:hostname/:ipaddress/:communitystring/:popname", middleware.is
                                                 .catch();
                                                 // discoDevice.discoverInterfaces();
                                             }
-                                            response.redirect("/devices"); //will redirect as a GET request
+                                            // response.redirect("/devices"); //will redirect as a GET request
                                         });
                                     }
 
