@@ -25,6 +25,7 @@ var deasync         = require('deasync');
 var enrichmentData  = require("../lookUps/enrich");
 var dateFormat      = require('dateformat');
 var ObjectId        = require('mongodb').ObjectID;
+var indexRoutes     = require("./index"); 
 
 var bulkSyncInProgress = false;
 var aDevice = new Device() ;
