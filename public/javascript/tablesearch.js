@@ -39,6 +39,8 @@ var $jtable = $j('#eventsTable');
         $j('#validateduser-update-form').attr('action', '/validatedusers/'+value.id+'/edit');
         $j('#interface-delete-form').attr('action', '/interfaces/'+value.id+'/?_method=DELETE');
         $j('#interface-update-form').attr('action', '/interfaces/'+value.id+'/edit');
+        $j('#devicemodel-delete-form').attr('action', '/devicemodels/'+value.id+'/?_method=DELETE');
+        $j('#devicemodel-update-form').attr('action', '/devicemodels/'+value.id+'/edit');
     });
 
   });

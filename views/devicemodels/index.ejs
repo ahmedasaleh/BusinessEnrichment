@@ -1,0 +1,66 @@
+<% include ../partials/header %>
+    <!--< the class container will give space around our contents>-->
+    <div class="container">
+        <header class="jumbotron">
+            <!--<adding second container to keep spacing around contents when we resize the page>-->
+            <div class="container">
+                <h1>Business Enrichment Portal</h1>
+                <p>View Device Models Information</p>
+                <div class="btn-group" role="group" aria-label="all">
+                    <a href="/devices/"><button type="button" class="btn btn-default ">All Devices</button></a>
+                    <a href="/pops/"><button type="button" class="btn btn-default ">All POPs</button></a>
+                    <!--<a href="/interfaces/"><button type="button" class="btn btn-default">All Interfaces</button></a>-->
+                    <a href="/sectors/"><button type="button" class="btn btn-default">All Sectors</button></a>
+                    <a href="/governorates/"><button type="button" class="btn btn-default ">All Governorates</button></a>
+                    <a href="/users/"><button type="button" class="btn btn-default">All Users</button></a>
+                    <a href="/links/"><button type="button" class="btn btn-default ">All Links</button></a>
+                    <a href="/validatedusers/"><button type="button" class="btn btn-default">All Validated Users</button></a>
+                    <a href="/devicemodels/"><button type="button" class="btn btn-default active">All Device Models</button></a>
+                    <a href="/interfaces/"><button type="button" class="btn btn-default">All Interfaces Data</button></a>
+                </div>        
+            </div>
+        </header>
+        <div class="btn-group" role="group" aria-label="sectors">
+            <form id="devicemodel-add-form"  class="btn-group" action="/devicemodels/new" method="GET">
+                <button type="button " class="btn  btn-primary">Add Model</button>
+            </form>
+            <form id="devicemodel-delete-form"  class="btn-group" action="/devicemodels/-1/?_method=DELETE" method="POST">
+                <button id="devicemodel-delete-button"  type="button " class="btn  btn-danger">Delete Model</button>
+            </form>
+            <form id="devicemodel-update-form"  class="btn-group" action="" method="GET">
+                <button type="button " class="btn  btn-warning">Update Model</button>
+            </form>
+        </div>        
+        
+        <div class="row text-left">
+            <div class="table-responsive">
+                <table id="eventsTable" data-pagination="true" data-search="true"data-toggle="table" data-height="525" data-pagination="true" 
+                data-maintain-selected="true" data-search="true" data-show-refresh="true" data-show-toggle="true" data-show-columns="true" 
+                data-toolbar="#toolbar" data-single-select="true">
+                    <thead>
+                        <tr>
+                            <th data-field="state" data-checkbox="true"> </th>
+                            <th data-field="_id" data-visible="false">ID</th>
+                            <th data-field="oid" data-sortable="true">OID</th>
+                            <th data-field="type">Type</th>
+                            <th data-field="vendor" data-sortable="true">Vendor</th>
+                            <th data-field="model">Model</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% devicemodels.forEach(function(devicemodel){ %>
+                            <tr>
+                                <td><% %></td>
+                                <td><%= devicemodel._id %></td>
+                                <td><%= devicemodel.oid %></td>
+                                <td><%= devicemodel.type %></td>
+                                <td><%= devicemodel.vendor %></td>
+                                <td><%= devicemodel.model %></td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+<% include ../partials/footer %>

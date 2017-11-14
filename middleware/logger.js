@@ -1,4 +1,5 @@
 var winston = require('winston');
+var dateFormat        = require('dateformat');
 const fs = require('fs');
 const tsFormat = () => (new Date()).toLocaleTimeString();
 const logDir = __dirname+"/.." +"/log/";
@@ -16,9 +17,9 @@ const logger = new winston.Logger({
       }),
       new winston.transports.File({
       	name: 'appLogger',
-        filename: logDir+'/bet.log',
+        filename: logDir+'/bet_'+dateFormat(new Date(),"dd-mm-yyyy_HH-MM-ss")+'.log',
         maxsize:'1048576',
-        maxFiles:'10',
+        maxFiles:'100',
         timestamp: new Date(),
         datePattern: 'yyyy-MM-dd',
         formatter: function(options) {

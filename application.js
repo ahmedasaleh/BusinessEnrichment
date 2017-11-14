@@ -34,6 +34,7 @@ var interfaceRoutes       = require("./routes/interfaces"),
     validatedUserRoutes    = require("./routes/validatedUsers"),  
     deviceRoutes    = require("./routes/devices"),  
     enrichmentRoutes    = require("./routes/enrichments"),  
+    deviceModelsRoutes    = require("./routes/devicemodels"),  
     indexRoutes     = require("./routes/index"); 
 
 var indexBaseURL        = "/",
@@ -45,6 +46,7 @@ var indexBaseURL        = "/",
     validatedUserBaseURL   = "/validatedusers",
     deviceBaseURL   = "/devices",
     enrichmentBaseURL   = "/enrichments",
+    deviceModelBaseURL   = "/devicemodels",
     interfaceBaseURL      = "/interfaces";
     // interfaceBaseURL      = "/devices/:id/interfaces";
 
@@ -62,7 +64,7 @@ app.use(flash());
 app.use(bodyParser.urlencoded({extended: true}));
 mongoose.Promise = global.Promise; //to vercome the warning about Mongoose mpromise
 
-mongoose.connect("mongodb://localhost/"+process.env.DEV_DB, {useMongoClient: true});
+mongoose.connect("mongodb://localhost/"+process.env.PROD_DB, {useMongoClient: true});
 
 //Passport configuration
 app.use(require("express-session")({
@@ -99,6 +101,7 @@ app.use(userBaseURL, userRoutes);
 app.use(linkBaseURL, linkRoutes);
 app.use(validatedUserBaseURL, validatedUserRoutes);
 app.use(enrichmentBaseURL, enrichmentRoutes);
+app.use(deviceModelBaseURL, deviceModelsRoutes);
 //start server
 process.on('uncaughtException', function (err) {
   console.error(err);

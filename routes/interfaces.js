@@ -243,6 +243,7 @@ var copyObject = function(toObject,fromObject,override){
         if(fromObject.sp_dpiName && override == true) toObject.sp_dpiName = fromObject.sp_dpiName;
         if(fromObject.sp_portID && override == true) toObject.sp_portID = fromObject.sp_portID;
         if(fromObject.actualspeed && override == true) toObject.actualspeed = fromObject.actualspeed;
+        if(fromObject.provisoFlag && override == true) toObject.provisoFlag = fromObject.provisoFlag;
         if(fromObject.pop && override == true) toObject.pop = fromObject.pop;
         if(toObject.type == "NONE") toObject.type = null;
     };

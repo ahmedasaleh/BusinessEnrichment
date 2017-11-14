@@ -50,36 +50,36 @@ function createDocRecurse (err,filename) {
                         isFileHeaderCorrect = false;
                         break;
                     }
-                    else if(((i == deviceData.type) && !(S(headerFields[i]) == "type"))){
-                        logger.error("incorrect file format, bad type entry");
-                        isFileHeaderCorrect = false;
-                        break;
-                    }
-                    else if(((i == deviceData.vendor) && !(S(headerFields[i]) == "vendor" ))){
-                        logger.error("incorrect file format, bad vendor entry");
-                        isFileHeaderCorrect = false;
-                        break;
-                    }
-                    else if(((i == deviceData.model) && !(S(headerFields[i]) == "model" ))){
-                        logger.error("incorrect file format, bad model entry");
-                        isFileHeaderCorrect = false;
-                        break;
-                    }
-                    else if(((i == deviceData.sysObjectID) && !(S(headerFields[i]) == "sysObjectID"))){
-                        logger.error("incorrect file format, bad sysObjectID entry");
-                        isFileHeaderCorrect = false;
-                        break;
-                    }
-                    else if(((i == deviceData.sysName) && !(S(headerFields[i]) == "sysName"))){
-                        logger.error("incorrect file format, bad sysName entry");
-                        isFileHeaderCorrect = false;
-                        break;
-                    }
-                    else if(((i == deviceData.sysDescr) && !(S(headerFields[i]) == "sysDescr"))){
-                        logger.error("incorrect file format, bad description entry");
-                        isFileHeaderCorrect = false;
-                        break;
-                    }
+                    // else if(((i == deviceData.type) && !(S(headerFields[i]) == "type"))){
+                    //     logger.error("incorrect file format, bad type entry");
+                    //     isFileHeaderCorrect = false;
+                    //     break;
+                    // }
+                    // else if(((i == deviceData.vendor) && !(S(headerFields[i]) == "vendor" ))){
+                    //     logger.error("incorrect file format, bad vendor entry");
+                    //     isFileHeaderCorrect = false;
+                    //     break;
+                    // }
+                    // else if(((i == deviceData.model) && !(S(headerFields[i]) == "model" ))){
+                    //     logger.error("incorrect file format, bad model entry");
+                    //     isFileHeaderCorrect = false;
+                    //     break;
+                    // }
+                    // else if(((i == deviceData.sysObjectID) && !(S(headerFields[i]) == "sysObjectID"))){
+                    //     logger.error("incorrect file format, bad sysObjectID entry");
+                    //     isFileHeaderCorrect = false;
+                    //     break;
+                    // }
+                    // else if(((i == deviceData.sysName) && !(S(headerFields[i]) == "sysName"))){
+                    //     logger.error("incorrect file format, bad sysName entry");
+                    //     isFileHeaderCorrect = false;
+                    //     break;
+                    // }
+                    // else if(((i == deviceData.sysDescr) && !(S(headerFields[i]) == "sysDescr"))){
+                    //     logger.error("incorrect file format, bad description entry");
+                    //     isFileHeaderCorrect = false;
+                    //     break;
+                    // }
             }
         }
         else{
