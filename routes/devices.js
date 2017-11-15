@@ -385,7 +385,7 @@ self.checkInterfaceInLinks = function(interfaceName){
                         actualspeed:actualspeed,pollInterval:pollInterval
             }
         }
-        else if(alias && S(alias.toLowerCase()).contains("-alpha-bitstream")){
+        else if(alias && S(alias.toLowerCase()).contains("alpha-bitstream")){
             // # Condition  Contain (_ALPHA-BITSTREAM)
             // # Patterns   P1-ALPHA-BITSTREAM P2 P3
             // # Patterns description   
