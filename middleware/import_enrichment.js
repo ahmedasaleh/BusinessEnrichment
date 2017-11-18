@@ -8,8 +8,8 @@ var cmd=require('node-cmd');
 
 var lineList = "";
 var deviceList = [];
-var deviceData ={ipaddress:0,hostname:1,community:2,type:3,vendor:4,model:5,sysObjectID:6,sysName:7,sysDescr:8};
-// var deviceData ={ipaddress:0,hostname:1,community:2,type:3,vendor:4,model:5,sysObjectID:6,sysName:7};
+// var deviceData ={ipaddress:0,hostname:1,community:2,type:3,vendor:4,model:5,sysObjectID:6,sysName:7,sysDescr:8};
+var deviceData ={ipaddress:0,hostname:1,community:2};
 String.prototype.escapeSpecialChars = function() {
     return this.replace(/\\/g, "")
                 .replace(/\\n/g, "")
@@ -35,6 +35,7 @@ function createDocRecurse (err,filename) {
         var isFileHeaderCorrect = true;
         if(headerFields.length == Object.keys(deviceData).length){
             for(var i=0;i<headerFields.length;i++){
+                console.log(i);
                     if(((i == deviceData.ipaddress) && !(S(headerFields[i]) == "ipaddress"))){
                         logger.error("incorrect file format, bad ipaddress entry");
                         isFileHeaderCorrect = false;
@@ -84,7 +85,7 @@ function createDocRecurse (err,filename) {
         }
         else{
             isFileHeaderCorrect = false;
-            logger.log("incorrect header format, expected "+Object.keys(deviceData).length+" fields found "+headerFields.length);
+            logger.error("incorrect header format, expected "+Object.keys(deviceData).length+" fields found "+headerFields.length);
 
         }
         if(isFileHeaderCorrect == true){

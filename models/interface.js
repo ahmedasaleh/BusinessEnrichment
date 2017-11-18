@@ -79,7 +79,7 @@ var interfaceSchema = new mongoose.Schema({
 });
 
 
-interfaceSchema.index({'$**': 'text'});
+// interfaceSchema.index({'$**': 'text'});
 interfaceSchema.plugin(mongoosePaginate);
 var Interface = mongoose.model("Interface", interfaceSchema);
 module.exports = Interface; //mongoose.model("Interface", interfaceSchema);

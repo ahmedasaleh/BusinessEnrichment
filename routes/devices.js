@@ -31,7 +31,7 @@ var indexRoutes     = require("./index");
 var bulkSyncInProgress = false;
 var aDevice = new Device() ;
 var targets = [];
-var MAX_PARALLEL_DEVICES = 200;//500;
+var MAX_PARALLEL_DEVICES = 50;//500;
 var throttle = MAX_PARALLEL_DEVICES;
 var doneDevices = 0;
 var syncCyclesThreshold = 3;
@@ -48,10 +48,11 @@ var snmpError = "";
 var theWalkSession, theTableSession, theTableColumnsSession; 
 var ifTableColumns ={ifIndex:1,ifDescr:2,ifType:3,ifSpeed:5,ifAdminStatus:7,ifOperStatus:8,ifInOctets:10,ifOutOctets:16};
 var ifXTableColumns ={ifName:1,ifAlias:18,ifHighSpeed:15,ifHCInOctets:6,ifHCOutOctets:10};
+var systemDetailsColumns ={sysObjectID:0,sysName:1};
 var deviceInterfaces = [Interface];
 var anInterface = new Interface();
 var discoveryFinished = false;
-var sysOID = ["1.3.6.1.2.1.1.2.0"];//retrieve sysObjectID to lookup model
+var systemDetails = ["1.3.6.1.2.1.1.2.0","1.3.6.1.2.1.1.5.0"];//retrieve sysObjectID to lookup model and sysName
 var oids = {
     ifTable: {
         OID: "1.3.6.1.2.1.2.2",
@@ -98,26 +99,48 @@ function discoveredDevice(device,linkEnrichmentData) {
     self.deviceVendor = S(self.device.vendor);
     self.deviceModel = S(self.device.model);
     self.modelOID = "";
+    self.sysName = S(self.device.sysName);
     self.maxRepetitions = 50;
     self.linkEnrichmentData = linkEnrichmentData;
     self.deviceToBeDeleted = false;
     self.deviceSyncCycles = self.device.deviceSyncCycles || 0;
+    self.errorRetrievingSysOID = false;
+    self.cleanSessionClose = false;//used to flag that the SNMP session closed cleanly without exceptions from dgram
 
 // Interface.allowedFields;
     self.allowedFields =  enrichmentData.interfaceAllowedFields ;//['ifName','ifAlias','ifIndex','ifDescr','ifType','ifSpeed','ifHighSpeed','counters','type',' specialService','secondPOP','secondHost','secondInterface','label','provisoFlag','noEnrichFlag','sp_service','sp_provider','sp_termination','sp_bundleId','sp_linkNumber','sp_CID','sp_TECID','sp_subCable','sp_customer','sp_sourceCore','sp_destCore','sp_vendor','sp_speed','sp_pop','sp_fwType','sp_serviceType','sp_ipType','sp_siteCode','sp_connType','sp_emsOrder','sp_connectedBW','sp_dpiName','sp_portID','unknownFlag','adminStatus','operStatus','actualspeed','syncCycles','lastUpdate','hostname','ipaddress','pop'];
 
-    self.session = snmp.createSession(self.device.ipaddress, S(self.device.community).trim().s,{ sourceAddress: "213.158.183.140",timeout: 10000, version: snmp.Version2c ,retries: 1});
+    self.session = snmp.createSession(self.device.ipaddress, S(self.device.community).trim().s,{ sourceAddress: "213.158.183.140",timeout: 30000, version: snmp.Version2c ,retries: 1});
     self.session.on("close", function () {
         if(self.inSyncMode){
             throttle = throttle + 1;
             doneDevices = doneDevices + 1;                   
             logger.info(self.name+" done, total done: "+doneDevices);            
         }
-        logger.info("snmp socket closed for "+self.name);
+        if(self.session) self.session = null;
+        self.cleanSessionClose = true;
+        logger.info("self.session.onClose,snmp socket closed for "+self.name);
     });
     self.session.on("error", function (error) {
         logger.error(error.toString ());
-        if(self.session) self.session.close();
+            if(self.session) {
+                try{
+                    self.session.close();
+                }
+                catch(e){
+                    logger.error("caught an error inside self.session.onError: "+e);
+                    if(self.inSyncMode && !self.cleanSessionClose){
+                        throttle = throttle + 1;
+                        doneDevices = doneDevices + 1;                   
+                        logger.info(self.name+" done, total done: "+doneDevices);            
+                    }
+                    if(self.session) self.session = null;
+                    self.cleanSessionClose = true;
+                    logger.info("self.session.onError, snmp socket closed for "+self.name);                    
+                }
+                finally{
+                }
+            }
     });
     self.setActualSpeed = function(sp_speed,ifSpeed,ifHighSpeed){
         var tmpActualSpeed;
@@ -731,7 +754,6 @@ self.checkInterfaceInLinks = function(interfaceName){
 		}
 		
 
-        
 
         if(!S(alias).isEmpty() && unknownFlag==1){
              logger.warn(hostname+" "+ipaddress+" : special services interface with invalid description - Service: "+specialService+" - ifAlias: "+alias+" - interfaceName: "+ifName+" - ifIndex: "+ifIndex);
@@ -744,18 +766,98 @@ self.checkInterfaceInLinks = function(interfaceName){
         return anErichment;
 
     }
+    self.saveDeviceOnError = function(){
+        self.deviceSyncCycles = self.deviceSyncCycles + 1;
+        if(self.errorRetrievingSysOID == true){
+            Device.findByIdAndUpdate(device._id,{ lastSyncTime: new Date(),deviceSyncCycles:self.deviceSyncCycles },function(error,updatedDevice){
+                if(error){
+                     logger.error(error);
+                }
+                else{
+                    if(self.session) {
+                        try{
+                            self.session.close();
+                        }
+                        catch(e){
+                            logger.error("caught an error inside self.saveDeviceOnError: "+e);
+                            if(self.inSyncMode && !self.cleanSessionClose){
+                                throttle = throttle + 1;
+                                doneDevices = doneDevices + 1;                   
+                                logger.info(self.name+" done, total done: "+doneDevices);            
+                            }
+                            if(self.session) self.session = null;
+                            self.cleanSessionClose = true;
+                            logger.info("self.saveDeviceOnError, snmp socket closed for "+self.name);                    
+                        }
+                        finally{
+                        }
+                    }
+                }
+                // throttle = throttle + 1;
 
+            });
+        }
+        else{
+            Device.findByIdAndUpdate(device._id,{ lastSyncTime: new Date(),deviceSyncCycles:self.deviceSyncCycles,type: self.deviceType,model: self.deviceModel,
+                vendor: self.deviceVendor,sysObjectID: self.modelOID,sysName: self.sysName },function(error,updatedDevice){
+                if(error){
+                     logger.error(error);
+                }
+                else{
+                    if(self.session) {
+                        try{
+                            self.session.close();
+                        }
+                        catch(e){
+                            logger.error("caught an error inside self.findByIdAndUpdate: "+e);
+                            if(self.inSyncMode && !self.cleanSessionClose){
+                                throttle = throttle + 1;
+                                doneDevices = doneDevices + 1;                   
+                                logger.info(self.name+" done, total done: "+doneDevices);            
+                            }
+                            if(self.session) self.session = null;
+                            self.cleanSessionClose = true;
+                            logger.info("self.findByIdAndUpdate, snmp socket closed for "+self.name);                    
+                        }
+                        finally{
+                        }
+                    }
+                }
+                // throttle = throttle + 1;
+
+            });
+
+        }
+
+    }
     self.saveDevice = function(device,deviceSyncCycles){
         //now the device will use interestInterfaces array during save action, so modify it to include only new and updated
         //interfaces
         self.interestInterfaces = self.interestInterfaces.concat(self.interfaceUpdateList);
         Device.findByIdAndUpdate(device._id,{interfaces: self.interestInterfaces, discovered: true, lastSyncTime: new Date(),deviceSyncCycles:self.deviceSyncCycles,
-            type: self.deviceType,model: self.deviceModel,vendor: self.deviceVendor,sysObjectID: self.modelOID},function(error,updatedDevice){
+            type: self.deviceType,model: self.deviceModel,vendor: self.deviceVendor,sysObjectID: self.device.sysObjectID,sysName: self.sysName},function(error,updatedDevice){
             if(error){
                  logger.error(error);
             }
             else{
-                if(self.session) self.session.close();
+                if(self.session) {
+                    try{
+                        self.session.close();
+                    }
+                    catch(e){
+                            logger.error("caught an error inside self.saveDevice: "+e);
+                            if(self.inSyncMode && !self.cleanSessionClose){
+                            throttle = throttle + 1;
+                            doneDevices = doneDevices + 1;                   
+                            logger.info(self.name+" done, total done: "+doneDevices);            
+                        }
+                        if(self.session) self.session = null;
+                        self.cleanSessionClose = true;
+                        logger.info("self.saveDevice, snmp socket closed for "+self.name);                    
+                    }
+                    finally{
+                    }
+                }
             }
             // throttle = throttle + 1;
 
@@ -764,7 +866,24 @@ self.checkInterfaceInLinks = function(interfaceName){
     self.deleteDevice = function(device){
         Device.findByIdAndRemove(device._id,function(error){
             if(error) logger.error(error);
-            if(self.session) self.session.close();
+            if(self.session) {
+                try{
+                    self.session.close();
+                }
+                catch(e){
+                    logger.error("caught an error inside self.deleteDevice: "+e);
+                    if(self.inSyncMode && !self.cleanSessionClose){
+                        throttle = throttle + 1;
+                        doneDevices = doneDevices + 1;                   
+                        logger.info(self.name+" done, total done: "+doneDevices);            
+                    }
+                    if(self.session) self.session = null;
+                    self.cleanSessionClose = true;
+                    logger.info("self.deleteDevice, snmp socket closed for "+self.name);                    
+                }
+                finally{
+                }
+            }
         });
     };
     self.getInterfaceFromInterestList = function(interfaceIndex){
@@ -942,14 +1061,21 @@ self.checkInterfaceInLinks = function(interfaceName){
         var ignoreMissing = true;
         interfaceList.forEach(function(interface, i){
             // Interface.findOneAndUpdate({"hostname" : S(interfaceList[i].hostname).s , "ifIndex" : S(interfaceList[i].ifIndex).toInt() },{lastUpdate:new Date()},function(error,updatedInterface){
-            Interface.findOneAndUpdate({"ipaddress" : S(interface.ipaddress).s , "ifIndex" : S(interface.ifIndex).toInt() },{syncCycles:interface.syncCycles},function(error,updatedInterface){
-                self.allowedFields.forEach(function(field) {
-                    if ((typeof interface[field] !== 'undefined' && ignoreMissing) ) {
-                        updatedInterface[field] = interface[field];
+                // Interface.findOneAndUpdate({"ipaddress" : S(interface.ipaddress).s , "ifIndex" : S(interface.ifIndex).toInt() },{syncCycles:interface.syncCycles},function(error,updatedInterface){
+                Interface.findById(interface._id,{syncCycles:interface.syncCycles},function(error,updatedInterface){
+                    if(error){
+                        logger.error(error);
+                    }
+                    else{
+                        self.allowedFields.forEach(function(field) {
+                            if ((typeof interface[field] !== 'undefined') && (typeof updatedInterface[field] !== 'undefined') && ignoreMissing ) {
+                                updatedInterface[field] = interface[field];
+                            }
+                        });
+                        updatedInterface.save();
+
                     }
                 });
-                updatedInterface.save();
-            });
         });
     };
     self.removeInterfaces  = function(interfaceList){
@@ -1103,7 +1229,25 @@ self.checkInterfaceInLinks = function(interfaceName){
             logger.error ("device "+self.name+ " has " +error.toString () + " while reading ifXTable");
             self.ifTableError = true;
             self.ifXTableError = true;
-            if(self.session) self.session.close();
+            if(self.session) {
+                try{
+                    self.session.close();
+                }
+                catch(e){
+                    logger.error("caught an error inside self.ifXTableResponseCb: "+e);
+                    if(self.inSyncMode && !self.cleanSessionClose){
+                        throttle = throttle + 1;
+                        doneDevices = doneDevices + 1;                   
+                        logger.info(self.name+" done, total done: "+doneDevices);            
+                    }
+                    if(self.session) self.session = null;
+                    self.cleanSessionClose = true;
+                    logger.info("self.ifXTableResponseCb, snmp socket closed for "+self.name);                    
+                }
+                finally{
+                }
+            }
+            self.saveDeviceOnError();
             // throttle = throttle + 1;
         }
         else{
@@ -1126,7 +1270,25 @@ self.checkInterfaceInLinks = function(interfaceName){
             logger.error ("device "+self.name+ " has " +error.toString () + " while reading ifTable");
             self.ifTableError = true;
             self.ifXTableError = true;
-            if(self.session) self.session.close();
+            if(self.session) {
+                try{
+                    self.session.close();
+                }
+                catch(e){
+                    logger.error("caught an error inside self.ifTableResponseCb: "+e);
+                    if(self.inSyncMode && !self.cleanSessionClose){
+                        throttle = throttle + 1;
+                        doneDevices = doneDevices + 1;                   
+                        logger.info(self.name+" done, total done: "+doneDevices);            
+                    }
+                    if(self.session) self.session = null;
+                    self.cleanSessionClose = true;
+                    logger.info("self.ifTableResponseCb, snmp socket closed for "+self.name);                    
+                }
+                finally{
+                }
+            }
+            self.saveDeviceOnError();
             // throttle = throttle + 1;
         }
         else{
@@ -1144,43 +1306,71 @@ self.checkInterfaceInLinks = function(interfaceName){
         // if: current interface index not found and not updated and syncCyles > threshold, then: delete interface
         // if: new interface index, then create interface 
         logger.info("in sync mode for: "+self.name+" "+self.device.ipaddress+" "+self.device.community);
-        self.session.get (sysOID, function (error, varbinds) {  
+        self.session.get (systemDetails, function (error, varbinds) {  
             if (error) {
+
                 logger.error ("device "+self.name+" has "+error.toString () +" while getting sysObjectID");
             } 
-            
-            for (var i = 0; i < varbinds.length; i++) {
-                // for version 1 we can assume all OIDs were successful
-                self.modelOID = varbinds[i].value;
-            
-                // for version 2c we must check each OID for an error condition
-                if (snmp.isVarbindError (varbinds[i])){
-                    logger.error (snmp.varbindError (varbinds[i]));
-                }
-                else {
-                    self.modelOID = varbinds[i].value;
-                }
+            else{
+                for (var i = 0; i < varbinds.length; i++) {
+                    // for version 1 we can assume all OIDs were successful
+                    // self.modelOID = varbinds[i].value;
+                    
+                    // for version 2c we must check each OID for an error condition
+                    if (snmp.isVarbindError (varbinds[i])){
+                        logger.error (snmp.varbindError (varbinds[i]));
+                    }
+                    else {
+                        if(i == systemDetailsColumns.sysObjectID) self.modelOID = varbinds[i].value;
+                        if(i == systemDetailsColumns.sysName) self.sysName = varbinds[i].value;
+                    }
+                }               
             }
-            self.modelOID = "."+self.modelOID;
-            DeviceModel.findOne({oid: self.modelOID},function(error,foundModel){
-                if(error){
-                    logger.error ("device "+self.name+" has "+error.toString () +" while checking model ID table"); 
-                    if(self.session) self.session.close();
-                }
-                else if(foundModel != null){
-                    self.deviceVendor = foundModel.vendor;
-                    self.deviceType  = foundModel.type;
-                    self.deviceModel = foundModel.model ;
-                    self.session.tableColumnsAsync(oids.ifTable.OID, oids.ifTable.Columns, self.maxRepetitions, self.ifTableResponseCb);
-                }
-                else{
-                    self.deviceType = S(self.device.type);
-                    self.deviceVendor = S(self.device.vendor);
-                    self.deviceModel = S(self.device.model);
-                    self.session.tableColumnsAsync(oids.ifTable.OID, oids.ifTable.Columns, self.maxRepetitions, self.ifTableResponseCb);
-                }        
+            
+            if(self.modelOID) self.modelOID = "."+self.modelOID;
+            else if(self.device.sysObjectID) self.modelOID = self.device.sysObjectID;
+            if(self.modelOID){
+                DeviceModel.findOne({oid: self.modelOID},function(error,foundModel){
+                    if(error){
+                        logger.error ("device "+self.name+" has "+error.toString () +" while checking model ID table"); 
+                        if(self.session) {
+                            try{
+                                self.session.close();
+                            }
+                            catch(e){
+                                    logger.error("caught an error inside self.syncInterfaces: "+e);
+                                    if(self.inSyncMode && !self.cleanSessionClose){
+                                    throttle = throttle + 1;
+                                    doneDevices = doneDevices + 1;                   
+                                    logger.info(self.name+" done, total done: "+doneDevices);            
+                                }
+                                if(self.session) self.session = null;
+                                self.cleanSessionClose = true;
+                                logger.info("self.syncInterfaces, snmp socket closed for "+self.name);                    
+                            }
+                            finally{
+                            }
+                        }
+                    }
+                    else if(foundModel != null){
+                        self.deviceVendor = foundModel.vendor;
+                        self.deviceType  = foundModel.type;
+                        self.deviceModel = foundModel.model ;
+                        self.session.tableColumnsAsync(oids.ifTable.OID, oids.ifTable.Columns, self.maxRepetitions, self.ifTableResponseCb);
+                    }
+                    else{
+                        self.deviceType = S(self.device.type);
+                        self.deviceVendor = S(self.device.vendor);
+                        self.deviceModel = S(self.device.model);
+                        self.session.tableColumnsAsync(oids.ifTable.OID, oids.ifTable.Columns, self.maxRepetitions, self.ifTableResponseCb);
+                    }        
 
-            });
+                });                
+            }
+            else{
+                self.errorRetrievingSysOID = true;
+                self.saveDeviceOnError();
+            }
             
         });
     };
@@ -1297,6 +1487,7 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
     // }
     var model ;//= request.body.device.model;
     var modelOID = "";
+    var sysName = "";
     var vendor ;//= request.body.device.vendor;
     // if(S(vendor).isEmpty() && parsedHostName){
     //     vendor = parsedHostName.deviceVendor;
@@ -1306,8 +1497,8 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
     // var governorate = request.body.device.governorate;
 
     var popId =  request.body.device.popName.name || 'NONE';
-    var sectorId = request.body.device.sector.name || 'NONE';
-    var governorateId = request.body.device.governorate.name || 'NONE';
+    var sectorId = 'NONE';//request.body.device.sector.name || 'NONE';
+    var governorateId = 'NONE';//request.body.device.governorate.name || 'NONE';
     ///
     var aPOP = new POP();
     var aSector = new Sector();
@@ -1348,33 +1539,40 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
         //     });
         // }
     }
-
     if(S(emptySector).toBoolean()){
         sectorId = aSector._id || request.body.device.sector.name  ;
     }
+
     if(S(emptyPOP).toBoolean()){
         popId = aPOP._id || request.body.device.popName.name  ;
     }
+
     if(S(emptyGove).toBoolean()){
         governorateId = aGove._id || request.body.device.governorate.name  ;
     }
-    session = snmp.createSession(ipaddress, S(communityString).trim().s,{ timeout: 10000, retries: 1});
-    session.get (sysOID, function (error, varbinds) {
+    session = snmp.createSession(ipaddress, S(communityString).trim().s,{ timeout: 5000, retries: 1});
+    session.get (systemDetails, function (error, varbinds) {
         if (error) {
-            logger.error (error.toString ());
+            logger.error ("found error while retrieving sysObjectId for "+hostname+" "+error.toString ());
+            request.flash("error","found error while retrieving sysObjectId ");
             response.redirect("/devices"); 
         } else {
             for (var i = 0; i < varbinds.length; i++) {
                 // for version 1 we can assume all OIDs were successful
-                modelOID = varbinds[i].value;
-            
+                // self.modelOID = varbinds[i].value;
+                
                 // for version 2c we must check each OID for an error condition
-                if (snmp.isVarbindError (varbinds[i]))
-                     logger.error (snmp.varbindError (varbinds[i]));
-                else
-                    modelOID = varbinds[i].value;
-            }
-                modelOID = "."+modelOID;
+                if (snmp.isVarbindError (varbinds[i])){
+                    logger.error (snmp.varbindError (varbinds[i]));
+                }
+                else {
+                    if(i == systemDetailsColumns.sysObjectID) modelOID = varbinds[i].value;
+                    if(i == systemDetailsColumns.sysName) sysName = varbinds[i].value;
+                }
+            }               
+
+            modelOID = "."+modelOID;
+
             DeviceModel.findOne({oid: modelOID},function(error,foundModel){
                 if(error){
                      logger.error(error);
@@ -1387,6 +1585,9 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
                 else{
                     model = model ;
                 }
+                // var foundPOP = __await__ (POP.findById(popId));
+                // var foundSector = __await__ (Sector.findById(sectorId));
+                // var foundGove = __await__ (Governorate.findById(governorateId));
                 if(!(popId === undefined)){
                     POP.findById(popId,function(error,foundPOP){
                         if(error){
@@ -1407,6 +1608,7 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
 
                                                 }else{
                                                     ///here goes correct values
+
                                                     aDevice = {
                                                             hostname: hostname.trim(),
                                                             ipaddress: ipaddress.trim(),
@@ -1416,9 +1618,10 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
                                                             model: foundModel.model.trim(),
                                                             vendor: foundModel.vendor.trim(),
                                                             sysObjectID: modelOID,
+                                                            sysName: sysName,
                                                             "popName.name":  foundPOP.name || 'NONE',
                                                             "sector.name": foundPOP.sector || 'NONE',
-                                                            "governorate.name":  foundGove.name || 'NONE'
+                                                            "governorate.name":  'NONE' //foundGove.name || 'NONE'
                                                     };
                                                     aDevice.interfaces = [];
                                                      logger.info("Device discovery started");
@@ -1460,6 +1663,7 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
                         }
                         else{
                             ///here goes correct values
+
                             aDevice = {
                                     hostname: hostname.trim(),
                                     ipaddress: ipaddress.trim(),
@@ -1468,6 +1672,8 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
                                     type: type.trim(),
                                     model: model.trim(),
                                     vendor: vendor.trim(),
+                                    sysObjectID: modelOID,
+                                    sysName: sysName,
                                     "popName.name":  'NONE',
                                     "sector.name":  'NONE',
                                     "governorate.name":   'NONE'
@@ -1559,26 +1765,6 @@ router.get("/new", middleware.isLoggedIn ,function(request, response) {
     response.render("devices/new");
 });
 
-var getDeviceModel = __async__ (function(ipaddress,communityString){
-    session = snmp.createSession(ipaddress, S(communityString).trim().s,{ timeout: 10000, retries: 1});
-    var foundOID = __await__(session.get (sysOID, function (error, varbinds) {
-        if (error) {
-            logger.error (error.toString ());
-            response.redirect("/devices"); 
-        } else {
-            for (var i = 0; i < varbinds.length; i++) {
-                // for version 1 we can assume all OIDs were successful
-                modelOID = varbinds[i].value;
-            
-                // for version 2c we must check each OID for an error condition
-                if (snmp.isVarbindError (varbinds[i]))
-                     logger.error (snmp.varbindError (varbinds[i]));
-                else
-                    modelOID = varbinds[i].value;
-            }
-        }
-    }));
-});
 
 var getDeviceFarLinks = __async__ (function(ahostname){
     var linkEnrichmentData;
@@ -1629,7 +1815,7 @@ var syncDevices = function(){
     .then(function(deviceList){
         for(var i=0;i<deviceList.length;i++){
             while(throttle <= 0) {
-                deasync.sleep(100);
+                deasync.sleep(20);
             }
             deviceList[i].syncInterfaces();
         }
@@ -1863,7 +2049,7 @@ router.post("/api/:hostname/:ipaddress/:communitystring/:popname", middleware.is
         governorateId = aGove._id   ;
     }
     session = snmp.createSession(ipaddress, S(communityString).trim().s,{ timeout: 10000, retries: 1});
-    session.get (sysOID, function (error, varbinds) {
+    session.get (systemDetails, function (error, varbinds) {
         if (error) {
             logger.error (error.toString ());
             response.json({ message: error.toString () });

@@ -64,7 +64,7 @@ app.use(flash());
 app.use(bodyParser.urlencoded({extended: true}));
 mongoose.Promise = global.Promise; //to vercome the warning about Mongoose mpromise
 
-mongoose.connect("mongodb://localhost/"+process.env.PROD_DB, {useMongoClient: true});
+mongoose.connect("mongodb://localhost/"+process.env.PROD_DB, {useMongoClient: true,keepAlive:300000,connectTimeoutMS:30000});
 
 //Passport configuration
 app.use(require("express-session")({
