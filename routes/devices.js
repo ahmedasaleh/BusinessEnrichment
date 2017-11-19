@@ -160,7 +160,7 @@ function discoveredDevice(device,linkEnrichmentData) {
     self.parseSpeed = function(speed){
         var multiplier, unit;
         if(S(speed).isEmpty() || S(speed).s.toLowerCase() == "unknown" ){
-            logger.warn(self.name +" : Unkown speed text "+speed);
+            // logger.warn(self.name +" : Unkown speed text "+speed);
             return 0;
         }
         else if( S(speed).isNumeric() && S(speed).toInt() == 0){
@@ -185,7 +185,7 @@ function discoveredDevice(device,linkEnrichmentData) {
             unit = 1000;
         }
         else{
-            logger.warn(self.name +" : Unkown speed text "+speed);  
+            // logger.warn(self.name +" : Unkown speed text "+speed);  
             multiplier = 0; unit = 1;
         }
         return S(multiplier).toInt() * S(unit).toInt();
@@ -756,10 +756,10 @@ self.checkInterfaceInLinks = function(interfaceName){
 
 
         if(!S(alias).isEmpty() && unknownFlag==1){
-             logger.warn(hostname+" "+ipaddress+" : special services interface with invalid description - Service: "+specialService+" - ifAlias: "+alias+" - interfaceName: "+ifName+" - ifIndex: "+ifIndex);
+             // logger.warn(hostname+" "+ipaddress+" : special services interface with invalid description - Service: "+specialService+" - ifAlias: "+alias+" - interfaceName: "+ifName+" - ifIndex: "+ifIndex);
         }
         if(!S(alias).isEmpty() && noEnrichFlag==1){
-             logger.warn(hostname+" "+ipaddress+" : Interface with no enrichment has been marked to import into proviso - ifAlias: "+alias+" - ifName: "+interfaceName+" - ifIndex: "+ifIndex);
+             // logger.warn(hostname+" "+ipaddress+" : Interface with no enrichment has been marked to import into proviso - ifAlias: "+alias+" - ifName: "+interfaceName+" - ifIndex: "+ifIndex);
         }
         if(anErichment) anErichment.actualspeed = self.setActualSpeed(sp_speed,ifSpeed,ifHighSpeed);
 
@@ -1015,21 +1015,6 @@ self.checkInterfaceInLinks = function(interfaceName){
                             }                       
                         }
                     }
-                    // else if((intf.devVendor == "alcatel") && (intf.devType =="dslam")   ){
-                    //     if((S(intf.ifType).toInt() == 6) || (S(intf.ifType).toInt() == 117)){
-                    //         // self.interfaces[key] = anInterface;
-                    //         // self.interestKeys.push(key);//push index to be used during ifXTable walk
-                    //         self.interestRawInterfaces.push(Object.assign(rawInterface,intf));
-                    //         intf.counters = 32;
-                    //         if(hcInOctetsLarge || hcOutOctetsLarge) intf.counters = 64;
-                    //         var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress,intf.ifSpeed ,intf.ifHighSpeed);
-                    //         if(enrichment) {
-                    //             Object.assign(intf,enrichment);
-                    //             self.interestInterfaces.push(intf);
-                    //             self.interestInterfacesIndices.push(intf.ifIndex); 
-                    //         }                       
-                    //     }
-                    // }
                 }
                 else{
                     // logger.warn("interface "+lowerCaseName+ " on device "+self.name+ " has no traffic");
@@ -1048,27 +1033,18 @@ self.checkInterfaceInLinks = function(interfaceName){
                 }
             });
         });
-        // for(var i=0;i<interfaceList.length;i++){
-        //     Interface.create(interfaceList[i],function(error,interface){
-        //         if(error){
-        //              logger.error(error);
-        //         }
-        //     });
-            
-        // }
     };
     self.updateInterfaces  = function(interfaceList){
         var ignoreMissing = true;
         interfaceList.forEach(function(interface, i){
-            // Interface.findOneAndUpdate({"hostname" : S(interfaceList[i].hostname).s , "ifIndex" : S(interfaceList[i].ifIndex).toInt() },{lastUpdate:new Date()},function(error,updatedInterface){
                 // Interface.findOneAndUpdate({"ipaddress" : S(interface.ipaddress).s , "ifIndex" : S(interface.ifIndex).toInt() },{syncCycles:interface.syncCycles},function(error,updatedInterface){
                 Interface.findById(interface._id,{syncCycles:interface.syncCycles},function(error,updatedInterface){
                     if(error){
                         logger.error(error);
                     }
-                    else{
+                    else if(updatedInterface != null){
                         self.allowedFields.forEach(function(field) {
-                            if ((typeof interface[field] !== 'undefined') && (typeof updatedInterface[field] !== 'undefined') && ignoreMissing ) {
+                            if (interface && updatedInterface && (typeof interface[field] !== 'undefined') && (typeof updatedInterface[field] !== 'undefined') && ignoreMissing ) {
                                 updatedInterface[field] = interface[field];
                             }
                         });
@@ -2057,13 +2033,13 @@ router.post("/api/:hostname/:ipaddress/:communitystring/:popname", middleware.is
         } else {
             for (var i = 0; i < varbinds.length; i++) {
                 // for version 1 we can assume all OIDs were successful
-                modelOID = varbinds[i].value;
-            
-                // for version 2c we must check each OID for an error condition
-                if (snmp.isVarbindError (varbinds[i]))
-                     logger.error (snmp.varbindError (varbinds[i]));
-                else
-                    modelOID = varbinds[i].value;
+                if (snmp.isVarbindError (varbinds[i])){
+                    logger.error (snmp.varbindError (varbinds[i]));
+                }
+                else {
+                    if(i == systemDetailsColumns.sysObjectID) modelOID = varbinds[i].value;
+                    if(i == systemDetailsColumns.sysName) sysName = varbinds[i].value;
+                }
             }
                 modelOID = "."+modelOID;
             DeviceModel.findOne({oid: modelOID},function(error,foundModel){

@@ -12,20 +12,6 @@ var interfaceDeviceID;
 
 //Mongoose PAGINATION
 
-// var responseHandler = function(response) {
-//   var data = '';
-
-//   // keep track of the data you receive
-//   response.on('data', function(chunk) {
-//     data += chunk + "\n";
-//   });
-
-//   // finished? ok, send the data to the client in JSON format
-//   response.on('end', function() {
-//         res.header("Content-Type:","application/json");
-//         res.end(data);
-//   });
-// };
 router.get("/pagination?",middleware.isLoggedIn ,function(request, response) {
         // limit is the number of rows per page
         var limit = parseInt(request.query.limit);
