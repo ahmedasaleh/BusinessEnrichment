@@ -84,16 +84,6 @@ var deviceSchema = new mongoose.Schema({
     sysObjectID: String,
     sysName: String,
     interfaces: [Interface.schema]
-    // interfaces: [
-    //         {
-    //             id: {
-    //                     type: mongoose.Schema.Types.ObjectId,
-    //                     //ref is the name of the model
-    //                     ref: "Interface"
-    //                 },
-    //             name: String
-    //         }
-    //     ]
 });
 deviceSchema.path('hostname').validate(hostnameEmpty, "hostname can't be empty!");
 deviceSchema.path('hostname').validate(hostnameLength, 'hostname is too short!');

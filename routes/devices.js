@@ -26,6 +26,7 @@ var enrichmentData  = require("../lookUps/enrich");
 var dateFormat      = require('dateformat');
 var ObjectId        = require('mongodb').ObjectID;
 var indexRoutes     = require("./index"); 
+var cmd             = require('node-cmd');
 
 
 var bulkSyncInProgress = false;
@@ -35,9 +36,9 @@ var MAX_PARALLEL_DEVICES = 50;//500;
 var throttle = MAX_PARALLEL_DEVICES;
 var doneDevices = 0;
 var syncCyclesThreshold = 3;
-var SYNC_DIFFERENCE_IN_DAYS = 7;//difference in days
-var SYNC_DIFFERENCE_IN_HOURS = 168;//difference in hours
-var SYNC_DIFFERENCE_IN_MINUTES = 10080;//difference in minutes
+var SYNC_DIFFERENCE_IN_DAYS = 1;//7;//difference in days
+var SYNC_DIFFERENCE_IN_HOURS = 1;//168;//difference in hours
+var SYNC_DIFFERENCE_IN_MINUTES = 1;//10080;//difference in minutes
 //*********************
 //  SNMP HANDLER
 //*********************
@@ -110,7 +111,7 @@ function discoveredDevice(device,linkEnrichmentData) {
 // Interface.allowedFields;
     self.allowedFields =  enrichmentData.interfaceAllowedFields ;//['ifName','ifAlias','ifIndex','ifDescr','ifType','ifSpeed','ifHighSpeed','counters','type',' specialService','secondPOP','secondHost','secondInterface','label','provisoFlag','noEnrichFlag','sp_service','sp_provider','sp_termination','sp_bundleId','sp_linkNumber','sp_CID','sp_TECID','sp_subCable','sp_customer','sp_sourceCore','sp_destCore','sp_vendor','sp_speed','sp_pop','sp_fwType','sp_serviceType','sp_ipType','sp_siteCode','sp_connType','sp_emsOrder','sp_connectedBW','sp_dpiName','sp_portID','unknownFlag','adminStatus','operStatus','actualspeed','syncCycles','lastUpdate','hostname','ipaddress','pop'];
 
-    self.session = snmp.createSession(self.device.ipaddress, S(self.device.community).trim().s,{ sourceAddress: "213.158.183.140",timeout: 30000, version: snmp.Version2c ,retries: 1});
+    self.session = snmp.createSession(self.device.ipaddress, S(self.device.community).trim().s,{ sourceAddress: "213.158.183.140",timeout: 10000, version: snmp.Version2c ,retries: 1});
     self.session.on("close", function () {
         if(self.inSyncMode){
             throttle = throttle + 1;
@@ -1036,8 +1037,8 @@ self.checkInterfaceInLinks = function(interfaceName){
     };
     self.updateInterfaces  = function(interfaceList){
         var ignoreMissing = true;
+
         interfaceList.forEach(function(interface, i){
-                // Interface.findOneAndUpdate({"ipaddress" : S(interface.ipaddress).s , "ifIndex" : S(interface.ifIndex).toInt() },{syncCycles:interface.syncCycles},function(error,updatedInterface){
                 Interface.findById(interface._id,{syncCycles:interface.syncCycles},function(error,updatedInterface){
                     if(error){
                         logger.error(error);
@@ -1048,8 +1049,10 @@ self.checkInterfaceInLinks = function(interfaceName){
                                 updatedInterface[field] = interface[field];
                             }
                         });
-                        updatedInterface.save();
-
+                        updatedInterface.save();                            
+                    }
+                    else{
+                        logger.error("Can't find interface ID");
                     }
                 });
         });
@@ -1465,9 +1468,7 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
     var modelOID = "";
     var sysName = "";
     var vendor ;//= request.body.device.vendor;
-    // if(S(vendor).isEmpty() && parsedHostName){
-    //     vendor = parsedHostName.deviceVendor;
-    // }
+
     // var popName = request.body.device.popName;
     // var sector = request.body.device.sector;
     // var governorate = request.body.device.governorate;
@@ -1494,26 +1495,12 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
         POP.findOne({shortName : 'NONE'},function(error,foundPOP){
             aPOP = foundPOP;
         });
-        // if(parsedHostName){
-        //     POP.findOne({shortName : parsedHostName.popName }, function(error,foundPOP){
-        //         aPOP = foundPOP;
-        //         emptyPOP = false;
-        //         popId = foundPOP._id;
-        //     });            
-        // }
     }
     if(governorateId === 'NONE') {
         emptyGove = true;
         Governorate.findOne({acronym : 'NONE' },function(error,foundGove){
             aGove = foundGove;
         });
-        // if(parsedHostName){
-        //     Governorate.findOne({acronym : parsedHostName.popGove }, function(error,foundGove){
-        //         aGove = foundGove;
-        //         emptyGove = false;
-        //         governorateId = foundGove._id;
-        //     });
-        // }
     }
     if(S(emptySector).toBoolean()){
         sectorId = aSector._id || request.body.device.sector.name  ;
@@ -1526,7 +1513,7 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
     if(S(emptyGove).toBoolean()){
         governorateId = aGove._id || request.body.device.governorate.name  ;
     }
-    session = snmp.createSession(ipaddress, S(communityString).trim().s,{ timeout: 5000, retries: 1});
+    session = snmp.createSession(ipaddress, S(communityString).trim().s,{ timeout: 10000, retries: 1});
     session.get (systemDetails, function (error, varbinds) {
         if (error) {
             logger.error ("found error while retrieving sysObjectId for "+hostname+" "+error.toString ());
@@ -1561,9 +1548,6 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
                 else{
                     model = model ;
                 }
-                // var foundPOP = __await__ (POP.findById(popId));
-                // var foundSector = __await__ (Sector.findById(sectorId));
-                // var foundGove = __await__ (Governorate.findById(governorateId));
                 if(!(popId === undefined)){
                     POP.findById(popId,function(error,foundPOP){
                         if(error){
@@ -1698,8 +1682,8 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
                             "governorate.name":   'NONE'
                     };
                     aDevice.interfaces = [];
-                     logger.info("Device discovery started");
-                     logger.info(aDevice.hostname + " "+ aDevice.ipaddress + " "+aDevice.community);
+                    logger.info("Device discovery started");
+                    logger.info(aDevice.hostname + " "+ aDevice.ipaddress + " "+aDevice.community);
                     Device.create(aDevice, function(error, device) {
                         if (error) {
                             logger.error(error);
@@ -1728,7 +1712,7 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
 
             });
         }
-    });////---
+    });
 
 });
 
@@ -1795,6 +1779,9 @@ var syncDevices = function(){
             }
             deviceList[i].syncInterfaces();
         }
+        while(doneDevices < deviceList.length){
+            deasync.sleep(20);
+        }
         bulkSyncInProgress = false;  
         doneDevices = 0;  
         throttle = MAX_PARALLEL_DEVICES;
@@ -1815,9 +1802,6 @@ router.get("/sync",  middleware.isLoggedIn ,function(request, response) {
     }
     response.redirect("/devices");
 });
-
-
-
 
 router.get("/sync/:id",  middleware.isLoggedIn ,function(request, response) {
     if(bulkSyncInProgress == false){
@@ -1843,6 +1827,27 @@ router.get("/sync/:id",  middleware.isLoggedIn ,function(request, response) {
         request.flash("error","Bulk synchronization process is already in background, will not sync device now");
     }
 
+    response.redirect("/devices");
+});
+//ADD DEVICE TO TNPM
+router.get("/tnpmdisco/:id",  middleware.isLoggedIn ,function(request, response) {
+    logger.info("try to add device with id "+ request.params.id+" to TNPM");
+    Device.findById(request.params.id, function(err, foundDevice) {
+        if (err) {
+             logger.error(err);
+        }
+        else {
+            logger.info("will add device " + foundDevice.hostname +" to TNPM");
+            var command = "ls";//process.env.MONGO_IMPORT_PATH + " -d "+ dbName + " -c devices --type csv --file "+S(filename).s + " --headerline";
+            logger.info(command);
+
+            cmd.get(command,function(error, data, stderr){
+                if(error) logger.error(error);
+                else logger.info("device sent to TNPM successfully");
+            });
+
+        }
+    });
     response.redirect("/devices");
 });
 
@@ -1877,32 +1882,32 @@ router.put("/:id", middleware.isLoggedIn ,function(request,response){
     request.body.device.lastUpdatedBy = {id: request.user._id, email: request.user.email};
     // note: Select2 has a defect which removes pop name and replace it with the id
     POP.findById({_id: mongoose.Types.ObjectId(request.body.device.popName.name)},function(error,foundPOP){
-    if(error){
-         logger.error(error);
-    }
-    else{
-        request.body.device.popName.name = foundPOP.name;
-                Governorate.findById({_id: mongoose.Types.ObjectId(request.body.device.governorate.name)},function(error,foundGove){
-                    if(error){
-                         logger.error(error);
-                    }
-                    else{
-                        request.body.device.governorate.name = foundGove.name;
-                        Device.findByIdAndUpdate(request.params.id,request.body.device,function(error,updatedDevice){
-                            if(error){
-                                 logger.error(error);
-                                response.redirect("/devices");
-                            }
-                            else{
-                                //redirect somewhere (show page)
-                                updatedDevice.save();
-                            }
-                        });
-                    }
-                });
-    }
-});
-                response.redirect("/devices/"+request.params.id);
+        if(error){
+             logger.error(error);
+        }
+        else{
+            request.body.device.popName.name = foundPOP.name;
+            // Governorate.findById({_id: mongoose.Types.ObjectId(request.body.device.governorate.name)},function(error,foundGove){
+                // if(error){
+                //      logger.error(error);
+                // }
+                // else{
+                //     request.body.device.governorate.name = foundGove.name;
+                    Device.findByIdAndUpdate(request.params.id,request.body.device,function(error,updatedDevice){
+                        if(error){
+                             logger.error(error);
+                            response.redirect("/devices");
+                        }
+                        else{
+                            //redirect somewhere (show page)
+                            updatedDevice.save();
+                        }
+                    });
+                // }
+            // });
+        }
+    });
+    response.redirect("/devices/"+request.params.id);
 
 });
 //DESTROY Device ROUTE
@@ -1934,12 +1939,6 @@ router.delete("/:id",  middleware.isLoggedIn , function(request,response){
         
     });
     response.redirect("/devices");
-    // Device.findByIdAndRemove(request.params.id,function(error){
-    //     if(error){
-    //          logger.error(error);
-    //     }
-    //     response.redirect("/devices");
-    // });
 });
 
 //DESTROY from NNM- Device ROUTE
@@ -2003,16 +2002,7 @@ router.post("/api/:hostname/:ipaddress/:communitystring/:popname", middleware.is
         emptyGove = true;
         Governorate.findOne({name : "NONE" }, function(error,foundGove){
             aGove = foundGove;
-            // emptyGove = false;
-            // governorateId = foundGove._id;
         });
-        // if(parsedHostName){
-        //     Governorate.findOne({acronym : parsedHostName.popGove }, function(error,foundGove){
-        //         aGove = foundGove;
-        //         emptyGove = false;
-        //         governorateId = foundGove._id;
-        //     });
-        // }
     }
 
     if(S(emptySector).toBoolean()){
@@ -2069,8 +2059,8 @@ router.post("/api/:hostname/:ipaddress/:communitystring/:popname", middleware.is
                         "popName.name":  aPOP,
                 };
                 aDevice.interfaces = [];
-                 logger.info("Device discovery started");
-                 logger.info(aDevice.hostname + " "+ aDevice.ipaddress + " "+aDevice.community);
+                logger.info("Device discovery started");
+                logger.info(aDevice.hostname + " "+ aDevice.ipaddress + " "+aDevice.community);
                 Device.create(aDevice, function(error, device) {
                     if (error) {
                         logger.error(error.errors);

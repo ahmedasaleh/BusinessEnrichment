@@ -4,7 +4,7 @@ var enrichmentData  = require("../lookUps/enrich");
 var logger          = require('../middleware/logger');//logging component
 var S               = require('string');
 var async           = require('async');
-var cmd=require('node-cmd');
+var cmd             = require('node-cmd');
 
 var lineList = "";
 var deviceList = [];
