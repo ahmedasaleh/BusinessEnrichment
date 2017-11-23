@@ -49,6 +49,7 @@ var interfaceSchema = new mongoose.Schema({
     sp_dpiName: String,
     sp_portID: String,
     sp_preNumber: String,
+    speedCat: String,
     unknownFlag: Number,    
     adminStatus: String,
     operStatus: String,

@@ -243,7 +243,7 @@ var getDeviceID = function(anID){
 
 //UPDATE INTERFACE ROUTE
 router.put("/:id", middleware.isLoggedIn,function(request,response){
-    //find and update the correct DEVICE
+    //find and update the correct INTERFACE
     request.body.interface.updated = new Date();
     request.body.interface.lastUpdatedBy = {id: request.user._id, email: request.user.email};
 

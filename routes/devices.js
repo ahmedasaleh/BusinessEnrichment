@@ -32,7 +32,7 @@ var cmd             = require('node-cmd');
 var bulkSyncInProgress = false;
 var aDevice = new Device() ;
 var targets = [];
-var MAX_PARALLEL_DEVICES = 50;//500;
+var MAX_PARALLEL_DEVICES = 500;
 var throttle = MAX_PARALLEL_DEVICES;
 var doneDevices = 0;
 var syncCyclesThreshold = 3;
@@ -299,7 +299,8 @@ self.checkInterfaceInLinks = function(interfaceName){
         var provisoFlag = 0;
         var unknownFlag = 0;
         var noEnrichFlag = 0;         
-        var label;      
+        var label;   
+        var speedCat = "" ;  
         if(alias){
             //label = hostname+" "+interfaceName+" "+alias;
 			label = hostname+" "+interfaceName;
@@ -317,6 +318,12 @@ self.checkInterfaceInLinks = function(interfaceName){
             tmpAlias = "";
         }
 
+        if(ifHighSpeed > 9990 && ifHighSpeed < 99990){
+            speedCat="10Gig";
+        }
+        else if(ifHighSpeed > 99989){
+            speedCat="100Gig";
+        }
 
         if(alias && S(alias.toLowerCase()).startsWith("int-")){
             // # Patterns   INT-P1-P2-P3-P4-P5-P6-P7-P8-P9
@@ -363,7 +370,7 @@ self.checkInterfaceInLinks = function(interfaceName){
                         specialService : specialService, provisoFlag : provisoFlag,sp_service : sp_service, sp_provider : sp_provider, sp_termination : sp_termination, 
                         sp_connType : sp_connType, sp_bundleId : sp_bundleId, sp_linkNumber : sp_linkNumber, sp_CID : sp_CID, sp_TECID : sp_TECID, 
                         sp_subCable : sp_subCable, unknownFlag : unknownFlag, label : label,noEnrichFlag:noEnrichFlag,sp_speed:sp_speed,
-                        actualspeed:actualspeed,pollInterval:pollInterval,
+                        actualspeed:actualspeed,pollInterval:pollInterval,speedCat:speedCat,
 
                         sp_customer : '',sp_pop : '',sp_emsOrder : '', sp_connectedBW : '',sp_fwType : '', sp_serviceType : '', sp_ipType : '', sp_vendor : '',
                         sp_sourceCore : '', sp_destCore : '',sp_siteCode:'',sp_preNumber:'',sp_portID:'',secondHost:'',secondInterface:'',secondPOP:'',type:'',pop:''                        
@@ -409,7 +416,7 @@ self.checkInterfaceInLinks = function(interfaceName){
                         specialService : specialService, provisoFlag : provisoFlag,sp_provider : sp_provider, sp_termination : sp_termination, 
                         sp_connType : sp_connType, sp_bundleId : sp_bundleId, sp_linkNumber : sp_linkNumber,  
                         sp_subCable : sp_subCable, unknownFlag : unknownFlag, label : label,noEnrichFlag:noEnrichFlag,sp_speed:sp_speed,
-                        actualspeed:actualspeed,pollInterval:pollInterval,
+                        actualspeed:actualspeed,pollInterval:pollInterval,speedCat:speedCat,
 
                         sp_service : '',sp_CID : '', sp_TECID : '', sp_customer : '',
                         sp_pop : '',sp_emsOrder : '', sp_connectedBW : '',sp_fwType : '', sp_serviceType : '', sp_ipType : '', sp_vendor : '',sp_sourceCore : '', sp_destCore : '', 
@@ -445,7 +452,7 @@ self.checkInterfaceInLinks = function(interfaceName){
             actualspeed = self.setActualSpeed(sp_speed,ifSpeed,ifHighSpeed);
             anErichment= {
                     specialService:specialService,provisoFlag:provisoFlag,unknownFlag:unknownFlag,sp_customer : sp_customer, sp_linkNumber:sp_linkNumber, 
-                    sp_speed : sp_speed,noEnrichFlag:noEnrichFlag,label : label,actualspeed:actualspeed,pollInterval:pollInterval,
+                    sp_speed : sp_speed,noEnrichFlag:noEnrichFlag,label : label,actualspeed:actualspeed,pollInterval:pollInterval,speedCat:speedCat,
 
                     sp_service : '', sp_provider : '', sp_termination : '',sp_connType : '', sp_bundleId : '',  
                     sp_CID : '', sp_TECID : '', sp_subCable : '', 
@@ -479,7 +486,7 @@ self.checkInterfaceInLinks = function(interfaceName){
 
             anErichment= {
                     specialService:specialService,provisoFlag:provisoFlag,unknownFlag:unknownFlag,sp_customer:sp_customer, sp_linkNumber:sp_linkNumber, 
-                    sp_speed : sp_speed,noEnrichFlag:noEnrichFlag,label : label,pollInterval:pollInterval,
+                    sp_speed : sp_speed,noEnrichFlag:noEnrichFlag,label : label,pollInterval:pollInterval,speedCat:speedCat,
 
                     sp_service : '', sp_provider : '', sp_termination : '',sp_connType : '', sp_bundleId : '',  
                     sp_CID : '', sp_TECID : '', sp_subCable : '', actualspeed:'',
@@ -515,7 +522,7 @@ self.checkInterfaceInLinks = function(interfaceName){
             actualspeed = self.setActualSpeed(sp_speed,ifSpeed,ifHighSpeed);
             anErichment= {
                     specialService:specialService,provisoFlag:provisoFlag,unknownFlag:unknownFlag,sp_customer : sp_customer, sp_linkNumber:sp_linkNumber, 
-                    sp_speed:sp_speed,noEnrichFlag:noEnrichFlag,label : label,pollInterval:pollInterval,
+                    sp_speed:sp_speed,noEnrichFlag:noEnrichFlag,label : label,pollInterval:pollInterval,speedCat:speedCat,
 
                     sp_service : '', sp_provider : '', sp_termination : '',sp_connType : '', sp_bundleId : '',  
                     sp_CID : '', sp_TECID : '', sp_subCable : '', actualspeed:'',
@@ -553,7 +560,7 @@ self.checkInterfaceInLinks = function(interfaceName){
             anErichment= {
                     specialService : specialService, provisoFlag:provisoFlag, unknownFlag : unknownFlag, sp_customer : sp_customer, sp_pop : sp_pop, 
                     sp_connType : sp_connType, sp_emsOrder : sp_emsOrder, sp_connectedBW : sp_connectedBW,noEnrichFlag:noEnrichFlag,label : label,
-                    sp_speed:sp_speed,actualspeed:actualspeed,pollInterval:pollInterval,
+                    sp_speed:sp_speed,actualspeed:actualspeed,pollInterval:pollInterval,speedCat:speedCat,
 
                     sp_service : '', sp_provider : '', sp_termination : '',sp_bundleId : '', sp_linkNumber : '', 
                     sp_CID : '', sp_TECID : '', sp_subCable : '', 
@@ -592,7 +599,7 @@ self.checkInterfaceInLinks = function(interfaceName){
             anErichment= {
                     specialService : specialService, provisoFlag:provisoFlag, unknownFlag : unknownFlag, sp_pop : sp_pop, sp_fwType : sp_fwType, 
                     sp_serviceType : sp_serviceType, sp_ipType : sp_ipType, sp_vendor : sp_vendor,noEnrichFlag:noEnrichFlag,label : label,
-                    pollInterval:pollInterval,
+                    pollInterval:pollInterval,speedCat:speedCat,
 
                     sp_service : '', sp_provider : '', sp_termination : '',sp_connType : '', sp_bundleId : '', sp_linkNumber : '', 
                     sp_CID : '', sp_TECID : '', sp_subCable : '', sp_speed:'',actualspeed:'',sp_customer : '',
@@ -640,7 +647,7 @@ self.checkInterfaceInLinks = function(interfaceName){
             anErichment= {
                     specialService:specialService,provisoFlag : provisoFlag, unknownFlag:unknownFlag, sp_provider : sp_provider, sp_service : sp_service, 
                     sp_sourceCore : sp_sourceCore, sp_destCore : sp_destCore, sp_vendor : sp_vendor, sp_linkNumber : sp_linkNumber, sp_speed : sp_speed, label : label,
-                    noEnrichFlag:noEnrichFlag,pollInterval:pollInterval,
+                    noEnrichFlag:noEnrichFlag,pollInterval:pollInterval,speedCat:speedCat,
 
                     sp_termination : '',sp_connType : '', sp_bundleId : '',  
                     sp_CID : '', sp_TECID : '', sp_subCable : '', actualspeed:'',sp_customer : '',
@@ -681,7 +688,7 @@ self.checkInterfaceInLinks = function(interfaceName){
             actualspeed = self.setActualSpeed(sp_speed,ifSpeed,ifHighSpeed);
             anErichment= {
                     specialService:specialService,provisoFlag : provisoFlag, unknownFlag:unknownFlag, sp_pop:sp_pop,sp_siteCode:sp_siteCode,sp_vendor:sp_vendor,
-                    sp_linkNumber:sp_linkNumber,sp_speed:sp_speed,noEnrichFlag:noEnrichFlag,label : label,pollInterval:pollInterval,
+                    sp_linkNumber:sp_linkNumber,sp_speed:sp_speed,noEnrichFlag:noEnrichFlag,label : label,pollInterval:pollInterval,speedCat:speedCat,
 
                     sp_service : '', sp_provider : '', sp_termination : '',sp_connType : '', sp_bundleId : '',  
                     sp_CID : '', sp_TECID : '', sp_subCable : '', actualspeed:'',sp_customer : '',
@@ -717,7 +724,7 @@ self.checkInterfaceInLinks = function(interfaceName){
 
             anErichment= {
                     specialService:specialService,provisoFlag : provisoFlag, unknownFlag:unknownFlag, sp_provider:sp_provider,sp_linkNumber:sp_linkNumber,
-                    sp_speed:sp_speed,noEnrichFlag:noEnrichFlag,label : label,pollInterval:pollInterval,
+                    sp_speed:sp_speed,noEnrichFlag:noEnrichFlag,label : label,pollInterval:pollInterval,speedCat:speedCat,
 
                     sp_service : '', sp_termination : '',sp_connType : '', sp_bundleId : '',  
                     sp_CID : '', sp_TECID : '', sp_subCable : '', actualspeed:'',sp_customer : '',
@@ -751,7 +758,7 @@ self.checkInterfaceInLinks = function(interfaceName){
             actualspeed = self.setActualSpeed(0,ifSpeed,ifHighSpeed);
             anErichment= {
                     specialService:specialService,provisoFlag : provisoFlag, unknownFlag:unknownFlag, sp_pop:sp_pop,sp_preNumber:sp_preNumber,
-                    sp_portID:sp_portID,noEnrichFlag:noEnrichFlag,label : label,
+                    sp_portID:sp_portID,noEnrichFlag:noEnrichFlag,label : label,speedCat:speedCat,
 
                     sp_service : '', sp_provider : '', sp_termination : '',sp_connType : '', sp_bundleId : '', sp_linkNumber : '', 
                     sp_CID : '', sp_TECID : '', sp_subCable : '', sp_speed:'',actualspeed:'',pollInterval:'',sp_customer : '',
@@ -767,7 +774,7 @@ self.checkInterfaceInLinks = function(interfaceName){
             else type = "WAN";
             anErichment = {
                 secondHost:interfaceLinkDetails.secondHost,secondInterface:interfaceLinkDetails.secondInterface,secondPOP:interfaceLinkDetails.secondPOP, provisoFlag:1,
-                noEnrichFlag:noEnrichFlag,unknownFlag:unknownFlag,type:type,pop:pop,label:label,pollInterval:pollInterval,
+                noEnrichFlag:noEnrichFlag,unknownFlag:unknownFlag,type:type,pop:pop,label:label,pollInterval:pollInterval,speedCat:speedCat,
 
                 specialService : '', sp_service : '', sp_provider : '', sp_termination : '',sp_connType : '', sp_bundleId : '', sp_linkNumber : '', 
                 sp_CID : '', sp_TECID : '', sp_subCable : '', sp_speed:'',actualspeed:'',sp_customer : '',
@@ -804,7 +811,7 @@ self.checkInterfaceInLinks = function(interfaceName){
                     noEnrichFlag=1; 
                     unknownFlag=0;
                     anErichment= { 
-                        provisoFlag : provisoFlag, unknownFlag : unknownFlag , label : label , noEnrichFlag:noEnrichFlag,pollInterval:pollInterval, 
+                        provisoFlag : provisoFlag, unknownFlag : unknownFlag , label : label , noEnrichFlag:noEnrichFlag,pollInterval:pollInterval,speedCat:speedCat, 
 
                         specialService : '', sp_service : '', sp_provider : '', sp_termination : '',sp_connType : '', sp_bundleId : '', sp_linkNumber : '', 
                         sp_CID : '', sp_TECID : '', sp_subCable : '', sp_speed:'',actualspeed:'',sp_customer : '',
@@ -818,7 +825,7 @@ self.checkInterfaceInLinks = function(interfaceName){
             noEnrichFlag=1; 
             unknownFlag=0;
             anErichment= { 
-                provisoFlag : provisoFlag, unknownFlag : unknownFlag , label : label , noEnrichFlag:noEnrichFlag,pollInterval:pollInterval ,
+                provisoFlag : provisoFlag, unknownFlag : unknownFlag , label : label , noEnrichFlag:noEnrichFlag,pollInterval:pollInterval ,speedCat:speedCat,
 
                 specialService : '', sp_service : '', sp_provider : '', sp_termination : '',sp_connType : '', sp_bundleId : '', sp_linkNumber : '', 
                 sp_CID : '', sp_TECID : '', sp_subCable : '', sp_speed:'',actualspeed:'',sp_customer : '', sp_pop : '',sp_emsOrder : '', sp_connectedBW : '',sp_fwType : '', 
@@ -827,7 +834,6 @@ self.checkInterfaceInLinks = function(interfaceName){
             };
 		}
 		
-
 
         if(!S(alias).isEmpty() && unknownFlag==1){
              // logger.warn(hostname+" "+ipaddress+" : special services interface with invalid description - Service: "+specialService+" - ifAlias: "+alias+" - interfaceName: "+ifName+" - ifIndex: "+ifIndex);
@@ -1113,20 +1119,23 @@ self.checkInterfaceInLinks = function(interfaceName){
 
         interfaceList.forEach(function(interface, i){
                 // Interface.findById(interface._id,{syncCycles:interface.syncCycles},function(error,updatedInterface){
-                Interface.findById(interface._id,function(error,updatedInterface){
+                // Interface.findById(interface._id,function(error,updatedInterface){
+                Interface.findOne({"ipaddress":interface.ipaddress,"ifIndex":interface.ifIndex},function(error,updatedInterface){
                     if(error){
                         logger.error(error);
                     }
                     else if(updatedInterface != null){
                         self.allowedFields.forEach(function(field) {
-                            if (interface && updatedInterface && (typeof interface[field] !== 'undefined') && ignoreMissing ) {
-                                updatedInterface[field] = interface[field];
+                            // if (interface && updatedInterface && (typeof interface[field] !== 'undefined') && ignoreMissing ) {
+                            if (interface && updatedInterface) {
+                                if(interface[field]) updatedInterface[field] = interface[field];
+                                else updatedInterface[field] = '';
                             }
                         });
                         updatedInterface.save();                            
                     }
                     else{
-                        logger.error("Can't find interface ID");
+                        logger.error("Can't find interface");
                     }
                 });
         });
@@ -1189,6 +1198,8 @@ self.checkInterfaceInLinks = function(interfaceName){
         if(fromObject.sp_preNumber && override == true) toObject.sp_preNumber = fromObject.sp_preNumber
         if(fromObject.sp_dpiName && override == true) toObject.sp_dpiName = fromObject.sp_dpiName
         if(fromObject.sp_portID && override == true) toObject.sp_portID = fromObject.sp_portID
+        if(fromObject.speedCat && override == true) toObject.speedCat = fromObject.speedCat
+        else toObject.speedCat = "";
         if(fromObject.unknownFlag) toObject.unknownFlag     = fromObject.unknownFlag    
         if(fromObject.adminStatus) toObject.adminStatus = fromObject.adminStatus
         if(fromObject.operStatus) toObject.operStatus = fromObject.operStatus
