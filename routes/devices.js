@@ -32,7 +32,7 @@ var cmd             = require('node-cmd');
 var bulkSyncInProgress = false;
 var aDevice = new Device() ;
 var targets = [];
-var MAX_PARALLEL_DEVICES = 500;
+var MAX_PARALLEL_DEVICES = 50;
 var throttle = MAX_PARALLEL_DEVICES;
 var doneDevices = 0;
 var syncCyclesThreshold = 3;
@@ -2023,15 +2023,46 @@ router.delete("/:id",  middleware.isLoggedIn , function(request,response){
 router.delete("/api/:hostname",  middleware.isAPIAuthenticated ,function(request,response){
     indexRoutes.invalidateAPIsession();
     var hostname = request.params.hostname;
+    logger.warn("NNM Deleting device with hostname: "+hostname);
+    //check device existence and find its list of interfaces
 
-    logger.warn("Deleting device with hostname: "+hostname);
+
     if(hostname){
         //find device
-        Device.remove({"hostname":hostname},function(error){
-            if(error) response.json({ message: error });
-            else response.json({ message: "Successfully deleted device" });
+        // Device.remove({"hostname":hostname},function(error){
+        //     if(error) response.json({ message: error });
+        //     else response.json({ message: "Successfully deleted device" });
+        // });
+        Device.findOne({"hostname": hostname},function(error,foundDevice){
+            if(error){
+                 logger.error(error);
+            }
+            else if(foundDevice != null){
+                var interfaceList = foundDevice.interfaces;
+                //iterate over them and delete
+                interfaceList.forEach(function(interface,key, callback ){
+                    logger.warn("NNM Deleting interface with index: "+interface.ifIndex);
+                    // {"hostname" : S(interfaceList[i].hostname).s , "ifIndex" : S(interfaceList[i].ifIndex).toInt() }
+                    Interface.findOneAndRemove({"hostname" : S(interface.hostname).s , "ifIndex" : S(interface.ifIndex).toInt() },function(error){
+                        if(error)  logger.error(error);
+                    });
+
+                });
+                Device.remove({"hostname":foundDevice.hostname},function(error){
+                    if(error) {
+                        logger.error(error);
+                        response.json({ message: "device found but not able to delete it" });
+                    }
+                    else{
+                        response.json({ message: "Successfully deleted device" });
+                    }
+                });
+            }
+            else{
+
+            }
+            
         });
-        // response.redirect("/devices");
     }
     else{
         response.json({ message: "invalid hostname" });
