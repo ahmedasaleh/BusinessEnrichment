@@ -4,6 +4,7 @@ var express             = require("express"),
 var User                = require("../models/user");
 var S                   = require('string');
 var ValidatedUser       = require("../models/validatedUser");
+var logger          = require("../middleware/logger");
 var nodemailer = require('nodemailer'); 
 var smtpConfig = {
     host: 'tedata.net',
@@ -133,20 +134,24 @@ router.post("/login",passport.authenticate('local',{
 //http://213.158.183.140:8080/api/authenticate?apikey=a67cb09f182b6b575006502894afdfb3865d84f93cfa36a7e5d3d07960d2255486fd5982154e98b7d72379a50f36d885
 router.post('/api/authenticate',  function (req, res) {
   key=req.query['apikey']; //get key from url
+    logger.info("received NNM authentication request with key: "+key);
   //authenticate it
   if(key){
     User.findOne({ authToken: key }, function (err, user) {
         if (err) { 
             APIAuthenticated = false;
             res.json({ message: "unauthorized" }); 
+            logger.error(err);
         }
         else if(!user) { 
             APIAuthenticated = false;
             res.json({ message: "unauthorized" });
+            logger.warn("unauthorized NNM user");
         }
         else {
             APIAuthenticated = true;
             res.json({ message: "Authenticated" });
+            logger.info("NNM user authenticated");
         }
     });
 

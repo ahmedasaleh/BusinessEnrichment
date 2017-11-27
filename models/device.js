@@ -40,14 +40,15 @@ var deviceSchema = new mongoose.Schema({
     deviceSyncCycles: {type: Number, default: 0},
     discovered: {type: Boolean, default: false},//used to mark device as discovered, useful during sync process
     // defaultCollector: {type: Number, default: 1},
-    popName: {
-        id:{
-            type: mongoose.Schema.Types.ObjectId,
-            //ref is the name of the model
-            ref: "POP"
-        },    
-        name: String  
-    },
+    popName: String,
+    // popName: {
+    //     id:{
+    //         type: mongoose.Schema.Types.ObjectId,
+    //         //ref is the name of the model
+    //         ref: "POP"
+    //     },    
+    //     name: String  
+    // },
     sector: {
         id:{                
             type: mongoose.Schema.Types.ObjectId,

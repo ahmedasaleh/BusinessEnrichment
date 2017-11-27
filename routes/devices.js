@@ -36,9 +36,9 @@ var MAX_PARALLEL_DEVICES = 50;
 var throttle = MAX_PARALLEL_DEVICES;
 var doneDevices = 0;
 var syncCyclesThreshold = 3;
-var SYNC_DIFFERENCE_IN_DAYS = 1;//7;//difference in days
-var SYNC_DIFFERENCE_IN_HOURS = 1;//168;//difference in hours
-var SYNC_DIFFERENCE_IN_MINUTES = 1;//10080;//difference in minutes
+var SYNC_DIFFERENCE_IN_DAYS = 7;//difference in days
+var SYNC_DIFFERENCE_IN_HOURS = 168;//difference in hours
+var SYNC_DIFFERENCE_IN_MINUTES = 10080;//difference in minutes
 //*********************
 //  SNMP HANDLER
 //*********************
@@ -80,7 +80,7 @@ var oids = {
     }
 };
 
-function discoveredDevice(device,linkEnrichmentData) {
+function discoveredDevice(device,linkEnrichmentData,devicePOP,deviceGove,deviceSector) {
     var self = this;
     self.name = device.hostname;
     self.device = device; 
@@ -107,6 +107,9 @@ function discoveredDevice(device,linkEnrichmentData) {
     self.deviceSyncCycles = self.device.deviceSyncCycles || 0;
     self.errorRetrievingSysOID = false;
     self.cleanSessionClose = false;//used to flag that the SNMP session closed cleanly without exceptions from dgram
+    self.devicePOP = devicePOP;
+    self.deviceGove = deviceGove;
+    self.deviceSector = deviceSector;
 
 // Interface.allowedFields;
     self.allowedFields =  enrichmentData.interfaceAllowedFields ;//['ifName','ifAlias','ifIndex','ifDescr','ifType','ifSpeed','ifHighSpeed','counters','type',' specialService','secondPOP','secondHost','secondInterface','label','provisoFlag','noEnrichFlag','sp_service','sp_provider','sp_termination','sp_bundleId','sp_linkNumber','sp_CID','sp_TECID','sp_subCable','sp_customer','sp_sourceCore','sp_destCore','sp_vendor','sp_speed','sp_pop','sp_fwType','sp_serviceType','sp_ipType','sp_siteCode','sp_connType','sp_emsOrder','sp_connectedBW','sp_dpiName','sp_portID','unknownFlag','adminStatus','operStatus','actualspeed','syncCycles','lastUpdate','hostname','ipaddress','pop'];
@@ -1826,6 +1829,9 @@ var getDeviceList = __async__ (function(){
     var foundDevices = __await__ (Device.find({},{lean:false}));
 
     foundDevices.forEach(function (device, i) {
+        //parse hostname to retrieve POP short name
+        var devicePOP = device.popName || S(device.hostname).splitLeft('-',1)[0];
+        var devicePOPDetails = __await__ (POP.findOne({shortName:devicePOP}));
         var foundRightLink = __await__ (Link.find({device1:device.hostname}));
         var foundLeftLink = __await__ (Link.find({device2:device.hostname}));
         if(foundRightLink.length > 0 || foundLeftLink.length > 0) {
@@ -1837,13 +1843,18 @@ var getDeviceList = __async__ (function(){
             linkEnrichmentData = null;
         }
         // delete device._id;
-        deviceList.push( new discoveredDevice(device.toObject(),linkEnrichmentData));
+        deviceList.push( new discoveredDevice(device.toObject(),linkEnrichmentData,devicePOP,devicePOPDetails.governorateAcro,devicePOPDetails.sector));
         if(deviceList.length % 250 == 0) process.stdout.write("=");
 
     });
     return deviceList;
 });
 
+var getdevicePOPDetails = __async__(function(hostname){
+        var devicePOP = S(hostname).splitLeft('-',1)[0];
+        var POPDetails = __await__ (POP.findOne({shortName:devicePOP}));
+        return {devicePOP:devicePOP,POPDetails:POPDetails};
+});
 //Sync devices
 var syncDevices = function(){
     logger.info("Starting bulk devices sync");
@@ -1883,6 +1894,7 @@ router.get("/sync",  middleware.isLoggedIn ,function(request, response) {
 router.get("/sync/:id",  middleware.isLoggedIn ,function(request, response) {
     if(bulkSyncInProgress == false){
         doneDevices = 0;
+
         Device.findById(request.params.id, function(err, foundDevice) {
             if (err) {
                  logger.error(err);
@@ -1890,7 +1902,13 @@ router.get("/sync/:id",  middleware.isLoggedIn ,function(request, response) {
             else {
                 logger.info("single sync mode, device " + foundDevice.hostname +" will be synced now");
                 // perform interface sync
+                var devicePOP = foundDevice.popName || S(foundDevice.hostname).splitLeft('-',1)[0];
+                // console.log(devicePOP);
+                // var devicePOPDetails = getdevicePOPDetails(foundDevice.hostname);
+                // console.log(devicePOPDetails);
+                // var discoDevice = new discoveredDevice(foundDevice,{},devicePOPDetails.devicePOP,devicePOPDetails.POPDetails.governorateAcro,devicePOPDetails.POPDetails.sector);
                 var discoDevice = new discoveredDevice(foundDevice,{});
+                // console.log(discoDevice);
                 getDeviceFarLinks(foundDevice.hostname)
                 .then(function(linkEnrichmentData){
                     discoDevice.linkEnrichmentData = linkEnrichmentData;
@@ -1988,6 +2006,8 @@ router.put("/:id", middleware.isLoggedIn ,function(request,response){
 
 });
 //DESTROY Device ROUTE
+//We have indexed devices by hostname in the database, so will use it as a key
+//We have indexed interfaces by ipaddress and ifIndex, so will use it as a key
 router.delete("/:id",  middleware.isLoggedIn , function(request,response){
      logger.warn("Deleting device with id: "+request.params.id);
     if(request.params.id == -1){
@@ -2004,12 +2024,12 @@ router.delete("/:id",  middleware.isLoggedIn , function(request,response){
             interfaceList.forEach(function(interface,key, callback ){
                 logger.warn("Deleting interface with index: "+interface.ifIndex);
                 // {"hostname" : S(interfaceList[i].hostname).s , "ifIndex" : S(interfaceList[i].ifIndex).toInt() }
-                Interface.findOneAndRemove({"hostname" : S(interface.hostname).s , "ifIndex" : S(interface.ifIndex).toInt() },function(error){
+                Interface.findOneAndRemove({"ipaddress" : S(interface.ipaddress).s , "ifIndex" : S(interface.ifIndex).toInt() },function(error){
                     if(error)  logger.error(error);
                 });
 
             });
-            Device.remove({"ipaddress":foundDevice.ipaddress},function(error){
+            Device.remove({"hostname":foundDevice.hostname},function(error){
                 if(error) logger.error(error);
             });
         }
@@ -2036,6 +2056,7 @@ router.delete("/api/:hostname",  middleware.isAPIAuthenticated ,function(request
         Device.findOne({"hostname": hostname},function(error,foundDevice){
             if(error){
                  logger.error(error);
+                 response.json({ message: "error while searching for the device, delete operation will be aborted" });
             }
             else if(foundDevice != null){
                 var interfaceList = foundDevice.interfaces;
@@ -2043,7 +2064,7 @@ router.delete("/api/:hostname",  middleware.isAPIAuthenticated ,function(request
                 interfaceList.forEach(function(interface,key, callback ){
                     logger.warn("NNM Deleting interface with index: "+interface.ifIndex);
                     // {"hostname" : S(interfaceList[i].hostname).s , "ifIndex" : S(interfaceList[i].ifIndex).toInt() }
-                    Interface.findOneAndRemove({"hostname" : S(interface.hostname).s , "ifIndex" : S(interface.ifIndex).toInt() },function(error){
+                    Interface.findOneAndRemove({"ipaddress" : S(interface.ipaddress).s , "ifIndex" : S(interface.ifIndex).toInt() },function(error){
                         if(error)  logger.error(error);
                     });
 
@@ -2059,7 +2080,8 @@ router.delete("/api/:hostname",  middleware.isAPIAuthenticated ,function(request
                 });
             }
             else{
-
+                response.json({ message: "IBM IIB is trying to delete device not in database" });
+                logger.warn("IBM IIB is trying to delete device not in database");
             }
             
         });
