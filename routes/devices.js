@@ -116,35 +116,46 @@ function discoveredDevice(device,linkEnrichmentData,devicePOP,deviceGove,deviceS
 
     self.session = snmp.createSession(self.device.ipaddress, S(self.device.community).trim().s,{ sourceAddress: "213.158.183.140",timeout: 10000, version: snmp.Version2c ,retries: 1});
     self.session.on("close", function () {
-        if(self.inSyncMode){
-            throttle = throttle + 1;
-            doneDevices = doneDevices + 1;                   
-            logger.info(self.name+" done, total done: "+doneDevices);            
+        logger.error(error.toString ());
+        if(self.session) {
+            try{
+                self.session.close();
+            }
+            catch(e){
+                logger.error("caught an error inside self.session.onClose: "+e);
+                if(self.inSyncMode && !self.cleanSessionClose){
+                    throttle = throttle + 1;
+                    doneDevices = doneDevices + 1;                   
+                    logger.info(self.name+" done, total done: "+doneDevices);            
+                }
+                if(self.session) self.session = null;
+                self.cleanSessionClose = true;
+                logger.info("self.session.onClose, snmp socket closed for "+self.name);                    
+            }
+            finally{
+            }
         }
-        if(self.session) self.session = null;
-        self.cleanSessionClose = true;
-        logger.info("self.session.onClose,snmp socket closed for "+self.name);
     });
     self.session.on("error", function (error) {
         logger.error(error.toString ());
-            if(self.session) {
-                try{
-                    self.session.close();
-                }
-                catch(e){
-                    logger.error("caught an error inside self.session.onError: "+e);
-                    if(self.inSyncMode && !self.cleanSessionClose){
-                        throttle = throttle + 1;
-                        doneDevices = doneDevices + 1;                   
-                        logger.info(self.name+" done, total done: "+doneDevices);            
-                    }
-                    if(self.session) self.session = null;
-                    self.cleanSessionClose = true;
-                    logger.info("self.session.onError, snmp socket closed for "+self.name);                    
-                }
-                finally{
-                }
+        if(self.session) {
+            try{
+                self.session.close();
             }
+            catch(e){
+                logger.error("caught an error inside self.session.onError: "+e);
+                if(self.inSyncMode && !self.cleanSessionClose){
+                    throttle = throttle + 1;
+                    doneDevices = doneDevices + 1;                   
+                    logger.info(self.name+" done, total done: "+doneDevices);            
+                }
+                if(self.session) self.session = null;
+                self.cleanSessionClose = true;
+                logger.info("self.session.onError, snmp socket closed for "+self.name);                    
+            }
+            finally{
+            }
+        }
     });
     self.setActualSpeed = function(sp_speed,ifSpeed,ifHighSpeed){
         var tmpActualSpeed;
