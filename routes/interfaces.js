@@ -240,6 +240,21 @@ var setDeviceID = function(anID){
 var getDeviceID = function(anID){
     return interfaceDeviceID ;
 };
+    var constructInterfaceID = function(deviceIP,ifIndex){
+        //Mongodb uses Object id of 24 char length in hex format
+        //will let ipaddress and ifIndex share this length
+        var ipaddress = S(deviceIP).replaceAll('.', 'a').padLeft(12, 'b').s;
+        var ifindex ;
+        if(ipaddress.length <= 12){
+            ifindex = S(ifIndex).padLeft(12, 'c').s;
+        }
+        else{
+            ifindex = S(ifIndex).padLeft((24 - ipaddress.length), 'c').s;
+        }
+        var str_id = ipaddress+ifindex;
+        return str_id;
+    };
+
 
 //UPDATE INTERFACE ROUTE
 router.put("/:id", middleware.isLoggedIn,function(request,response){
@@ -248,7 +263,7 @@ router.put("/:id", middleware.isLoggedIn,function(request,response){
     request.body.interface.lastUpdatedBy = {id: request.user._id, email: request.user.email};
 
     Interface.findById(request.params.id,function(error,foundInterface){
-        
+        console.log("will update interface id: "+request.params.id+" , ipaddress nad ifIndex: "+foundInterface.ipaddress+" / "+foundInterface.ifIndex);
         if(error){
             logger.error(error);
             request.flash("error","something went wrong while updating the interface");
@@ -257,9 +272,14 @@ router.put("/:id", middleware.isLoggedIn,function(request,response){
         else{
             copyObject(foundInterface,request.body.interface,true);
             foundInterface.lastUpdate = new Date();
-            foundInterface.save(function(error,intf){
-                if(error) logger.error(error);
-            });
+            //save view
+            console.log("interface id after copy: "+foundInterface._id+" , ipaddress nad ifIndex: "+foundInterface.ipaddress+" / "+foundInterface.ifIndex);
+            foundInterface._id = constructInterfaceID(foundInterface.ipaddress,foundInterface.ifIndex);
+            console.log("interface constructed id: "+foundInterface._id+" , ipaddress nad ifIndex: "+foundInterface.ipaddress+" / "+foundInterface.ifIndex);
+            foundInterface.save();
+            // foundInterface.save(function(error,intf){
+            //     if(error) logger.error(error);
+            // });
             
 
             Device.findOne({hostname: foundInterface.hostname},function(error,foundDevice){

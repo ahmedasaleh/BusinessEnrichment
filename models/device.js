@@ -41,6 +41,10 @@ var deviceSchema = new mongoose.Schema({
     discovered: {type: Boolean, default: false},//used to mark device as discovered, useful during sync process
     // defaultCollector: {type: Number, default: 1},
     popName: String,
+    cabinet: String,
+    sector: String,
+    governorate: String,
+    district: String,
     // popName: {
     //     id:{
     //         type: mongoose.Schema.Types.ObjectId,
@@ -49,22 +53,22 @@ var deviceSchema = new mongoose.Schema({
     //     },    
     //     name: String  
     // },
-    sector: {
-        id:{                
-            type: mongoose.Schema.Types.ObjectId,
-            //ref is the name of the model
-            ref: "Sector"
-        },
-        name: String
-    },
-    governorate: {
-        id:{                
-            type: mongoose.Schema.Types.ObjectId,
-            //ref is the name of the model
-            ref: "Governorate"
-        },    
-        name: String
-    },
+    // sector: {
+    //     id:{                
+    //         type: mongoose.Schema.Types.ObjectId,
+    //         //ref is the name of the model
+    //         ref: "Sector"
+    //     },
+    //     name: String
+    // },
+    // governorate: {
+    //     id:{                
+    //         type: mongoose.Schema.Types.ObjectId,
+    //         //ref is the name of the model
+    //         ref: "Governorate"
+    //     },    
+    //     name: String
+    // },
     author: {
         id:{
             type: mongoose.Schema.Types.ObjectId,

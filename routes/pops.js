@@ -7,7 +7,7 @@ var aPOP = new POP() ;
 
 //Mongoose PAGINATION
 router.get("/pagination",middleware.isLoggedIn ,function(request, response) {
-    POP.paginate({}, { select: 'name', lean: true,limit: 5000 }, function(err, result) {
+    POP.paginate({}, { select: 'shortName', lean: true,limit: 5000 }, function(err, result) {
         response.setHeader('Content-Type', 'application/json');
         response.send(JSON.stringify(result));
     });

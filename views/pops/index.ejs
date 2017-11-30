@@ -45,8 +45,8 @@
                         <tr>
                             <th data-field="state" data-checkbox="true"> </th>
                             <th data-field="_id" data-visible="false">ID</th>
-                            <th data-field="name" data-sortable="true">Name</th>
-                            <th data-field="acronym">Acronym</th>
+                            <th data-field="shortName" data-sortable="true">Short Name</th>
+                            <th data-field="popType" data-sortable="true">POP Type</th>
                             <th data-field="governorate" data-sortable="true">Governorate</th>
                             <th data-field="district" data-sortable="true">District</th>
                             <th data-field="sector" data-sortable="true">Sector</th>
@@ -57,9 +57,9 @@
                             <tr>
                                 <td><% %></td>
                                 <td><%= pop._id %></td>
-                                <td><a href="/pops/<%= pop._id %>"><%= pop.name %></a></td>
                                 <td><%= pop.shortName %></td>
-                                <td><%= pop.governorateAcro %></td>
+                                <td><%= pop.popType %></td>
+                                <td><%= pop.governorate %></td>
                                 <td><%= pop.district %></td>
                                 <td><%= pop.sector %></td>
                             </tr>

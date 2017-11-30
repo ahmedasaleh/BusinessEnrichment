@@ -34,9 +34,10 @@ $j(document).ready(function() {
 		}).done(function( data ) {
 		    if ( console && console.log ) {
 		        popsData = JSON.parse(data)["docs"];
-		        // console.log(popsData);
+		        console.log(popsData[0]);
 				mappedPopsData = $j.map(popsData, function (obj) {
 				obj.text = obj.text || obj.name; // replace name with the property used for the text
+		        // console.log(obj.text);
 				return obj;
 				});
 

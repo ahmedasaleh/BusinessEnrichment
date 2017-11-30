@@ -11,10 +11,7 @@ var express             = require("express"),
     logger              = require('./middleware/logger'),//logging component
     S                   = require("string");
     // deleteLogger           = require('./middleware/deleteLogger'),//logging component
-    seedDB              = require("./seeds");
 
-
-// var LocalAPIKeyStrategy = require('passport-localapikey').Strategy;
 
 var winston = require('winston');
 var fileUpload = require('express-fileupload');
@@ -121,6 +118,7 @@ app.listen(process.env.PORT, process.env.IP, function() {
     console.log("Business Enrichment V"+ applicationVersion +" Server Started on "+process.env.IP+":"+process.env.PORT);
     console.log("current time is: "+ new Date());
     console.log(process.env.UV_THREADPOOL_SIZE);
+
 });
 
 

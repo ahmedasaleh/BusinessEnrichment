@@ -3,24 +3,28 @@ var mongoosePaginate = require('mongoose-paginate');
 
 //Database template setup
 var popSchema = new mongoose.Schema({
-    name: String,
+    // name: String,
     shortName: String,
-    governorateAcro: {
-        id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Governorate'
-      },
-      acronym: String
-    },
+    governorate: String,
     district: String,
-    sector: {
-        id: {
-            type: mongoose.Schema.Types.ObjectId,
-            //ref is the name of the model
-            ref: "Sector"
-        },
-        name: String
-    },
+    sector: String,
+    popType: String,
+    // governorate: {
+    //     id: {
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     ref: 'Governorate'
+    //   },
+    //   acronym: String
+    // },
+    // district: String,
+    // sector: {
+    //     id: {
+    //         type: mongoose.Schema.Types.ObjectId,
+    //         //ref is the name of the model
+    //         ref: "Sector"
+    //     },
+    //     name: String
+    // },
     author: {
                 id:{
                     type: mongoose.Schema.Types.ObjectId,
