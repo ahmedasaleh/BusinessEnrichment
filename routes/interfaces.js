@@ -231,6 +231,7 @@ var copyObject = function(toObject,fromObject,override){
         if(fromObject.actualspeed && override == true) toObject.actualspeed = fromObject.actualspeed;
         if(fromObject.provisoFlag && override == true) toObject.provisoFlag = fromObject.provisoFlag;
         if(fromObject.pop && override == true) toObject.pop = fromObject.pop;
+        if(fromObject.isUpLink && override == true) toObject.isUpLink = fromObject.isUpLink;
         if(toObject.type == "NONE") toObject.type = null;
     };
 

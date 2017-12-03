@@ -63,9 +63,11 @@ var interfaceSchema = new mongoose.Schema({
     hostname:  String,
     ipaddress:  String,
     pop: String, //device pop
-    // devicePOP: String,
     deviceCabinetName: String,
-    parentPOP: String
+    governorate: String,
+    district: String,
+    sector: String,
+
     // delete: {type: Boolean, default: false},//used to mark interface for deletion
     // author: {
     //     id:{

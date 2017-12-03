@@ -287,7 +287,7 @@ self.checkInterfaceInLinks = function(interfaceName){
                         secondHost = self.linkEnrichmentData[i].device2;
                         secondInterface = self.linkEnrichmentData[i].interface2;
                         // secondPOP = S(self.linkEnrichmentData[i].device2).splitLeft('-')[0];
-                        parsedHostName = parser.parseHostname(secondHost);
+                        parsedHostName = Parser.parseHostname(secondHost);
                         secondPOP = parsedHostName.devicePOPName;
                         secondDeviceType = parsedHostName.deviceType;
                         i = self.linkEnrichmentData.length;//break only first loop 
@@ -301,7 +301,7 @@ self.checkInterfaceInLinks = function(interfaceName){
                         secondHost = self.linkEnrichmentData[i].device1;
                         secondInterface = self.linkEnrichmentData[i].interface1;
                         // secondPOP = S(self.linkEnrichmentData[i].device1).splitLeft('-')[0];
-                        parsedHostName = parser.parseHostname(secondHost);
+                        parsedHostName = Parser.parseHostname(secondHost);
                         secondPOP = parsedHostName.devicePOPName;
                         secondDeviceType = parsedHostName.deviceType;
                         i = self.linkEnrichmentData.length;//break only first loop 
@@ -315,7 +315,7 @@ self.checkInterfaceInLinks = function(interfaceName){
                         secondHost = self.linkEnrichmentData[i].device2;
                         secondInterface = self.linkEnrichmentData[i].interface2;
                         // secondPOP = S(self.linkEnrichmentData[i].device2).splitLeft('-')[0];
-                        parsedHostName = parser.parseHostname(secondHost);
+                        parsedHostName = Parser.parseHostname(secondHost);
                         secondPOP = parsedHostName.devicePOPName;
                         secondDeviceType = parsedHostName.deviceType;
                         i = self.linkEnrichmentData.length;//break only first loop 
@@ -325,7 +325,7 @@ self.checkInterfaceInLinks = function(interfaceName){
                         secondHost = self.linkEnrichmentData[i].device1;
                         secondInterface = self.linkEnrichmentData[i].interface1;
                         // secondPOP = S(self.linkEnrichmentData[i].device1).splitLeft('-')[0];
-                        parsedHostName = parser.parseHostname(secondHost);
+                        parsedHostName = Parser.parseHostname(secondHost);
                         secondPOP = parsedHostName.devicePOPName;
                         secondDeviceType = parsedHostName.deviceType;
                         i = self.linkEnrichmentData.length;//break only first loop 
@@ -354,7 +354,8 @@ self.checkInterfaceInLinks = function(interfaceName){
         var unknownFlag = 0;
         var noEnrichFlag = 0;         
         var label;   
-        var speedCat = "" ;  
+        var speedCat = "" ; 
+        var pop = self.devicePOP;
         var parentPOP = "";
         if(alias){
             //label = hostname+" "+interfaceName+" "+alias;
@@ -1143,7 +1144,11 @@ self.checkInterfaceInLinks = function(interfaceName){
                     {
                         self.interestRawInterfaces.push(Object.assign(rawInterface,intf));
                         intf.counters = 32;
-                        intf.pop = self.devicePOP;
+                        intf.pop = self.devicePOP+"_"+self.deviceGove;
+                        intf.governorate =   self.deviceGove ;
+                        intf.district = self.deviceSector ;
+                        intf.sector = self.deviceDistrict ;
+
                         if(hcInOctetsLarge || hcOutOctetsLarge) intf.counters = 64;
                         var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress,intf.ifSpeed ,intf.ifHighSpeed);
                         if(enrichment) {
@@ -1158,6 +1163,9 @@ self.checkInterfaceInLinks = function(interfaceName){
                         if(((S(intf.ifType).toInt() == 6) || (S(intf.ifType).toInt() == 117))){
                             // self.interfaces[key] = anInterface;
                             // self.interestKeys.push(key);//push index to be used during ifXTable walk
+                            intf.governorate =   self.deviceGove ;
+                            intf.district = self.deviceSector ;
+                            intf.sector = self.deviceDistrict ;
                             self.interestRawInterfaces.push(Object.assign(rawInterface,intf));
                             intf.counters = 32;
                             if(hcInOctetsLarge || hcOutOctetsLarge) intf.counters = 64;
@@ -1312,6 +1320,13 @@ self.checkInterfaceInLinks = function(interfaceName){
         if(fromObject.hostname) toObject.hostname = fromObject.hostname;
         if(fromObject.ipaddress) toObject.ipaddress = fromObject.ipaddress;
         if(fromObject.pop && override == true) toObject.pop = fromObject.pop;
+        if(fromObject.isUpLink && override == true) toObject.isUpLink = fromObject.isUpLink;
+        if(fromObject.parentPOP && override == true) toObject.parentPOP = fromObject.parentPOP;
+        if(fromObject.deviceCabinetName && override == true) toObject.deviceCabinetName = fromObject.deviceCabinetName;
+        if(fromObject.governorate && override == true) toObject.governorate = fromObject.governorate;
+        if(fromObject.district && override == true) toObject.district = fromObject.district;
+        if(fromObject.sector && override == true) toObject.sector = fromObject.sector;
+
 
     };
     self.applySyncRules = function(){
@@ -1963,7 +1978,7 @@ var getDeviceList = __async__ (function(){
     var foundDevices = __await__ (Device.find({},{lean:false}));
 
     foundDevices.forEach(function (device, i) {
-        var parsedHostName = Parser.parseHostname(S(hostname));
+        var parsedHostName = Parser.parseHostname(S(device.hostname));
         // devicePOP = S(device.hostname).splitLeft('-',1)[0];
         var POPDetails = __await__ (POP.findOne({shortName:parsedHostName.devicePOPName,governorate:parsedHostName.popGove}));
         if(POPDetails == null){
@@ -2394,3 +2409,4 @@ router.post("/api/:hostname/:ipaddress/:communitystring/:popname", middleware.is
 
 module.exports = router;
 module.exports.syncDevices = syncDevices;
+module.exports.bulkSyncInProgress = bulkSyncInProgress;

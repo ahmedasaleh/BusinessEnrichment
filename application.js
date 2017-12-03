@@ -108,9 +108,14 @@ process.on('uncaughtException', function (err) {
 
 //sec min hour day month weekday
 new CronJob('0 0 0 */2 * *', function() {
-  console.log('Automatic sync for devices runs every 48 hrs');
-  console.log("current syncing time is: "+ new Date());
-  deviceRoutes.syncDevices();
+    console.log('Automatic sync for devices runs every 48 hrs');
+    console.log("current syncing time is: "+ new Date());
+    if(deviceRoutes.bulkSyncInProgress == false) {
+        deviceRoutes.syncDevices();
+    }
+    else{
+        console.log("will not run, bulk sync is running in background ");
+    }
 }, null, true, 'Africa/Cairo');
 
 process.env.UV_THREADPOOL_SIZE = 10;
