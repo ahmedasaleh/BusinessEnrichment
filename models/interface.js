@@ -62,7 +62,10 @@ var interfaceSchema = new mongoose.Schema({
     lastSyncTime: Date,
     hostname:  String,
     ipaddress:  String,
-    pop: String //device pop
+    pop: String, //device pop
+    // devicePOP: String,
+    deviceCabinetName: String,
+    parentPOP: String
     // delete: {type: Boolean, default: false},//used to mark interface for deletion
     // author: {
     //     id:{

@@ -240,20 +240,20 @@ var setDeviceID = function(anID){
 var getDeviceID = function(anID){
     return interfaceDeviceID ;
 };
-    var constructInterfaceID = function(deviceIP,ifIndex){
-        //Mongodb uses Object id of 24 char length in hex format
-        //will let ipaddress and ifIndex share this length
-        var ipaddress = S(deviceIP).replaceAll('.', 'a').padLeft(12, 'b').s;
-        var ifindex ;
-        if(ipaddress.length <= 12){
-            ifindex = S(ifIndex).padLeft(12, 'c').s;
-        }
-        else{
-            ifindex = S(ifIndex).padLeft((24 - ipaddress.length), 'c').s;
-        }
-        var str_id = ipaddress+ifindex;
-        return str_id;
-    };
+var constructInterfaceID = function(deviceIP,ifIndex){
+    //Mongodb uses Object id of 24 char length in hex format
+    //will let ipaddress and ifIndex share this length
+    var ipaddress = S(deviceIP).replaceAll('.', 'a').padLeft(12, 'b').s;
+    var ifindex ;
+    if(ipaddress.length <= 12){
+        ifindex = S(ifIndex).padLeft(12, 'c').s;
+    }
+    else{
+        ifindex = S(ifIndex).padLeft((24 - ipaddress.length), 'c').s;
+    }
+    var str_id = ipaddress+ifindex;
+    return str_id;
+};
 
 
 //UPDATE INTERFACE ROUTE
