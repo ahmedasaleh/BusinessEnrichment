@@ -24,13 +24,17 @@ parserObj.parseHostname = function(hostname){
 	var deviceDetails = null;
 	var devicePOPName = null;
 	var popGove = null;
-	// var deviceType = null;
+	var deviceType = null;
 	// var deviceVendor = null;
 
 	if(nameFields.length >= 4){
 		devicePOPName = nameFields[0];
 		popGove = nameFields[2];
-		deviceDetails = {devicePOPName:devicePOPName,popGove:popGove}
+		// deviceType = nameFields[1]
+		deviceType = enrichmentData.deviceType[S(nameFields[1]).left(1).s] ;
+		deviceVendor = enrichmentData.deviceVendor[S(nameFields[1]).right(1).s] ;
+
+		deviceDetails = {devicePOPName:devicePOPName,popGove:popGove,deviceType:deviceType,deviceVendor:deviceVendor}
 	}
 	return deviceDetails;
 }
