@@ -40,11 +40,18 @@ var deviceSchema = new mongoose.Schema({
     deviceSyncCycles: {type: Number, default: 0},
     discovered: {type: Boolean, default: false},//used to mark device as discovered, useful during sync process
     // defaultCollector: {type: Number, default: 1},
-    popName: String,
-    cabinet: String,
-    sector: String,
-    governorate: String,
-    district: String,
+    pop: String,//popName
+    cabinet: { type: String, default: 'Unknown' },
+    sector: { type: String, default: 'Unknown' },
+    gov: { type: String, default: 'Unknown' },//governorate
+    district: { type: String, default: 'Unknown' },
+    popType: { type: String, default: 'Unknown' },
+    type: String,
+    model: String,
+    vendor: String,
+    sysObjectID: String,
+    sysName: String,
+    interfaces: [Interface.schema],
     // popName: {
     //     id:{
     //         type: mongoose.Schema.Types.ObjectId,
@@ -82,13 +89,7 @@ var deviceSchema = new mongoose.Schema({
             ref: "User"
         },
         email: String
-    },
-    type: String,
-    model: String,
-    vendor: String,
-    sysObjectID: String,
-    sysName: String,
-    interfaces: [Interface.schema]
+    }
 });
 deviceSchema.path('hostname').validate(hostnameEmpty, "hostname can't be empty!");
 deviceSchema.path('hostname').validate(hostnameLength, 'hostname is too short!');

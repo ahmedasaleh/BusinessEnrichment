@@ -54,20 +54,21 @@ var interfaceSchema = new mongoose.Schema({
     adminStatus: String,
     operStatus: String,
     actualspeed: String,
-    isUpLink: {type: String,default: "0"},
-    parentPOP: String,
     syncCycles: {type: Number, default: 0},//used to track number of sync cycles where interface was missed
     createdAt: { type: Date, default: Date.now },
     lastUpdate: Date,
     lastSyncTime: Date,
     hostname:  String,
     ipaddress:  String,
-    pop: String, //device pop
-    deviceCabinetName: String,
-    governorate: String,
-    district: String,
-    sector: String,
-
+    pop: {type: String,default: "Unknown"}, // pop
+    isUpLink: {type: String,default: "0"},
+    parentPOP: {type: String,default: "Unknown"},
+    devPOP: {type: String,default: "Unknown"}, //device pop
+    devCabinet: {type: String,default: "Unknown"},//deviceCabinetName
+    devGov: {type: String,default: "Unknown"},//governorate
+    devDistrict: {type: String,default: "Unknown"},//district
+    devSector: {type: String,default: "Unknown"},//sector
+    devPOPType: {type: String,default: "Unknown"}
     // delete: {type: Boolean, default: false},//used to mark interface for deletion
     // author: {
     //     id:{

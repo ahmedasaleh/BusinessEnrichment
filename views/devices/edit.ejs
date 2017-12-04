@@ -20,33 +20,32 @@
                     <label for="communityString">Community String</label>
                     <input class="form-control" type="text" name="device[communityString]" value="<%= device.community %>">
                 </div>
+                <!--
                 <div class="form-group">
                     <label for="device-pop-name">POP Name</label>
-                    <select id="device-pop-name" class="form-control select2-single" type="text" name="device[popName][name]"  data-init-text="<%= device.popName.name %>" >
+                    <select id="device-pop-name" class="form-control select2-single" type="text" name="device[pop]"  data-init-text="<%= device.pop %>" >
                     </select>
                 </div>
-                <!--
                 <div class="form-group">
                     <label for="device-sector-name">Sector Name</label>
                     <% if(device.sector.name === undefined){ %>
-                        <select id="device-sector-name" class="form-control select2-single" type="text" name="device[sector][name]"  value="<%= device.sector.name %>"  >
+                        <select id="device-sector-name" class="form-control select2-single" type="text" name="device[sector]"  value="<%= device.sector %>"  >
                         </select>
                     <% } else {  %>
-                        <select id="device-sector-name" class="form-control select2-single" type="text" name="device[sector][name]"  data-init-text="<%= device.sector.name %>"  >
+                        <select id="device-sector-name" class="form-control select2-single" type="text" name="device[sector]"  data-init-text="<%= device.sector %>"  >
                         </select>
                     <%   } %>
                 </div>
                 <div class="form-group">
                     <label for="device-governorate-name">Governorate Name</label>
-                    <% if(device.governorate.name === undefined){ %>
-                    <select id="device-governorate-name" class="form-control select2-single" type="text" name="device[governorate][name]"  value="<%= device.governorate.name %>" >
+                    <% if(device.gov === undefined){ %>
+                    <select id="device-governorate-name" class="form-control select2-single" type="text" name="device[gov]"  value="<%= device.gov %>" >
                     </select>
                     <% } else {%>
-                    <select id="device-governorate-name" class="form-control select2-single" type="text" name="device[governorate][name]"  data-init-text="<%= device.governorate.name %>" >
+                    <select id="device-governorate-name" class="form-control select2-single" type="text" name="device[gov]"  data-init-text="<%= device.gov %>" >
                     </select>
                     <% } %>
                 </div>
-                -->
                 <div class="form-group">
                     <label for="deviceType">Type</label>
                     <select id="device-type" class="form-control select2-single" name="device[type]" data-init-text="<%= device.type %>" disabled>
@@ -69,6 +68,7 @@
                     <label for="sysObjectID">sysObjectID</label>
                     <input class="form-control" type="text" name="device[sysObjectID]" value="<%= device.sysObjectID %>" readonly>
                 </div>
+                -->
                 <div class="form-group">
                     <!--<btn-block will let the button takes width of the 2 inputs>-->
                     <button class="btn btn-lg btn-primary btn-block">Submit!</button>
