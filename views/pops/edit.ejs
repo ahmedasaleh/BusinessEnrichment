@@ -19,28 +19,38 @@
                         <option value="Access" selected="selected">Access</option>
                         <option value="Core">Core</option>
                         <option value="Distribution">Distribution</option>
+                        <option value="Cabinet">Cabinet</option>
                     <% } else if(pop.popType == null) {%>
                         <option value="Access" selected="selected">Access</option>
                         <option value="Core">Core</option>
                         <option value="Distribution">Distribution</option>
+                        <option value="Cabinet">Cabinet</option>
                     <% } else if(pop.popType == "Access") {%>
                         <option value="Access" selected="selected">Access</option>
                         <option value="Core">Core</option>
                         <option value="Distribution">Distribution</option>
+                        <option value="Cabinet">Cabinet</option>
                     <% } else if(pop.popType == "Distribution") {%>
                         <option value="Distribution" selected="selected">Distribution</option>
+                        <option value="Access">Access</option>
+                        <option value="Core">Core</option>
+                        <option value="Cabinet">Cabinet</option>
+                    <% } else if(pop.popType == "Cabinet") {%>
+                        <option value="Cabinet" selected="selected">Cabinet</option>
+                        <option value="Distribution">Distribution</option>
                         <option value="Access">Access</option>
                         <option value="Core">Core</option>
                     <% } else if(pop.popType == "Core"){%>
                         <option value="Core" selected="selected">Core</option>
                         <option value="Access">Access</option>
                         <option value="Distribution">Distribution</option>
+                        <option value="Cabinet">Cabinet</option>
                         <% } %>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="governorateAcro">Governorate </label>
-                    <input class="form-control" type="text" name="pop[governorate]" value="<%= pop.governorate %>">
+                    <input class="form-control" type="text" name="pop[governorate]" value="<%= pop.gov %>">
                 </div>
                 <div class="form-group">
                     <label for="district">District</label>
@@ -49,6 +59,10 @@
                 <div class="form-group">
                     <label for="sector">Sector</label>
                     <input class="form-control" type="text" name="pop[sector]" value="<%= pop.sector %>">
+                </div>
+                <div class="form-group">
+                    <label for="sector">Parent POP</label>
+                    <input class="form-control" type="text" name="pop[parentPOP]" value="<%= pop.parentPOP %>">
                 </div>
                 <div class="form-group">
                     <!--<btn-block will let the button takes width of the 2 inputs>-->

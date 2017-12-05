@@ -5,10 +5,11 @@ var mongoosePaginate = require('mongoose-paginate');
 var popSchema = new mongoose.Schema({
     // name: String,
     shortName: String,
-    governorate: String,
-    district: String,
-    sector: String,
-    popType: String,
+    gov: {type: String,default: "Unknown"},
+    district: {type: String,default: "Unknown"},
+    sector: {type: String,default: "Unknown"},
+    popType: {type: String,default: "Unknown"},
+    parentPOP: {type: String,default: "Unknown"},
     // governorate: {
     //     id: {
     //     type: mongoose.Schema.Types.ObjectId,

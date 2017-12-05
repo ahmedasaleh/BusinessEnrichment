@@ -63,6 +63,15 @@ $j(document).ready(function() {
 			        containerCssClass: ':all:',
 					minimumInputLength: 1
 				});
+				$j("#new-pop-governorate-name").select2({
+					placeholder: 'type something...',
+					selectOnClose: true,
+					data: mappedPopsData,
+			        theme: "bootstrap",
+			        width: null,
+			        containerCssClass: ':all:',
+					minimumInputLength: 1
+				});
 
 		    }
 		});
