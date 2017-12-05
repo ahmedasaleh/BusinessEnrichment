@@ -62,8 +62,9 @@ var interfaceSchema = new mongoose.Schema({
     ipaddress:  String,
     pop: {type: String,default: "Unknown"}, // pop
     isUpLink: {type: String,default: "0"},
-    parentPOP: {type: String,default: "Unknown"},
+    // parentPOP: {type: String,default: "Unknown"},
     devPOP: {type: String,default: "Unknown"}, //device pop
+    devPOPLongName: {type: String,default: "Unknown"}, //device pop
     devCabinet: {type: String,default: "Unknown"},//deviceCabinetName
     devGov: {type: String,default: "Unknown"},//governorate
     devDistrict: {type: String,default: "Unknown"},//district

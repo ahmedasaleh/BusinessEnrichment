@@ -41,6 +41,7 @@ var deviceSchema = new mongoose.Schema({
     discovered: {type: Boolean, default: false},//used to mark device as discovered, useful during sync process
     // defaultCollector: {type: Number, default: 1},
     pop: String,//popName
+    popLongName: { type: String, default: 'Unknown' },//popName
     cabinet: { type: String, default: 'Unknown' },
     sector: { type: String, default: 'Unknown' },
     gov: { type: String, default: 'Unknown' },//governorate
@@ -52,30 +53,6 @@ var deviceSchema = new mongoose.Schema({
     sysObjectID: String,
     sysName: String,
     interfaces: [Interface.schema],
-    // popName: {
-    //     id:{
-    //         type: mongoose.Schema.Types.ObjectId,
-    //         //ref is the name of the model
-    //         ref: "POP"
-    //     },    
-    //     name: String  
-    // },
-    // sector: {
-    //     id:{                
-    //         type: mongoose.Schema.Types.ObjectId,
-    //         //ref is the name of the model
-    //         ref: "Sector"
-    //     },
-    //     name: String
-    // },
-    // governorate: {
-    //     id:{                
-    //         type: mongoose.Schema.Types.ObjectId,
-    //         //ref is the name of the model
-    //         ref: "Governorate"
-    //     },    
-    //     name: String
-    // },
     author: {
         id:{
             type: mongoose.Schema.Types.ObjectId,
