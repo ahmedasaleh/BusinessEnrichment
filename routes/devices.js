@@ -1592,8 +1592,12 @@ self.checkInterfaceInLinks = function(interfaceName){
                 }               
             }
             
-            if(self.modelOID) self.modelOID = "."+self.modelOID;
+            if(self.modelOID) {
+                self.modelOID = "."+self.modelOID;
+                self.device.sysObjectID = self.modelOID;
+            }
             else if(self.device.sysObjectID) self.modelOID = self.device.sysObjectID;
+            console.log("self.device.sysObjectID: "+self.device.sysObjectID);
             if(self.modelOID){
                 DeviceModel.findOne({oid: self.modelOID},function(error,foundModel){
                     if(error){
