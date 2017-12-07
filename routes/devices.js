@@ -28,7 +28,7 @@ var dateFormat      = require('dateformat');
 var ObjectId        = require('mongodb').ObjectID;
 var indexRoutes     = require("./index"); 
 var cmd             = require('node-cmd');
-
+var Map = require("collections/map");
 
 var bulkSyncInProgress = false;
 var aDevice = new Device() ;
@@ -83,12 +83,13 @@ var oids = {
 
 // function discoveredDevice(device,linkEnrichmentData,devicePOP,deviceGove,deviceSector,deviceDistrict,popType,parentPOP,cabinetName,POPDetails) {
 function discoveredDevice(device,linkEnrichmentData,cabinetName,POPDetails) {
-    var self = this;
+    var self = null;
+    self = this;
     self.name = device.hostname;
     self.device = device; 
+
     self.filteredInterestInterfacesMap = new Map();//this map will containg filtered interfaces by self.retrieveIfXTable()
     self.deviceInterfaces = [];
-
 
     self.interestInterfacesMap = new Map();//this map will containg filtered interfaces by self.retrieveIfTable()
     self.interfaceUpdateMap = new Map();
@@ -117,14 +118,14 @@ function discoveredDevice(device,linkEnrichmentData,cabinetName,POPDetails) {
     self.deviceDistrict = self.device.district;
     self.devicePOPType = self.device.popType;
     self.devicePOPLongName = self.device.popLongName;
-// console.log("self.device.pop: "+self.device.pop);
+
     if(S(self.deviceGove).isEmpty() || S(self.deviceGove).s == "Unknown" && !(self.device.updatedAt instanceof Date)) self.deviceGove = POPDetails.gov;
     if(S(self.deviceSector).isEmpty() || S(self.deviceSector).s == "Unknown" && !(self.device.updatedAt instanceof Date)) self.deviceSector = POPDetails.sector;
     if(S(self.deviceDistrict).isEmpty() || S(self.deviceDistrict).s == "Unknown" && !(self.device.updatedAt instanceof Date)) self.deviceDistrict = POPDetails.district;
     if(S(self.devicePOPType).isEmpty() || S(self.devicePOPType).s == "Unknown" && !(self.device.updatedAt instanceof Date)) self.devicePOPType = POPDetails.popType;
     if(S(self.devicePOPLongName).isEmpty() || S(self.devicePOPLongName).s == "Unknown" && !(self.device.updatedAt instanceof Date)) self.devicePOPLongName = POPDetails.popLongName;
-    if(!S(self.device.pop).isEmpty()) self.devicePOP = self.device.pop;
-    else if(POPDetails.shortName && POPDetails.shortName != "Unknown" && !S(self.device.pop).isEmpty()) self.devicePOP = POPDetails.shortName+"_"+self.deviceGove;
+    if(!S(self.device.pop).isEmpty() && self.device.pop != "Unknown") self.devicePOP = self.device.pop;
+    else if(POPDetails.shortName && POPDetails.shortName != "Unknown") self.devicePOP = POPDetails.shortName+"_"+self.deviceGove;
 
     // console.log(self.devicePOP +" | "+self.devicePOPLongName+ " | "+ self.deviceGove + " | "+ self.deviceSector + " | "+ self.deviceDistrict + " | "+ self.devicePOPType + " | "+self.cabinetName);
 
@@ -154,7 +155,25 @@ function discoveredDevice(device,linkEnrichmentData,cabinetName,POPDetails) {
     self.session.on("close", function () {
         if(self.session) {
             try{
-                self.destroy();
+                // self.destroy();
+        if(self.inSyncMode && !self.cleanSessionClose){
+            throttle = throttle + 1;
+            doneDevices = doneDevices + 1;                   
+            logger.info(self.name+" done, total done: "+doneDevices);  
+
+            self.filteredInterestInterfacesMap.clear();
+            self.filteredInterestInterfacesMap = null;
+            self.interestInterfacesMap.clear();
+            self.interestInterfacesMap = null;
+            self.interfaceUpdateMap.clear();
+            self.interfaceUpdateMap = null;
+            self.deviceInterfaces = null;
+            self.interfaceRemoveList = null;
+
+
+        }
+        if(self.session) self.session = null;
+        self.cleanSessionClose = true;
                 logger.info("self.session.onClose, snmp socket closed for "+self.name);                    
             }
             catch(e){
@@ -998,17 +1017,19 @@ self.checkInterfaceInLinks = function(interfaceName){
         //now the device will use interestInterfaces array during save action, so modify it to include only new and updated interfaces
         var mergedMap = new Map(self.filteredInterestInterfacesMap, self.deviceInterfaces);
 
-        // self.filteredInterestInterfacesMap.forEach(function(interface, key) {
-        //     self.deviceInterfaces.push(interface);
-        // });
+        self.interfaceUpdateMap.forEach(function(interface,key) {
+            self.deviceInterfaces.push(interface);
+            if(self.filteredInterestInterfacesMap.has(key)) self.filteredInterestInterfacesMap.delete(key);
+        });
 
-        // self.interfaceUpdateMap.forEach(function(interface,key) {
-        //     self.deviceInterfaces.push(interface);
-        // });
-
-        mergedMap.forEach(function(interface,key) {
+        self.filteredInterestInterfacesMap.forEach(function(interface, key) {
             self.deviceInterfaces.push(interface);
         });
+
+        logger.info("self.saveDevice()");
+        // mergedMap.forEach(function(interface,key) {
+        //     self.deviceInterfaces.push(interface);
+        // });
 
 
         // Device.findByIdAndUpdate(device._id,{interfaces: self.interestInterfaces, discovered: true, lastSyncTime: new Date(),deviceSyncCycles:self.deviceSyncCycles,
@@ -1057,23 +1078,19 @@ self.checkInterfaceInLinks = function(interfaceName){
         var intf = new Interface();
         var interface = self.filteredInterestInterfacesMap.get(interfaceIndex);
         intf = Object.assign(intf,interface);
-        // async.forEachOf(self.interestInterfaces,function(interface,key,callback){
-        //     if(interface.ifIndex == interfaceIndex){
-        //         intf = Object.assign(intf,interface);
-        //     }
-        // }); 
         return intf;
     };    
-    self.removeInterfaceFromInterestList = function(interfaceIndex){
-        self.filteredInterestInterfacesMap.delete(interfaceIndex);
-        // for(var i=0; i<self.interestInterfaces.length;i++){
-        //     if(self.interestInterfaces[i].ifIndex ==  interfaceIndex){
-        //         self.interestInterfaces.splice(i,1);
-        //         self.interestInterfacesIndices.splice(i,1);
-        //         i = self.interestInterfaces.length;//break smoothly
-        //     }
-        // }
-    };    
+    // self.removeInterfaceFromInterestList = function(interfaceIndex){
+    //     // console.log("self.removeInterfaceFromInterestList: "+ interfaceIndex);
+    //     self.filteredInterestInterfacesMap.delete(interfaceIndex);
+    //     // for(var i=0; i<self.interestInterfaces.length;i++){
+    //     //     if(self.interestInterfaces[i].ifIndex ==  interfaceIndex){
+    //     //         self.interestInterfaces.splice(i,1);
+    //     //         self.interestInterfacesIndices.splice(i,1);
+    //     //         i = self.interestInterfaces.length;//break smoothly
+    //     //     }
+    //     // }
+    // };    
 
     self.retrieveIfTable = function( table,callback){
         var indexes = [];
@@ -1181,43 +1198,28 @@ self.checkInterfaceInLinks = function(interfaceName){
                 rawInterface.ifHCInOctets = hcInOctetsLarge;
                 rawInterface.ifHCOutOctets = hcOutOctetsLarge;
                 if((hcInOctetsLarge == true) || (hcOutOctetsLarge == true) || (intf.ifInOctets > 0) || (intf.ifOutOctets > 0)){
+
                     if( ((intf.devType.toLowerCase() =="router") || (intf.devType.toLowerCase() =="switch")) && !S(lowerCaseName).isEmpty() && !S(lowerCaseName).contains('pppoe') && !S(lowerCaseName).startsWith("vi")
                         )//&& !(intf.ifName == S("Gi0/3").s) && !(intf.ifName == S("Gi0/1").s) && !(self.name == S("HELWAN-S02C-C-EG").s)) 
                     {
-                        // self.interestRawInterfaces.push(Object.assign(rawInterface,intf));
                         intf.counters = 32;
-                        // intf.governorate =   self.deviceGove ;
-                        // intf.district = self.deviceSector ;
-                        // intf.sector = self.deviceDistrict ;
-
                         if(hcInOctetsLarge || hcOutOctetsLarge) intf.counters = 64;
                         var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress,intf.ifSpeed ,intf.ifHighSpeed);
                         if(enrichment) {
                             Object.assign(intf,enrichment);
-                            // self.interestInterfaces.push(intf);
-                            // self.interestInterfacesIndices.push(intf.ifIndex); 
                             self.filteredInterestInterfacesMap.set(intf.ifIndex,intf);
-                            // console.log("self.retrieveIfXTable self.interestInterfaces.length , self.interestInterfacesIndices.length "+self.interestInterfaces.length+" / "+self.interestInterfacesIndices.length);
+
                         }                       
                     }
                     // else if((intf.devVendor == "huawei") && ((intf.devType =="msan") || (intf.devType =="gpon") || (intf.devType =="dslam"))  ){
                     else if(((intf.devType.toLowerCase() =="msan") || (intf.devType.toLowerCase() =="gpon") || (intf.devType.toLowerCase() =="dslam"))  ){
                         if(((S(intf.ifType).toInt() == 6) || (S(intf.ifType).toInt() == 117))){
-                            // self.interfaces[key] = anInterface;
-                            // self.interestKeys.push(key);//push index to be used during ifXTable walk
-                            // intf.governorate =   self.deviceGove ;
-                            // intf.district = self.deviceSector ;
-                            // intf.sector = self.deviceDistrict ;
-                            // self.interestRawInterfaces.push(Object.assign(rawInterface,intf));
                             intf.counters = 32;
                             if(hcInOctetsLarge || hcOutOctetsLarge) intf.counters = 64;
                             var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress,intf.ifSpeed ,intf.ifHighSpeed);
                             if(enrichment) {
                                 Object.assign(intf,enrichment);
-                                // self.interestInterfaces.push(intf);
-                                // self.interestInterfacesIndices.push(intf.ifIndex); 
                                 self.filteredInterestInterfacesMap.set(intf.ifIndex,intf);
-                            // console.log("self.retrieveIfXTable self.interestInterfaces.length , self.interestInterfacesIndices.length "+self.interestInterfaces.length+" / "+self.interestInterfacesIndices.length);
                             }                       
                         }
                     }
@@ -1233,6 +1235,7 @@ self.checkInterfaceInLinks = function(interfaceName){
         return self.filteredInterestInterfacesMap;
     };    
     self.createInterfaces  = function(interfaceList){
+        logger.info("self.createInterfaces");
         self.filteredInterestInterfacesMap.forEach(function(interface, key) {
             interface._id = self.constructInterfaceID(interface.ipaddress,interface.ifIndex);
             Interface.create(interface,function(error,createdInterface){
@@ -1241,15 +1244,6 @@ self.checkInterfaceInLinks = function(interfaceName){
                 }
             });
         });
-
-        // interfaceList.forEach(function(interface,i){
-        //     interface._id = self.constructInterfaceID(interface.ipaddress,interface.ifIndex);
-        //     Interface.create(interface,function(error,createdInterface){
-        //         if(error){
-        //              logger.error(error);
-        //         }
-        //     });
-        // });
     };
     self.updateInterfaces  = function(interfaceList){
         var ignoreMissing = true;
@@ -1274,30 +1268,6 @@ self.checkInterfaceInLinks = function(interfaceName){
                     }
                 });
         });
-        // interfaceList.forEach(function(interface, i){
-        //         // Interface.findById(interface._id,{syncCycles:interface.syncCycles},function(error,updatedInterface){
-        //         // Interface.findOne({"ipaddress":interface.ipaddress,"ifIndex":interface.ifIndex},function(error,updatedInterface){
-        //         var interfaceID = self.constructInterfaceID(interface.ipaddress,interface.ifIndex);
-        //         // console.log(interface);
-        //         Interface.findById(interfaceID,function(error,foundInterface){
-        //             if(error){
-        //                 logger.error(error);
-        //             }
-        //             else if(foundInterface != null){
-        //                 self.allowedFields.forEach(function(field) {
-        //                     // if (interface && updatedInterface && (typeof interface[field] !== 'undefined') && ignoreMissing ) {
-        //                     // if (interface && foundInterface) {
-        //                         if(interface[field] != null || interface[field] !== 'undefined') foundInterface[field] = interface[field];
-        //                         else foundInterface[field] = '';
-        //                     // }
-        //                 });
-        //                 foundInterface.save();                            
-        //             }
-        //             else{
-        //                 logger.error("Can't find interface");
-        //             }
-        //         });
-        // });
     };
     self.removeInterfaces  = function(interfaceList){
         interfaceList.forEach(function(interface){
@@ -1389,7 +1359,8 @@ self.checkInterfaceInLinks = function(interfaceName){
                 interface.syncCycles = 0;
                 interface.lastSyncTime = new Date();
                 //remove interface from list of interest interfaces as it is already exists
-                self.removeInterfaceFromInterestList(interface.ifIndex);
+                // self.removeInterfaceFromInterestList(interface.ifIndex);
+                self.filteredInterestInterfacesMap.delete(interface.ifIndex);
                 self.interfaceUpdateMap.set(interface.ifIndex,interface);
             }
             // if: current interface index found in interestInterfaces and interface updated, then: skip
@@ -1399,7 +1370,8 @@ self.checkInterfaceInLinks = function(interfaceName){
                 self.copyObject(interface,intf,false);
                 interface.lastSyncTime = new Date();
                 interface.syncCycles = 0;
-                self.removeInterfaceFromInterestList(interface.ifIndex);
+                // self.removeInterfaceFromInterestList(interface.ifIndex);
+                self.filteredInterestInterfacesMap.delete(interface.ifIndex);
                 self.interfaceUpdateMap.set(interface.ifIndex,interface);
             }
             else if(!self.filteredInterestInterfacesMap.has(interface.ifIndex) && !(interface.lastUpdate instanceof Date)){
@@ -1576,7 +1548,7 @@ self.checkInterfaceInLinks = function(interfaceName){
                                 self.deviceVendor = foundModel.vendor;
                                 self.deviceType  = foundModel.type;
                                 self.deviceModel = foundModel.model ;
-                                if(self.session) self.session.tableColumnsAsync(oids.ifTable.OID, oids.ifTable.Columns, self.maxRepetitions, self.ifTableResponseCb);
+                                if(self.session) self.session.tableColumns(oids.ifTable.OID, oids.ifTable.Columns, self.maxRepetitions, self.ifTableResponseCb);
                                 else self.destroy();
                             }
                             else{
