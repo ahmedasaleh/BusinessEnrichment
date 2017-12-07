@@ -20,15 +20,15 @@
                     <label for="communityString">Community String</label>
                     <input class="form-control" type="text" name="device[communityString]" value="<%= device.community %>">
                 </div>
-                <!--
                 <div class="form-group">
                     <label for="device-pop-name">POP Name</label>
                     <select id="device-pop-name" class="form-control select2-single" type="text" name="device[pop]"  data-init-text="<%= device.pop %>" >
                     </select>
                 </div>
+                <!--
                 <div class="form-group">
                     <label for="device-sector-name">Sector Name</label>
-                    <% if(device.sector.name === undefined){ %>
+                    <% if(device.sector === undefined){ %>
                         <select id="device-sector-name" class="form-control select2-single" type="text" name="device[sector]"  value="<%= device.sector %>"  >
                         </select>
                     <% } else {  %>

@@ -112,16 +112,21 @@ function discoveredDevice(device,linkEnrichmentData,cabinetName,POPDetails) {
 
     self.devicePOP = "Unknown";
     self.cabinetName = cabinetName || "Unknown";
-    self.deviceGove = POPDetails.gov;//deviceGove || "Unknown";
-    self.deviceSector = POPDetails.sector;//deviceSector || "Unknown";
-    self.deviceDistrict = POPDetails.district;//deviceDistrict || "Unknown";
-    self.devicePOPType = POPDetails.popType;//popType || "Unknown";
-    // if(devicePOP && devicePOP != "Unknown") self.devicePOP = devicePOP+"_"+deviceGove;
-    if(POPDetails.shortName && POPDetails.shortName != "Unknown") self.devicePOP = POPDetails.shortName+"_"+self.deviceGove;
-console.log("------------------------>> POPDetails");
-console.log(POPDetails);
-console.log("<<-------------------------POPDetails");
-    // console.log(self.devicePOP + " | "+ self.deviceGove + " | "+ self.deviceSector + " | "+ self.deviceDistrict + " | "+ self.devicePOPType + " | "+self.cabinetName);
+    self.deviceGove = self.device.gov;
+    self.deviceSector = self.device.sector;
+    self.deviceDistrict = self.device.district;
+    self.devicePOPType = self.device.popType;
+    self.devicePOPLongName = self.device.popLongName;
+console.log("self.device.pop: "+self.device.pop);
+    if(S(self.deviceGove).isEmpty() || S(self.deviceGove).s == "Unknown" && !(self.device.updatedAt instanceof Date)) self.deviceGove = POPDetails.gov;
+    if(S(self.deviceSector).isEmpty() || S(self.deviceSector).s == "Unknown" && !(self.device.updatedAt instanceof Date)) self.deviceSector = POPDetails.sector;
+    if(S(self.deviceDistrict).isEmpty() || S(self.deviceDistrict).s == "Unknown" && !(self.device.updatedAt instanceof Date)) self.deviceDistrict = POPDetails.district;
+    if(S(self.devicePOPType).isEmpty() || S(self.devicePOPType).s == "Unknown" && !(self.device.updatedAt instanceof Date)) self.devicePOPType = POPDetails.popType;
+    if(S(self.devicePOPLongName).isEmpty() || S(self.devicePOPLongName).s == "Unknown" && !(self.device.updatedAt instanceof Date)) self.devicePOPLongName = POPDetails.popLongName;
+    if(!S(self.device.pop).isEmpty()) self.devicePOP = self.device.pop;
+    else if(POPDetails.shortName && POPDetails.shortName != "Unknown" && !S(self.device.pop).isEmpty()) self.devicePOP = POPDetails.shortName+"_"+self.deviceGove;
+
+    console.log(self.devicePOP + " | "+ self.deviceGove + " | "+ self.deviceSector + " | "+ self.deviceDistrict + " | "+ self.devicePOPType + " | "+self.cabinetName);
 
 // Interface.allowedFields;
     self.allowedFields =  enrichmentData.interfaceAllowedFields ;//['ifName','ifAlias','ifIndex','ifDescr','ifType','ifSpeed','ifHighSpeed','counters','type',' specialService','secondPOP','secondHost','secondInterface','label','provisoFlag','noEnrichFlag','sp_service','sp_provider','sp_termination','sp_bundleId','sp_linkNumber','sp_CID','sp_TECID','sp_subCable','sp_customer','sp_sourceCore','sp_destCore','sp_vendor','sp_speed','sp_pop','sp_fwType','sp_serviceType','sp_ipType','sp_siteCode','sp_connType','sp_emsOrder','sp_connectedBW','sp_dpiName','sp_portID','unknownFlag','adminStatus','operStatus','actualspeed','syncCycles','lastUpdate','hostname','ipaddress','pop'];
@@ -135,8 +140,17 @@ console.log("<<-------------------------POPDetails");
                     throttle = throttle + 1;
                     doneDevices = doneDevices + 1;                   
                     logger.info(self.name+" done, total done: "+doneDevices);  
-                    self.filteredInterestInterfacesMap.clear();    
-                    self.interestInterfacesMap.clear();      
+
+                    self.filteredInterestInterfacesMap.clear();
+                    self.filteredInterestInterfacesMap = null;
+                    self.interestInterfacesMap.clear();
+                    self.interestInterfacesMap = null;
+                    self.interfaceUpdateMap.clear();
+                    self.interfaceUpdateMap = null;
+                    self.deviceInterfaces = null;
+                    self.interfaceRemoveList = null;
+
+
                 }
                 if(self.session) self.session = null;
                 self.cleanSessionClose = true;
@@ -144,14 +158,6 @@ console.log("<<-------------------------POPDetails");
             }
             catch(e){
                 logger.error("caught an error inside self.session.onClose: "+e);
-                // if(self.inSyncMode && !self.cleanSessionClose){
-                //     throttle = throttle + 1;
-                //     doneDevices = doneDevices + 1;                   
-                //     logger.info(self.name+" done, total done: "+doneDevices);            
-                // }
-                // if(self.session) self.session = null;
-                // self.cleanSessionClose = true;
-                // logger.info("self.session.onClose, snmp socket closed for "+self.name);                    
             }
             finally{
             }
@@ -169,6 +175,14 @@ console.log("<<-------------------------POPDetails");
                     throttle = throttle + 1;
                     doneDevices = doneDevices + 1;                   
                     logger.info(self.name+" done, total done: "+doneDevices);            
+                    self.filteredInterestInterfacesMap.clear();
+                    self.filteredInterestInterfacesMap = null;
+                    self.interestInterfacesMap.clear();
+                    self.interestInterfacesMap = null;
+                    self.interfaceUpdateMap.clear();
+                    self.interfaceUpdateMap = null;
+                    self.deviceInterfaces = null;
+                    self.interfaceRemoveList = null;
                 }
                 if(self.session) self.session = null;
                 self.cleanSessionClose = true;
@@ -208,6 +222,12 @@ console.log("<<-------------------------POPDetails");
     };
     //this function takes an interface as argument and update its device details
     self.updateDeviceDetailsForInterface = function(theInterface){
+        if((self.deviceType.toLowerCase() =="msan") || (self.deviceType.toLowerCase() =="gpon")){
+            self.cabinetName = self.cabinetName;
+        }
+        else{
+            self.cabinetName = "Unknown";
+        }
         theInterface.hostname = self.device.hostname;
         theInterface.devType = S(self.deviceType).s;
         theInterface.devVendor = S(self.deviceVendor).s;
@@ -215,16 +235,6 @@ console.log("<<-------------------------POPDetails");
         theInterface.devPOP = S(self.devicePOP).s;
         theInterface.devCabinet = S(self.cabinetName).s;
         theInterface.devPOP = self.devicePOP;
-        // if((theInterface.devType.toLowerCase() =="router") || (theInterface.devType.toLowerCase() =="switch")){
-        //     if(self.devicePOP && self.devicePOP != "Unknown") theInterface.devPOP = self.devicePOP;//+"_"+self.deviceGove;
-        //     else theInterface.devPOP = "Unknown";
-        // }
-        if((self.deviceType.toLowerCase() =="msan") || (self.deviceType.toLowerCase() =="gpon")){
-            self.cabinetName = self.cabinetName;
-        }
-        else{
-            self.cabinetName = "Unknown";
-        }
         theInterface.devGov =   self.deviceGove ;
         theInterface.devDistrict = self.deviceDistrict ;
         theInterface.devSector = self.deviceSector ;
@@ -961,6 +971,14 @@ self.checkInterfaceInLinks = function(interfaceName){
                                 throttle = throttle + 1;
                                 doneDevices = doneDevices + 1;                   
                                 logger.info(self.name+" done, total done: "+doneDevices);            
+                                self.filteredInterestInterfacesMap.clear();
+                                self.filteredInterestInterfacesMap = null;
+                                self.interestInterfacesMap.clear();
+                                self.interestInterfacesMap = null;
+                                self.interfaceUpdateMap.clear();
+                                self.interfaceUpdateMap = null;
+                                self.deviceInterfaces = null;
+                                self.interfaceRemoveList = null;
                             }
                             if(self.session) self.session = null;
                             self.cleanSessionClose = true;
@@ -993,6 +1011,14 @@ self.checkInterfaceInLinks = function(interfaceName){
                                 throttle = throttle + 1;
                                 doneDevices = doneDevices + 1;                   
                                 logger.info(self.name+" done, total done: "+doneDevices);            
+                                self.filteredInterestInterfacesMap.clear();
+                                self.filteredInterestInterfacesMap = null;
+                                self.interestInterfacesMap.clear();
+                                self.interestInterfacesMap = null;
+                                self.interfaceUpdateMap.clear();
+                                self.interfaceUpdateMap = null;
+                                self.deviceInterfaces = null;
+                                self.interfaceRemoveList = null;
                             }
                             if(self.session) self.session = null;
                             self.cleanSessionClose = true;
@@ -1036,11 +1062,19 @@ self.checkInterfaceInLinks = function(interfaceName){
                         self.session.close();
                     }
                     catch(e){
-                            logger.error("caught an error inside self.saveDevice: "+e);
-                            if(self.inSyncMode && !self.cleanSessionClose){
+                        logger.error("caught an error inside self.saveDevice: "+e);
+                        if(self.inSyncMode && !self.cleanSessionClose){
                             throttle = throttle + 1;
                             doneDevices = doneDevices + 1;                   
                             logger.info(self.name+" done, total done: "+doneDevices);            
+                            self.filteredInterestInterfacesMap.clear();
+                            self.filteredInterestInterfacesMap = null;
+                            self.interestInterfacesMap.clear();
+                            self.interestInterfacesMap = null;
+                            self.interfaceUpdateMap.clear();
+                            self.interfaceUpdateMap = null;
+                            self.deviceInterfaces = null;
+                            self.interfaceRemoveList = null;
                         }
                         if(self.session) self.session = null;
                         self.cleanSessionClose = true;
@@ -1067,6 +1101,14 @@ self.checkInterfaceInLinks = function(interfaceName){
                         throttle = throttle + 1;
                         doneDevices = doneDevices + 1;                   
                         logger.info(self.name+" done, total done: "+doneDevices);            
+                        self.filteredInterestInterfacesMap.clear();
+                        self.filteredInterestInterfacesMap = null;
+                        self.interestInterfacesMap.clear();
+                        self.interestInterfacesMap = null;
+                        self.interfaceUpdateMap.clear();
+                        self.interfaceUpdateMap = null;
+                        self.deviceInterfaces = null;
+                        self.interfaceRemoveList = null;
                     }
                     if(self.session) self.session = null;
                     self.cleanSessionClose = true;
@@ -1498,6 +1540,14 @@ self.checkInterfaceInLinks = function(interfaceName){
                         throttle = throttle + 1;
                         doneDevices = doneDevices + 1;                   
                         logger.info(self.name+" done, total done: "+doneDevices);            
+                        self.filteredInterestInterfacesMap.clear();
+                        self.filteredInterestInterfacesMap = null;
+                        self.interestInterfacesMap.clear();
+                        self.interestInterfacesMap = null;
+                        self.interfaceUpdateMap.clear();
+                        self.interfaceUpdateMap = null;
+                        self.deviceInterfaces = null;
+                        self.interfaceRemoveList = null;
                     }
                     if(self.session) self.session = null;
                     self.cleanSessionClose = true;
@@ -1539,6 +1589,14 @@ self.checkInterfaceInLinks = function(interfaceName){
                         throttle = throttle + 1;
                         doneDevices = doneDevices + 1;                   
                         logger.info(self.name+" done, total done: "+doneDevices);            
+                        self.filteredInterestInterfacesMap.clear();
+                        self.filteredInterestInterfacesMap = null;
+                        self.interestInterfacesMap.clear();
+                        self.interestInterfacesMap = null;
+                        self.interfaceUpdateMap.clear();
+                        self.interfaceUpdateMap = null;
+                        self.deviceInterfaces = null;
+                        self.interfaceRemoveList = null;
                     }
                     if(self.session) self.session = null;
                     self.cleanSessionClose = true;
@@ -1606,6 +1664,14 @@ self.checkInterfaceInLinks = function(interfaceName){
                                     throttle = throttle + 1;
                                     doneDevices = doneDevices + 1;                   
                                     logger.info(self.name+" done, total done: "+doneDevices);            
+                                    self.filteredInterestInterfacesMap.clear();
+                                    self.filteredInterestInterfacesMap = null;
+                                    self.interestInterfacesMap.clear();
+                                    self.interestInterfacesMap = null;
+                                    self.interfaceUpdateMap.clear();
+                                    self.interfaceUpdateMap = null;
+                                    self.deviceInterfaces = null;
+                                    self.interfaceRemoveList = null;
                                 }
                                 if(self.session) self.session = null;
                                 self.cleanSessionClose = true;
@@ -1826,88 +1892,43 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
 
             modelOID = "."+modelOID;
 
-                var discoDevice ;
-                getDeviceInfo(modelOID,hostname)
-                .then(function(deviceExtraDetails){
-                aDevice = {
-                        hostname: hostname.trim(),
-                        ipaddress: ipaddress.trim(),
-                        author: {id: request.user._id, email: request.user.email},
-                        community: communityString.trim(),
-                        type: deviceExtraDetails.deviceModelOID.type.trim(),
-                        model: deviceExtraDetails.deviceModelOID.model.trim(),
-                        vendor: deviceExtraDetails.deviceModelOID.vendor.trim(),
-                        sysObjectID: modelOID,
-                        sysName: sysName,
-                        pop:  deviceExtraDetails.POPDetails.shortName,
-                        sector: deviceExtraDetails.POPDetails.sector, 
-                        gov:  deviceExtraDetails.POPDetails.gov 
-                };
-                aDevice.interfaces = [];
-                Device.create(aDevice, function(error, device) {
-                    if (error) {
-                        logger.error(error);
-                        for (field in error.errors) {
-                            request.flash("error",error.errors[field].message);
-                        }
-                        
+            var discoDevice ;
+            getDeviceInfo(modelOID,hostname)
+            .then(function(deviceExtraDetails){
+            aDevice = {
+                    hostname: hostname.trim(),
+                    ipaddress: ipaddress.trim(),
+                    author: {id: request.user._id, email: request.user.email},
+                    community: communityString.trim(),
+                    type: deviceExtraDetails.deviceModelOID.type.trim(),
+                    model: deviceExtraDetails.deviceModelOID.model.trim(),
+                    vendor: deviceExtraDetails.deviceModelOID.vendor.trim(),
+                    sysObjectID: modelOID,
+                    sysName: sysName,
+                    pop:  deviceExtraDetails.POPDetails.shortName+"_"+deviceExtraDetails.POPDetails.gov,
+                    sector: deviceExtraDetails.POPDetails.sector, 
+                    gov:  deviceExtraDetails.POPDetails.gov 
+            };
+            aDevice.interfaces = [];
+            Device.create(aDevice, function(error, device) {
+                if (error) {
+                    logger.error(error);
+                    for (field in error.errors) {
+                        request.flash("error",error.errors[field].message);
                     }
-                    else {
-                         logger.info("new device created and saved");
-                        request.flash("success","Successfully added device, will start device discovery now");
-                        // var discoDevice = new discoveredDevice(device);
-                         discoDevice = new discoveredDevice(device,deviceExtraDetails.linkEnrichmentData,deviceExtraDetails.cabinetName,deviceExtraDetails.POPDetails);
-                            discoDevice.discoverInterfaces();
-                    }
-                    response.redirect("/devices"); //will redirect as a GET request
-                });
-                })
-                .catch();
-
-
-            // getDeviceInfo(modelOID,parsedHostName.devicePOPName,parsedHostName.popGove)
-            // .then(function(extraDetails){
-            //     aDevice = {
-            //             hostname: hostname.trim(),
-            //             ipaddress: ipaddress.trim(),
-            //             author: {id: request.user._id, email: request.user.email},
-            //             community: communityString.trim(),
-            //             type: extraDetails.deviceModelOID.type.trim(),
-            //             model: extraDetails.deviceModelOID.model.trim(),
-            //             vendor: extraDetails.deviceModelOID.vendor.trim(),
-            //             sysObjectID: modelOID,
-            //             sysName: sysName,
-            //             pop:  extraDetails.devicePOP.shortName,
-            //             sector: extraDetails.devicePOP.sector, 
-            //             gov:  extraDetails.devicePOP.gov 
-            //     };
-            //     aDevice.interfaces = [];
-            //      logger.info("Device discovery started");
-            //      logger.info(aDevice.hostname + " "+ aDevice.ipaddress + " "+aDevice.community);
-            //     Device.create(aDevice, function(error, device) {
-            //         if (error) {
-            //             logger.error(error);
-            //             for (field in error.errors) {
-            //                 request.flash("error",error.errors[field].message);
-            //             }
-                        
-            //         }
-            //         else {
-            //              logger.info("new device created and saved");
-            //             request.flash("success","Successfully added device, will start device discovery now");
-            //             var discoDevice = new discoveredDevice(device);
-            //             getDeviceFarLinks(device.hostname)
-            //             .then(function(linkEnrichmentData){
-            //                 discoDevice.linkEnrichmentData = linkEnrichmentData;
-            //                 discoDevice.discoverInterfaces();
-            //             })
-            //             .catch();
-            //         }
-            //         response.redirect("/devices"); //will redirect as a GET request
-            //     });
-
-            // })
-            // .catch();
+                    
+                }
+                else {
+                     logger.info("new device created and saved");
+                    request.flash("success","Successfully added device, will start device discovery now");
+                    // var discoDevice = new discoveredDevice(device);
+                     discoDevice = new discoveredDevice(device,deviceExtraDetails.linkEnrichmentData,deviceExtraDetails.cabinetName,deviceExtraDetails.POPDetails);
+                        discoDevice.discoverInterfaces();
+                }
+                response.redirect("/devices"); //will redirect as a GET request
+            });
+            })
+            .catch();
         }
     });
 
@@ -2132,13 +2153,19 @@ router.put("/:id", middleware.isLoggedIn ,function(request,response){
     request.body.device.lastUpdatedBy = {id: request.user._id, email: request.user.email};
     // note: Select2 has a defect which removes pop name and replace it with the id
     // POP.findById({_id: mongoose.Types.ObjectId(request.body.device.popName.name)},function(error,foundPOP){
+        console.log(request.body.device);
     POP.findById({_id: mongoose.Types.ObjectId(request.body.device.pop)},function(error,foundPOP){
         if(error){
              logger.error(error);
         }
         else{
             // request.body.device.popName.name = foundPOP.name;
-            request.body.device.pop = foundPOP.name;
+            request.body.device.pop = foundPOP.shortName+"_"+foundPOP.gov;
+            request.body.device.popLongName =  foundPOP.popLongName || "Unknown";
+            request.body.device.sector =  foundPOP.sector || "Unknown";
+            request.body.device.gov =  foundPOP.gov || "Unknown";
+            request.body.device.district =  foundPOP.district || "Unknown";
+            request.body.device.popType =  foundPOP.popType || "Unknown";
             // Governorate.findById({_id: mongoose.Types.ObjectId(request.body.device.governorate.name)},function(error,foundGove){
                 // if(error){
                 //      logger.error(error);

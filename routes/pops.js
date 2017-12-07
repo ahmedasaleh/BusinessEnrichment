@@ -4,14 +4,69 @@ var POP         = require("../models/pop");
 var middleware  = require("../middleware");
 var seedDB      = require("../seeds");
 var aPOP = new POP() ;
+var S               = require('string');
+
 
 //Mongoose PAGINATION
-router.get("/pagination",middleware.isLoggedIn ,function(request, response) {
-    POP.paginate({}, { select: 'shortName', lean: true,limit: 5000 }, function(err, result) {
-        response.setHeader('Content-Type', 'application/json');
-        response.send(JSON.stringify(result));
-    });
+// router.get("/pagination",middleware.isLoggedIn ,function(request, response) {
+//     POP.paginate({}, { select: 'shortName', lean: true,limit: 5000 }, function(err, result) {
+//         console.log(result);
+//         response.setHeader('Content-Type', 'application/json');
+//         response.send(JSON.stringify(result));
+//     });
+// });
+
+router.get("/pagination?", middleware.isLoggedIn ,function(request, response) {
+        // limit is the number of rows per page
+        var limit = parseInt(request.query.limit);
+        // offset is the page number
+        var skip  = parseInt(request.query.offset);
+        // search string
+        var searchQuery = request.query.search ;//: 'xe-'
+
+        if(S(searchQuery).isEmpty()){
+            POP.count({}, function(err, popsCount) {
+                POP.find({},'shortName gov',{lean:true,skip:skip,limit:limit}, function(err, foundPOPs) {
+                    if (err) {
+                         logger.error(err);
+                    }
+                    else {
+                        var data = "{\"total\":"+ popsCount+",\"rows\":" +  JSON.stringify(foundPOPs).escapeSpecialChars()+"}";
+                        response.setHeader('Content-Type', 'application/json');
+                        // response.send((foundDevices)); 
+                        response.send(data);        
+                    }
+
+                });
+
+            });
+
+        } 
+        else {
+            searchQuery = ".*"+S(searchQuery).s.toLowerCase()+".*";
+            POP.count({'$or' : [
+                {shortName: new RegExp(searchQuery,'i')}
+                ]}, 
+                function(err, m_popsCount) {
+                POP.find({'$or' : [
+                    {shortName: new RegExp(searchQuery,'i')}
+                ]},'shortName gov',{lean:true,skip:skip,limit:limit}, function(err, foundPOPs) {
+                    if (err) {
+                         logger.error(err);
+                    }
+                    else {
+                        var data = "{\"total\":"+ m_popsCount+",\"rows\":" + JSON.stringify(foundPOPs)+"}";
+                        response.setHeader('Content-Type', 'application/json');
+                        // response.send((foundDevices)); 
+                        response.send(data);        
+                    }
+
+                });
+            });
+
+        }
 });
+
 //INDEX - show all pops
 router.get("/", middleware.isLoggedIn ,function(request, response) {
     

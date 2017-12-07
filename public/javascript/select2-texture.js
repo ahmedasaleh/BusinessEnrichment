@@ -6,7 +6,7 @@ $j(document).ready(function() {
 	var IP = "" ;//= nodesocket.ip;//"127.0.0.1";
 	var PORT = "";// = nodesocket.port;//"8080";
 	var socket = "";
-	var pops_pagination_url = "";//"http://"+socket+"/pops/pagination";
+	var pops_pagination_url = "";//http://"+socket+"/pops/pagination";
 	var sectors_pagination_url = "";//"http://"+socket+"/sectors/pagination";
 	var governorates_pagination_url = "";//"http://"+socket+"/governorates/pagination";
 	var interfaces_pagination_url = "";//"http://"+socket+"/interfaces/pagination";
@@ -26,21 +26,36 @@ $j(document).ready(function() {
 		sectors_pagination_url = "http://"+socket+"/sectors/pagination";
 		governorates_pagination_url = "http://"+socket+"/governorates/pagination";
 		
+$j('#newxx-device-pop-name').select2({
+  ajax: {
+    url: 'http://213.158.183.140:8080/pops/pagination',
+    data: function (params) {
+    	console.log(params);
+      var query = {
+        search: params.term,
+        type: 'public'
+      }
+
+      // Query parameters will be ?search=[term]&type=public
+      return query;
+    }
+  }
+});
+
 		$j.ajax({
-		  url: pops_pagination_url,//"http://127.0.0.1:8080/pops/pagination",//
+		  url: pops_pagination_url,
 		  beforeSend: function( xhr ) {
 		    xhr.overrideMimeType( "text/plain; charset=x-user-defined" );
 		  }
 		}).done(function( data ) {
-		    if ( console && console.log ) {
-		        popsData = JSON.parse(data)["docs"];
-		        console.log(popsData[0]);
+		    // if ( console && console.log ) {
+		        popsData = JSON.parse(data)["rows"];
 				mappedPopsData = $j.map(popsData, function (obj) {
-				obj.text = obj.text || obj.name; // replace name with the property used for the text
-		        // console.log(obj.text);
-				return obj;
+					// obj.text = obj.text || obj.name; // replace name with the property used for the text
+					obj.text = obj.shortName; // replace name with the property used for the text
+					obj.id = obj._id;
+					return obj;
 				});
-
 				$j("#device-pop-name").select2({
 					placeholder: 'type something...',
 					selectOnClose: true,
@@ -57,6 +72,7 @@ $j(document).ready(function() {
 				$j("#new-device-pop-name").select2({
 					placeholder: 'type something...',
 					selectOnClose: true,
+					// dataType : "json",
 					data: mappedPopsData,
 			        theme: "bootstrap",
 			        width: null,
@@ -73,7 +89,7 @@ $j(document).ready(function() {
 					minimumInputLength: 1
 				});
 
-		    }
+		    // }
 		});
 
 		$j.ajax({
