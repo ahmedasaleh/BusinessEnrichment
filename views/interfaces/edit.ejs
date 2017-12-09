@@ -149,6 +149,21 @@
                     <input class="form-control" type="text" name="interface[pop]" value="<%= interface.pop %>">
                 </div>
                 <div class="form-group">
+                    <label for="isUpLink">Is UpLink</label>
+                    <select class="form-control" type="text" name="interface[isUpLink]" value="<%= interface.isUpLink %>">
+                    <% if(interface.isUpLink === undefined ) { %>
+                        <option value="1">1</option>
+                        <option value="0" selected="selected">0</option>
+                    <% } else if( parseInt(interface.isUpLink) == 0) {%>
+                        <option value="1">1</option>
+                        <option value="0" selected="selected">0</option>
+                    <% } else {%>
+                        <option value="1" selected="selected">1</option>
+                        <option value="0">0</option>
+                        <% } %>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label for="provisoFlag">To Be Exported to TNPM</label>
                     <select class="form-control" type="text" name="interface[provisoFlag]" value="<%= interface.provisoFlag %>">
                     <% if(interface.provisoFlag === undefined ) { %>

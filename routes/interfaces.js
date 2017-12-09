@@ -242,18 +242,22 @@ var getDeviceID = function(anID){
     return interfaceDeviceID ;
 };
 var constructInterfaceID = function(deviceIP,ifIndex){
-    //Mongodb uses Object id of 24 char length in hex format
-    //will let ipaddress and ifIndex share this length
-    var ipaddress = S(deviceIP).replaceAll('.', 'a').padLeft(12, 'b').s;
-    var ifindex ;
-    if(ipaddress.length <= 12){
-        ifindex = S(ifIndex).padLeft(12, 'c').s;
-    }
-    else{
-        ifindex = S(ifIndex).padLeft((24 - ipaddress.length), 'c').s;
-    }
-    var str_id = ipaddress+ifindex;
-    return str_id;
+        //Mongodb uses Object id of 24 char length in hex format
+        //will let ipaddress and ifIndex share this length
+        // 10.0.0.1    to 10.255.255.254   
+        // 172.16.0.1  to 172.31.255.254  
+        // 192.168.0.1 to 192.168.255.254  
+        var ipaddress = deviceIP.replace('.','');//replace first dot
+        ipaddress = S(ipaddress).replaceAll('.', 'a').padLeft(12, 'b').s;
+        var ifindex ;
+        if(ipaddress.length <= 12){
+            ifindex = S(ifIndex).padLeft(12, 'c').s;
+        }
+        else{
+            ifindex = S(ifIndex).padLeft((24 - ipaddress.length), 'c').s;
+        }
+        var str_id = ipaddress+ifindex;
+        return str_id;
 };
 
 

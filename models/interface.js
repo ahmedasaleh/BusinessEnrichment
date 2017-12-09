@@ -62,7 +62,10 @@ var interfaceSchema = new mongoose.Schema({
     ipaddress:  String,
     pop: {type: String,default: "Unknown"}, // pop
     isUpLink: {type: String,default: "0"},
-    // parentPOP: {type: String,default: "Unknown"},
+    ifSpeedText: {type: String,default: "Unknown"},
+    ifHighSpeedText: {type: String,default: "Unknown"},
+    sp_speedText: {type: String,default: "Unknown"},
+    actualspeedText: {type: String,default: "Unknown"},
     devPOP: {type: String,default: "Unknown"}, //device pop
     devPOPLongName: {type: String,default: "Unknown"}, //device pop
     devCabinet: {type: String,default: "Unknown"},//deviceCabinetName
