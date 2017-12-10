@@ -1771,7 +1771,7 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
     var hostname = request.body.device.hostname;
     var ipaddress = request.body.device.ipaddress;
     var communityString = request.body.device.community || "public";
-    var parsedHostName = Parser.parseHostname(S(hostname));
+    // var parsedHostName = Parser.parseHostname(S(hostname));
     var type ;
     var model ;
     var modelOID = "";
@@ -2152,7 +2152,7 @@ router.delete("/api/:hostname",  middleware.isAPIAuthenticated ,function(request
                 var interfaceList = foundDevice.interfaces;
                 //iterate over them and delete
                 interfaceList.forEach(function(interface,key, callback ){
-                    logger.warn("NNM Deleting interface with index: "+interface.ifIndex);
+                    logger.warn("IIB Deleting interface with index: "+interface.ifIndex);
                     // {"hostname" : S(interfaceList[i].hostname).s , "ifIndex" : S(interfaceList[i].ifIndex).toInt() }
                     Interface.findOneAndRemove({"ipaddress" : S(interface.ipaddress).s , "ifIndex" : S(interface.ifIndex).toInt() },function(error){
                         if(error)  logger.error(error);
@@ -2186,28 +2186,31 @@ router.delete("/api/:hostname",  middleware.isAPIAuthenticated ,function(request
 //http://213.158.183.140:8080/devices/api/OBORCB11-M99H-C-EG/104.236.166.95/public/OBORCB11
 router.post("/api/:hostname/:ipaddress/:communitystring/:popname", middleware.isAPIAuthenticated ,function(request, response) {
     indexRoutes.invalidateAPIsession();
-    logger.info("received request from NNM");
+    logger.info("received request from IIB");
+
     //get data from a form and add to devices array
     var hostname = request.params.hostname;
     var ipaddress = request.params.ipaddress;
     var communityString = request.params.community || "public";
     var aPOP = request.params.popname;//this is redundant after the latest modifications
 
-    var parsedHostName = Parser.parseHostname(S(hostname));
+    if(communityString == S(process.env.COMMUNITY_KEY1).s) communityString = process.env.COMMUNITY_VALUE1
+
+    // var parsedHostName = Parser.parseHostname(S(hostname));
 
     var type ;//= request.body.device.type;
     var model ;//= request.body.device.model;
     var modelOID = "";
     var vendor ;//= request.body.device.vendor;
 
-    logger.info("device with the following information will be added through NNM: "+hostname+", "+ipaddress+", "+communityString+", "+aPOP);
+    logger.info("device with the following information will be added through iib: "+hostname+", "+ipaddress+", "+communityString+", "+aPOP);
 
     session = snmp.createSession(ipaddress, S(communityString).trim().s,{ timeout: 10000, retries: 1});
     session.get (systemDetails, function (error, varbinds) {
         if (error) {
             logger.error ("found error while retrieving sysObjectId for "+hostname+" "+error.toString());
-            request.flash("error","found error while retrieving sysObjectId ");
-            response.redirect("/devices"); 
+            // request.flash("error","found error while retrieving sysObjectId ");
+            response.json("found error while retrieving sysObjectId for "+hostname+" "+error.toString()); 
         } else {
             for (var i = 0; i < varbinds.length; i++) {
                 if (snmp.isVarbindError (varbinds[i])){
@@ -2221,21 +2224,21 @@ router.post("/api/:hostname/:ipaddress/:communitystring/:popname", middleware.is
 
             modelOID = "."+modelOID;
 
-            getDeviceInfo(modelOID,parsedHostName.devicePOPName,parsedHostName.popGove)
-            .then(function(extraDetails){
+            getDeviceInfo(modelOID,hostname)
+            .then(function(deviceExtraDetails){
                 aDevice = {
                         hostname: hostname.trim(),
                         ipaddress: ipaddress.trim(),
                         author: {id: request.user._id, email: request.user.email},
                         community: communityString.trim(),
-                        type: extraDetails.deviceModelOID.type.trim(),
-                        model: extraDetails.deviceModelOID.model.trim(),
-                        vendor: extraDetails.deviceModelOID.vendor.trim(),
+                        type: deviceExtraDetails.deviceModelOID.type.trim(),
+                        model: deviceExtraDetails.deviceModelOID.model.trim(),
+                        vendor: deviceExtraDetails.deviceModelOID.vendor.trim(),
                         sysObjectID: modelOID,
                         sysName: sysName,
-                        pop:  extraDetails.devicePOP.shortName,
-                        sector: extraDetails.devicePOP.sector, 
-                        gov:  extraDetails.devicePOP.gov 
+                        pop:  deviceExtraDetails.POPDetails.shortName+"_"+deviceExtraDetails.POPDetails.gov,
+                        sector: deviceExtraDetails.POPDetails.sector, 
+                        gov:  deviceExtraDetails.POPDetails.gov 
                 };
                 aDevice.interfaces = [];
                  logger.info("Device discovery started");
@@ -2243,13 +2246,10 @@ router.post("/api/:hostname/:ipaddress/:communitystring/:popname", middleware.is
                 Device.create(aDevice, function(error, device) {
                     if (error) {
                         logger.error(error);
-                        for (field in error.errors) {
-                            request.flash("error",error.errors[field].message);
-                        }
-                        
+                        response.json(error);
                     }
                     else {
-                         logger.info("new device created and saved");
+                        logger.info("new device created and saved");
                         request.flash("success","Successfully added device, will start device discovery now");
                         var discoDevice = new discoveredDevice(device);
                         getDeviceFarLinks(device.hostname)
@@ -2259,7 +2259,7 @@ router.post("/api/:hostname/:ipaddress/:communitystring/:popname", middleware.is
                         })
                         .catch();
                     }
-                    response.redirect("/devices"); //will redirect as a GET request
+                    response.json("Successfully added device, will start device discovery now"); 
                 });
 
             })
