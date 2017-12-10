@@ -1231,7 +1231,14 @@ self.checkInterfaceInLinks = function(interfaceName){
                         )//&& !(intf.ifName == S("Gi0/3").s) && !(intf.ifName == S("Gi0/1").s) && !(self.name == S("HELWAN-S02C-C-EG").s)) 
                     {
                         intf.counters = 32;
-                        if(hcInOctetsLarge || hcOutOctetsLarge) intf.counters = 64;
+                        if(hcInOctetsLarge || hcOutOctetsLarge) {
+							if(intf.ifHighSpeed && intf.ifHighSpeed>0) {
+								intf.counters = "64";
+							}
+							else{
+								intf.counters = "64_32";
+							}
+						}
                         var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress,intf.ifSpeed ,intf.ifHighSpeed);
                         if(enrichment) {
                             Object.assign(intf,enrichment);
@@ -1243,7 +1250,14 @@ self.checkInterfaceInLinks = function(interfaceName){
                     else if(((intf.devType.toLowerCase() =="msan") || (intf.devType.toLowerCase() =="gpon") || (intf.devType.toLowerCase() =="dslam"))  ){
                         if(((S(intf.ifType).toInt() == 6) || (S(intf.ifType).toInt() == 117))){
                             intf.counters = 32;
-                            if(hcInOctetsLarge || hcOutOctetsLarge) intf.counters = 64;
+							if(hcInOctetsLarge || hcOutOctetsLarge) {
+								if(intf.ifHighSpeed && intf.ifHighSpeed>0) {
+									intf.counters = "64";
+								}
+								else{
+									intf.counters = "64_32";
+								}
+							}
                             var enrichment = self.parseIfAlias(alias,self.name,name,intf.ifIndex,self.device.ipaddress,intf.ifSpeed ,intf.ifHighSpeed);
                             if(enrichment) {
                                 Object.assign(intf,enrichment);

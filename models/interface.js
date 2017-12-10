@@ -13,7 +13,8 @@ var interfaceSchema = new mongoose.Schema({
     ifHCInOctets: String,
     ifHCOutOctets: String,
     pollInterval: String,
-    counters: Number,
+    // counters: Number,
+    counters: String,
     type: String, //Local or WAN
     specialService: String,
     secondPOP: String,
