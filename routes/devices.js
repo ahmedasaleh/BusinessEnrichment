@@ -197,8 +197,9 @@ function discoveredDevice(device,linkEnrichmentData,cabinetName,POPDetails) {
         var str_id = ipaddress+ifindex;
         return str_id;
     };
-    self.convertSpeedToText = function(speedNumber){
+    self.convertSpeedToText = function(speedNumber,multiplier){
         var integerSpeed = S(speedNumber).toInt();
+        integerSpeed = integerSpeed * S(multiplier).toInt();
         var unit = " meg";
         var value = "1";
         var textSpeed = value+unit;
@@ -964,10 +965,10 @@ self.checkInterfaceInLinks = function(interfaceName){
         }
         if(anErichment) {
             anErichment.actualspeed = self.setActualSpeed(sp_speed,ifSpeed,ifHighSpeed);
-            anErichment.actualspeedText = self.convertSpeedToText(anErichment.actualspeed);
-            anErichment.ifSpeedText = self.convertSpeedToText(ifSpeed);
-            anErichment.ifHighSpeedText = self.convertSpeedToText(ifHighSpeed);
-            anErichment.sp_speedText = self.convertSpeedToText(anErichment.sp_speed);
+            anErichment.actualspeedText = self.convertSpeedToText(anErichment.actualspeed,1);
+            anErichment.ifSpeedText = self.convertSpeedToText(ifSpeed,1);
+            anErichment.ifHighSpeedText = self.convertSpeedToText(ifHighSpeed,1000000);
+            anErichment.sp_speedText = self.convertSpeedToText(anErichment.sp_speed,1);
         }
 
         return anErichment;
@@ -1658,7 +1659,7 @@ router.get("/pagination?", middleware.isLoggedIn ,function(request, response) {
 
         if(S(searchQuery).isEmpty()){
             Device.count({}, function(err, devicesCount) {
-                Device.find({},'hostname ipaddress pop sector gov district type model vendor community createdAt updatedAt lastSyncTime author lastUpdatedBy sysObjectID sysName sysDescr',{lean:true,skip:skip,limit:limit}, function(err, foundDevices) {
+                Device.find({},'hostname ipaddress pop popLongName sector gov district type model vendor community createdAt updatedAt lastSyncTime author lastUpdatedBy sysObjectID sysName sysDescr',{lean:true,skip:skip,limit:limit}, function(err, foundDevices) {
                     if (err) {
                          logger.error(err);
                     }
@@ -1691,7 +1692,7 @@ router.get("/pagination?", middleware.isLoggedIn ,function(request, response) {
                 {type: new RegExp(searchQuery,'i')},
                 {model: new RegExp(searchQuery,'i')},
                 {vendor: new RegExp(searchQuery,'i')},
-                {pop: new RegExp(searchQuery,'i')}]},'hostname ipaddress pop sector gov district type model vendor community createdAt updatedAt lastSyncTime author lastUpdatedBy sysObjectID sysName sysDescr',{lean:true,skip:skip,limit:limit}, function(err, foundDevices) {
+                {pop: new RegExp(searchQuery,'i')}]},'hostname ipaddress pop popLongName sector gov district type model vendor community createdAt updatedAt lastSyncTime author lastUpdatedBy sysObjectID sysName sysDescr',{lean:true,skip:skip,limit:limit}, function(err, foundDevices) {
                     if (err) {
                          logger.error(err);
                     }
