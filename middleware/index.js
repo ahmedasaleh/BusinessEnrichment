@@ -57,12 +57,12 @@ middlewareObj.checkInterfaceOwnership = function(request, response, next) {
 }
 
 middlewareObj.isLoggedIn = function(request, response, next){
-    // return next();//hack
-    if(request.isAuthenticated()){
-        return next();
-    }
-    request.flash("error", "You need to be logged in to do that");
-    response.redirect("/login");
+    return next();//hack
+    // if(request.isAuthenticated()){
+    //     return next();
+    // }
+    // request.flash("error", "You need to be logged in to do that");
+    // response.redirect("/login");
 }
 
 middlewareObj.isAPIAuthenticated = function(request, response, next){

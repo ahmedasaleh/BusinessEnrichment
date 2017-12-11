@@ -119,6 +119,9 @@ function discoveredDevice(device,linkEnrichmentData,cabinetName,POPDetails) {
     self.devicePOPType = self.device.popType;
     self.devicePOPLongName = self.device.popLongName;
 
+    if(self.device.sector == S("#N/A").s) self.deviceSector = "";
+    if(self.device.district == S("#N/A").s) self.deviceDistrict = "";
+
     if(S(self.deviceGove).isEmpty() || S(self.deviceGove).s == "Unknown" && !(self.device.updatedAt instanceof Date)) self.deviceGove = POPDetails.gov;
     if(S(self.deviceSector).isEmpty() || S(self.deviceSector).s == "Unknown" && !(self.device.updatedAt instanceof Date)) self.deviceSector = POPDetails.sector;
     if(S(self.deviceDistrict).isEmpty() || S(self.deviceDistrict).s == "Unknown" && !(self.device.updatedAt instanceof Date)) self.deviceDistrict = POPDetails.district;
@@ -415,8 +418,8 @@ self.checkInterfaceInLinks = function(interfaceName){
         // var pop = self.devicePOP;
         var parentPOP = "Unknown";
         if(alias){
-            //label = hostname+" "+interfaceName+" "+alias;
-            label = hostname+" "+interfaceName;
+            label = hostname+" "+interfaceName+" "+alias;
+            // label = hostname+" "+interfaceName;
         }
         else{
             label = hostname+" "+interfaceName;
@@ -549,6 +552,7 @@ self.checkInterfaceInLinks = function(interfaceName){
             skipNextCheck = true;
             var specialService="Alpha-Bitstream";
             provisoFlag=1;
+            pollInterval = "02min";
             var enrichmentString = S(alias).replaceAll(' ','-');//trying to unify byremoving spaces
             var enrichmentFields = S(enrichmentString).splitLeft('-');
             var sp_customer="Unknown",sp_linkNumber="Unknown",sp_speed=0;
@@ -1045,39 +1049,55 @@ self.checkInterfaceInLinks = function(interfaceName){
         if(self.deviceSaved == false){
             try{
                 self.deviceSaved = true;
+                var intfs = [];
+                var finalIntfs = [];
                 //now the device will use interestInterfaces array during save action, so modify it to include only new and updated interfaces
                 logger.info("self.saveDevice() for "+self.name);
                 // console.log("self.interfaceUpdateMap.size: "+self.interfaceUpdateMap.size+" | "+self.filteredInterestInterfacesMap.size);
+                console.log("1-self.deviceInterfaces.length: "+self.deviceInterfaces.length);
+                console.log("self.interfaceUpdateMap.size: "+self.interfaceUpdateMap.size);
+                console.log("self.filteredInterestInterfacesMap.size: "+self.filteredInterestInterfacesMap.size);
                 self.interfaceUpdateMap.forEach(function(interface,key) {
                     self.deviceInterfaces.push(interface);
                     if(self.filteredInterestInterfacesMap.has(key)) self.filteredInterestInterfacesMap.delete(key);
                 });
         
                 self.filteredInterestInterfacesMap.forEach(function(interface, key) {
-                    self.deviceInterfaces.push(interface);
+                    if(self.deviceInterfaces.length < 15000) self.deviceInterfaces.push(interface);
+                    else intfs.push(interface);
                 });
-                Device.findByIdAndUpdate(device._id,{interfaces: self.deviceInterfaces, discovered: true, lastSyncTime: new Date(),deviceSyncCycles:self.deviceSyncCycles,
-                    type: self.deviceType,model: self.deviceModel,vendor: self.deviceVendor,sysObjectID: self.device.sysObjectID,sysName: self.sysName,pop:self.devicePOP,
-                    popLongName:self.devicePOPLongName,cabinet:self.cabinetName,sector:self.deviceSector,gov:self.deviceGove,district:self.deviceDistrict,
-                    popType:self.devicePOPType},function(error,updatedDevice){
-                    if(error){
-                         logger.error(error);
-                    }
-                    else{
-                        if(self.session) {
-                            try{
-                                self.session.close();
-                            }
-                            catch(e){
-                                logger.error("caught an error inside self.saveDevice: "+e);
-                                self.destroy();
-                                logger.info("self.saveDevice, snmp socket closed for "+self.name);                    
-                            }
-                            finally{
+                finalIntfs = self.deviceInterfaces.concat(intfs);
+                console.log("2-self.deviceInterfaces.length: "+self.deviceInterfaces.length);
+                console.log("3-finalIntfs.length: "+finalIntfs.length);
+                    // Device.findByIdAndUpdate(device._id,{interfaces: self.deviceInterfaces, discovered: true, lastSyncTime: new Date(),deviceSyncCycles:self.deviceSyncCycles,
+                    Device.findByIdAndUpdate(device._id,{interfaces: finalIntfs, discovered: true, lastSyncTime: new Date(),deviceSyncCycles:self.deviceSyncCycles,
+                        type: self.deviceType,model: self.deviceModel,vendor: self.deviceVendor,sysObjectID: self.device.sysObjectID,sysName: self.sysName,pop:self.devicePOP,
+                        popLongName:self.devicePOPLongName,cabinet:self.cabinetName,sector:self.deviceSector,gov:self.deviceGove,district:self.deviceDistrict,
+                        popType:self.devicePOPType},function(error,updatedDevice){
+                        if(error){
+                             logger.error(error);
+                        }
+                        else{
+                            // if(intfs.length > 0){
+                            //     Device.findByIdAndUpdate(device._id,{interfaces: finalIntfs, discovered: true, lastSyncTime: new Date(),deviceSyncCycles:self.deviceSyncCycles,
+                            //         type: self.deviceType,model: self.deviceModel,vendor: self.deviceVendor,sysObjectID: self.device.sysObjectID,sysName: self.sysName,pop:self.devicePOP,
+                            //         popLongName:self.devicePOPLongName,cabinet:self.cabinetName,sector:self.deviceSector,gov:self.deviceGove,district:self.deviceDistrict,
+                            //         popType:self.devicePOPType},function(error,updatedDevice){ if(error) logger.error(error)});
+                            // }
+                            if(self.session) {
+                                try{
+                                    self.session.close();
+                                }
+                                catch(e){
+                                    logger.error("caught an error inside self.saveDevice: "+e);
+                                    self.destroy();
+                                    logger.info("self.saveDevice, snmp socket closed for "+self.name);                    
+                                }
+                                finally{
+                                }
                             }
                         }
-                    }
-                });
+                    });
                 
             }
             catch(error){
@@ -1108,17 +1128,6 @@ self.checkInterfaceInLinks = function(interfaceName){
         intf = Object.assign(intf,interface);
         return intf;
     };    
-    // self.removeInterfaceFromInterestList = function(interfaceIndex){
-    //     // console.log("self.removeInterfaceFromInterestList: "+ interfaceIndex);
-    //     self.filteredInterestInterfacesMap.delete(interfaceIndex);
-    //     // for(var i=0; i<self.interestInterfaces.length;i++){
-    //     //     if(self.interestInterfaces[i].ifIndex ==  interfaceIndex){
-    //     //         self.interestInterfaces.splice(i,1);
-    //     //         self.interestInterfacesIndices.splice(i,1);
-    //     //         i = self.interestInterfaces.length;//break smoothly
-    //     //     }
-    //     // }
-    // };    
 
     self.retrieveIfTable = function( table,callback){
         var indexes = [];
@@ -1153,9 +1162,7 @@ self.checkInterfaceInLinks = function(interfaceName){
             // anInterface.lastUpdate = new Date();
             var interfaceType = S(anInterface.ifType).toInt();
             if(anInterface.operStatus == snmpConstants.ifAdminOperStatus.up){
-                    // self.interfaces[key] = anInterface;
-                    // self.interestKeys.push(key);//push index to be used during ifXTable walk
-                    self.interestInterfacesMap.set(key,anInterface);
+                    if(self.interestInterfacesMap.size < 21123) self.interestInterfacesMap.set(key,anInterface);
             }
         }); 
         self.ifTableError = false;
@@ -1295,6 +1302,7 @@ self.checkInterfaceInLinks = function(interfaceName){
         try{
             var ignoreMissing = true;
             interfaceList.forEach(function(interface,key) {
+                    if(self.filteredInterestInterfacesMap.has(key)) self.filteredInterestInterfacesMap.delete(key);
                     var interfaceID = self.constructInterfaceID(interface.ipaddress,interface.ifIndex);
                     Interface.findById(interfaceID,function(error,foundInterface){
                         if(error){
@@ -1484,10 +1492,8 @@ self.checkInterfaceInLinks = function(interfaceName){
 
     };
     self.saveInterfacesView = function(){
-        // if(self.interestInterfaces.length > 0) self.createInterfaces(self.interestInterfaces);
-        if(self.filteredInterestInterfacesMap.size > 0) self.createInterfaces(self.filteredInterestInterfacesMap);
-        // if(self.interfaceUpdateList.length > 0) self.updateInterfaces(self.interfaceUpdateList);
         if(self.interfaceUpdateMap.size > 0) self.updateInterfaces(self.interfaceUpdateMap);
+        if(self.filteredInterestInterfacesMap.size > 0) self.createInterfaces(self.filteredInterestInterfacesMap);
         if(self.interfaceRemoveList.length > 0) self.removeInterfaces(self.interfaceRemoveList);
     };
     self.ifXTableResponseCb = function  (error, table) {
@@ -1803,7 +1809,7 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
             aDevice = {
                     hostname: hostname.trim(),
                     ipaddress: ipaddress.trim(),
-                    author: {id: request.user._id, email: request.user.email},
+                    // author: {id: request.user._id, email: request.user.email},
                     community: communityString.trim(),
                     type: deviceExtraDetails.deviceModelOID.type.trim(),
                     model: deviceExtraDetails.deviceModelOID.model.trim(),
@@ -2191,10 +2197,13 @@ router.post("/api/:hostname/:ipaddress/:communitystring/:popname", middleware.is
     //get data from a form and add to devices array
     var hostname = request.params.hostname;
     var ipaddress = request.params.ipaddress;
-    var communityString = request.params.community || "public";
+    var communityString = request.params.communitystring || "public";
     var aPOP = request.params.popname;//this is redundant after the latest modifications
 
-    if(communityString == S(process.env.COMMUNITY_KEY1).s) communityString = process.env.COMMUNITY_VALUE1
+    if(S(communityString).s == S(process.env.COMMUNITY_KEY1).s) {
+        logger.info("found "+process.env.COMMUNITY_KEY1+" community string will replace it with "+process.env.COMMUNITY_VALUE1);
+        communityString = S(process.env.COMMUNITY_VALUE1).s;
+    }
 
     // var parsedHostName = Parser.parseHostname(S(hostname));
 
@@ -2203,7 +2212,7 @@ router.post("/api/:hostname/:ipaddress/:communitystring/:popname", middleware.is
     var modelOID = "";
     var vendor ;//= request.body.device.vendor;
 
-    logger.info("device with the following information will be added through iib: "+hostname+", "+ipaddress+", "+communityString+", "+aPOP);
+    logger.info("device with the following information will be added through IIB: "+hostname+", "+ipaddress+", "+communityString+", "+aPOP);
 
     session = snmp.createSession(ipaddress, S(communityString).trim().s,{ timeout: 10000, retries: 1});
     session.get (systemDetails, function (error, varbinds) {
@@ -2229,7 +2238,7 @@ router.post("/api/:hostname/:ipaddress/:communitystring/:popname", middleware.is
                 aDevice = {
                         hostname: hostname.trim(),
                         ipaddress: ipaddress.trim(),
-                        author: {id: request.user._id, email: request.user.email},
+                        // author: {id: request.user._id, email: request.user.email},
                         community: communityString.trim(),
                         type: deviceExtraDetails.deviceModelOID.type.trim(),
                         model: deviceExtraDetails.deviceModelOID.model.trim(),
@@ -2241,26 +2250,41 @@ router.post("/api/:hostname/:ipaddress/:communitystring/:popname", middleware.is
                         gov:  deviceExtraDetails.POPDetails.gov 
                 };
                 aDevice.interfaces = [];
-                 logger.info("Device discovery started");
+                 logger.info("Device discovery started from IIB");
                  logger.info(aDevice.hostname + " "+ aDevice.ipaddress + " "+aDevice.community);
-                Device.create(aDevice, function(error, device) {
-                    if (error) {
+                 Device.create(aDevice, function(error, device) {
+                     if (error) {
                         logger.error(error);
-                        response.json(error);
-                    }
-                    else {
-                        logger.info("new device created and saved");
-                        request.flash("success","Successfully added device, will start device discovery now");
-                        var discoDevice = new discoveredDevice(device);
-                        getDeviceFarLinks(device.hostname)
-                        .then(function(linkEnrichmentData){
-                            discoDevice.linkEnrichmentData = linkEnrichmentData;
-                            discoDevice.discoverInterfaces();
-                        })
-                        .catch();
-                    }
-                    response.json("Successfully added device, will start device discovery now"); 
-                });
+                        response.json(error); 
+                     }
+                     else {
+                          logger.info("new device created and saved");
+                         // response.json("Successfully added device, will start device discovery now");
+                         // var discoDevice = new discoveredDevice(device);
+                          discoDevice = new discoveredDevice(device,deviceExtraDetails.linkEnrichmentData,deviceExtraDetails.cabinetName,deviceExtraDetails.POPDetails);
+                             discoDevice.discoverInterfaces();
+                     }
+                     response.json("Successfully added device, will start device discovery now"); 
+                 });
+
+                // Device.create(aDevice, function(error, device) {
+                //     if (error) {
+                //         logger.error(error);
+                //         response.json(error);
+                //     }
+                //     else {
+                //         logger.info("new device created and saved");
+                //         request.flash("success","Successfully added device, will start device discovery now");
+                //         var discoDevice = new discoveredDevice(device);
+                //         getDeviceFarLinks(device.hostname)
+                //         .then(function(linkEnrichmentData){
+                //             discoDevice.linkEnrichmentData = linkEnrichmentData;
+                //             discoDevice.discoverInterfaces();
+                //         })
+                //         .catch();
+                //     }
+                //     response.json("Successfully added device, will start device discovery now"); 
+                // });
 
             })
             .catch();
