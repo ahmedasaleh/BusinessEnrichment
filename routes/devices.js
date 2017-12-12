@@ -39,6 +39,7 @@ var syncCyclesThreshold = 3;
 var SYNC_DIFFERENCE_IN_DAYS = 7;//difference in days
 var SYNC_DIFFERENCE_IN_HOURS = 168;//difference in hours
 var SYNC_DIFFERENCE_IN_MINUTES = 10080;//difference in minutes
+var BSON_LIMIT = 21123;
 //*********************
 //  SNMP HANDLER
 //*********************
@@ -1054,9 +1055,9 @@ self.checkInterfaceInLinks = function(interfaceName){
                 //now the device will use interestInterfaces array during save action, so modify it to include only new and updated interfaces
                 logger.info("self.saveDevice() for "+self.name);
                 // console.log("self.interfaceUpdateMap.size: "+self.interfaceUpdateMap.size+" | "+self.filteredInterestInterfacesMap.size);
-                console.log("1-self.deviceInterfaces.length: "+self.deviceInterfaces.length);
-                console.log("self.interfaceUpdateMap.size: "+self.interfaceUpdateMap.size);
-                console.log("self.filteredInterestInterfacesMap.size: "+self.filteredInterestInterfacesMap.size);
+                // console.log("1-self.deviceInterfaces.length: "+self.deviceInterfaces.length);
+                // console.log("self.interfaceUpdateMap.size: "+self.interfaceUpdateMap.size);
+                // console.log("self.filteredInterestInterfacesMap.size: "+self.filteredInterestInterfacesMap.size);
                 self.interfaceUpdateMap.forEach(function(interface,key) {
                     self.deviceInterfaces.push(interface);
                     if(self.filteredInterestInterfacesMap.has(key)) self.filteredInterestInterfacesMap.delete(key);
@@ -1067,8 +1068,8 @@ self.checkInterfaceInLinks = function(interfaceName){
                     else intfs.push(interface);
                 });
                 finalIntfs = self.deviceInterfaces.concat(intfs);
-                console.log("2-self.deviceInterfaces.length: "+self.deviceInterfaces.length);
-                console.log("3-finalIntfs.length: "+finalIntfs.length);
+                // console.log("2-self.deviceInterfaces.length: "+self.deviceInterfaces.length);
+                // console.log("3-finalIntfs.length: "+finalIntfs.length);
                     // Device.findByIdAndUpdate(device._id,{interfaces: self.deviceInterfaces, discovered: true, lastSyncTime: new Date(),deviceSyncCycles:self.deviceSyncCycles,
                     Device.findByIdAndUpdate(device._id,{interfaces: finalIntfs, discovered: true, lastSyncTime: new Date(),deviceSyncCycles:self.deviceSyncCycles,
                         type: self.deviceType,model: self.deviceModel,vendor: self.deviceVendor,sysObjectID: self.device.sysObjectID,sysName: self.sysName,pop:self.devicePOP,
@@ -1162,7 +1163,7 @@ self.checkInterfaceInLinks = function(interfaceName){
             // anInterface.lastUpdate = new Date();
             var interfaceType = S(anInterface.ifType).toInt();
             if(anInterface.operStatus == snmpConstants.ifAdminOperStatus.up){
-                    if(self.interestInterfacesMap.size < 21123) self.interestInterfacesMap.set(key,anInterface);
+                    if(self.interestInterfacesMap.size < BSON_LIMIT) self.interestInterfacesMap.set(key,anInterface);
             }
         }); 
         self.ifTableError = false;
