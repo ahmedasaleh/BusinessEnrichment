@@ -39,7 +39,7 @@ var syncCyclesThreshold = 3;
 var SYNC_DIFFERENCE_IN_DAYS = 7;//difference in days
 var SYNC_DIFFERENCE_IN_HOURS = 168;//difference in hours
 var SYNC_DIFFERENCE_IN_MINUTES = 10080;//difference in minutes
-var BSON_LIMIT = 21123;
+var ARRAY_SIZE_LIMIT = 10123;
 //*********************
 //  SNMP HANDLER
 //*********************
@@ -122,6 +122,7 @@ function discoveredDevice(device,linkEnrichmentData,cabinetName,POPDetails) {
 
     if(self.device.sector == S("#N/A").s) self.deviceSector = "";
     if(self.device.district == S("#N/A").s) self.deviceDistrict = "";
+    if(self.devicePOP == "Unknown_Unkown") self.devicePOP = "Unknown";
 
     if(S(self.deviceGove).isEmpty() || S(self.deviceGove).s == "Unknown" && !(self.device.updatedAt instanceof Date)) self.deviceGove = POPDetails.gov;
     if(S(self.deviceSector).isEmpty() || S(self.deviceSector).s == "Unknown" && !(self.device.updatedAt instanceof Date)) self.deviceSector = POPDetails.sector;
@@ -131,7 +132,7 @@ function discoveredDevice(device,linkEnrichmentData,cabinetName,POPDetails) {
     if(!S(self.device.pop).isEmpty() && self.device.pop != "Unknown") self.devicePOP = self.device.pop;
     else if(POPDetails.shortName && POPDetails.shortName != "Unknown") self.devicePOP = POPDetails.shortName+"_"+self.deviceGove;
 
-    // console.log(self.devicePOP +" | "+self.devicePOPLongName+ " | "+ self.deviceGove + " | "+ self.deviceSector + " | "+ self.deviceDistrict + " | "+ self.devicePOPType + " | "+self.cabinetName);
+    console.log(self.devicePOP +" | "+self.devicePOPLongName+ " | "+ self.deviceGove + " | "+ self.deviceSector + " | "+ self.deviceDistrict + " | "+ self.devicePOPType + " | "+self.cabinetName);
 
     self.destroy = function(){
         if(self.inSyncMode && !self.cleanSessionClose){
@@ -1050,28 +1051,18 @@ self.checkInterfaceInLinks = function(interfaceName){
         if(self.deviceSaved == false){
             try{
                 self.deviceSaved = true;
-                var intfs = [];
-                var finalIntfs = [];
-                //now the device will use interestInterfaces array during save action, so modify it to include only new and updated interfaces
-                logger.info("self.saveDevice() for "+self.name);
-                // console.log("self.interfaceUpdateMap.size: "+self.interfaceUpdateMap.size+" | "+self.filteredInterestInterfacesMap.size);
-                // console.log("1-self.deviceInterfaces.length: "+self.deviceInterfaces.length);
-                // console.log("self.interfaceUpdateMap.size: "+self.interfaceUpdateMap.size);
-                // console.log("self.filteredInterestInterfacesMap.size: "+self.filteredInterestInterfacesMap.size);
-                self.interfaceUpdateMap.forEach(function(interface,key) {
-                    self.deviceInterfaces.push(interface);
-                    if(self.filteredInterestInterfacesMap.has(key)) self.filteredInterestInterfacesMap.delete(key);
-                });
-        
-                self.filteredInterestInterfacesMap.forEach(function(interface, key) {
-                    if(self.deviceInterfaces.length < 15000) self.deviceInterfaces.push(interface);
-                    else intfs.push(interface);
-                });
-                finalIntfs = self.deviceInterfaces.concat(intfs);
-                // console.log("2-self.deviceInterfaces.length: "+self.deviceInterfaces.length);
-                // console.log("3-finalIntfs.length: "+finalIntfs.length);
+                console.log(self.interfaceUpdateMap.size + self.filteredInterestInterfacesMap.size);
+                    self.interfaceUpdateMap.forEach(function(interface,key) {
+                        self.deviceInterfaces.push(interface);
+                        if(self.filteredInterestInterfacesMap.has(key)) self.filteredInterestInterfacesMap.delete(key);
+                    });
+            
+                    self.filteredInterestInterfacesMap.forEach(function(interface, key) {
+                        self.deviceInterfaces.push(interface);
+                        
+                    });
                     // Device.findByIdAndUpdate(device._id,{interfaces: self.deviceInterfaces, discovered: true, lastSyncTime: new Date(),deviceSyncCycles:self.deviceSyncCycles,
-                    Device.findByIdAndUpdate(device._id,{interfaces: finalIntfs, discovered: true, lastSyncTime: new Date(),deviceSyncCycles:self.deviceSyncCycles,
+                    Device.findByIdAndUpdate(device._id,{interfaces: self.deviceInterfaces, discovered: true, lastSyncTime: new Date(),deviceSyncCycles:self.deviceSyncCycles,
                         type: self.deviceType,model: self.deviceModel,vendor: self.deviceVendor,sysObjectID: self.device.sysObjectID,sysName: self.sysName,pop:self.devicePOP,
                         popLongName:self.devicePOPLongName,cabinet:self.cabinetName,sector:self.deviceSector,gov:self.deviceGove,district:self.deviceDistrict,
                         popType:self.devicePOPType},function(error,updatedDevice){
@@ -1079,12 +1070,6 @@ self.checkInterfaceInLinks = function(interfaceName){
                              logger.error(error);
                         }
                         else{
-                            // if(intfs.length > 0){
-                            //     Device.findByIdAndUpdate(device._id,{interfaces: finalIntfs, discovered: true, lastSyncTime: new Date(),deviceSyncCycles:self.deviceSyncCycles,
-                            //         type: self.deviceType,model: self.deviceModel,vendor: self.deviceVendor,sysObjectID: self.device.sysObjectID,sysName: self.sysName,pop:self.devicePOP,
-                            //         popLongName:self.devicePOPLongName,cabinet:self.cabinetName,sector:self.deviceSector,gov:self.deviceGove,district:self.deviceDistrict,
-                            //         popType:self.devicePOPType},function(error,updatedDevice){ if(error) logger.error(error)});
-                            // }
                             if(self.session) {
                                 try{
                                     self.session.close();
@@ -1163,7 +1148,7 @@ self.checkInterfaceInLinks = function(interfaceName){
             // anInterface.lastUpdate = new Date();
             var interfaceType = S(anInterface.ifType).toInt();
             if(anInterface.operStatus == snmpConstants.ifAdminOperStatus.up){
-                    if(self.interestInterfacesMap.size < BSON_LIMIT) self.interestInterfacesMap.set(key,anInterface);
+                    self.interestInterfacesMap.set(key,anInterface);
             }
         }); 
         self.ifTableError = false;
@@ -1416,6 +1401,64 @@ self.checkInterfaceInLinks = function(interfaceName){
         if(fromObject.actualspeedText && override == true) toObject.actualspeedText = fromObject.actualspeedText;
 
     };
+        self.applyLimit = function(){
+        var nonProviso1 =0,proviso1=0;
+        var nonProviso2 =0, proviso2=0;
+
+        var sum = self.interfaceUpdateMap.size + self.filteredInterestInterfacesMap.size;
+        console.log("sum: "+sum);
+        var extra,ratio1,ratio2,toBeDeleted1,toBeDeleted2;
+
+        self.interfaceUpdateMap.forEach(function(interface,key) {
+          if(self.interfaceUpdateMap.get(key).provisoFlag == 1) {
+            proviso1++;
+          }
+          else {
+            nonProviso1++;
+          }
+        });
+        self.filteredInterestInterfacesMap.forEach(function(interface,key) {
+          if(self.filteredInterestInterfacesMap.get(key).provisoFlag == 1) {
+            proviso2++;
+          }
+          else {
+            nonProviso2++;
+          }
+        });
+        console.log(proviso1+" | "+nonProviso1+" | "+proviso2+" | "+nonProviso2);
+        if(sum >= ARRAY_SIZE_LIMIT){
+           extra = sum -ARRAY_SIZE_LIMIT;
+          // console.log("extra: "+extra);
+          ratio1 = nonProviso1/(nonProviso1+nonProviso2);console.log("ratio1: "+ratio1);
+          ratio2 = nonProviso2/(nonProviso1+nonProviso2);console.log("ratio2: "+ratio2);
+          toBeDeleted1 = Math.ceil(ratio1 * extra);console.log("toBeDeleted1: "+toBeDeleted1);
+          toBeDeleted2 = Math.ceil(ratio2 * extra);console.log("toBeDeleted2: "+toBeDeleted2);
+        }
+        var counter1=0,counter2=0;
+
+        // self.interfaceUpdateMap.forEach(function(interface,key) {
+        //   if(self.interfaceUpdateMap.get(key).provisoFlag == 0 && counter1 < toBeDeleted1 && !self.device.interfaces.includes(interface)) {
+        //     self.interfaceUpdateMap.delete(key);
+        //     counter1++;
+        //   }
+        // });
+
+        // self.filteredInterestInterfacesMap.forEach(function(interface,key) {
+        //   if(self.filteredInterestInterfacesMap.get(key).provisoFlag == 0 && counter2 < toBeDeleted2 && !self.device.interfaces.includes(interface)) {
+        //     self.filteredInterestInterfacesMap.delete(key);
+        //     counter2++;
+        //   }
+        // });
+        self.filteredInterestInterfacesMap.forEach(function(interface,key) {
+          if(self.filteredInterestInterfacesMap.get(key).provisoFlag == 0 && counter2 < extra ) {
+            self.filteredInterestInterfacesMap.delete(key);
+            counter2++;
+          }
+        });
+        console.log(counter1+" | "+counter2);
+        console.log(self.filteredInterestInterfacesMap.size + self.interfaceUpdateMap.size);
+    };
+
     self.applySyncRules = function(){
         async.forEachOf(self.device.interfaces,function(interface,key,callback){
             var syncCycles = S(interface.syncCycles).toInt();
@@ -1466,7 +1509,8 @@ self.checkInterfaceInLinks = function(interfaceName){
                         self.interfaceUpdateMap.set(interface.ifIndex,interface);
             }
         });//end of async.forEachOf
-
+        console.log("will apply limits");
+        if((self.interfaceUpdateMap.size + self.filteredInterestInterfacesMap.size) > ARRAY_SIZE_LIMIT) self.applyLimit();
     };
     self.checkDeviceDecommisionCondition = function(){
         if(self.device.lastSyncTime === undefined){
@@ -1920,8 +1964,12 @@ var getdeviceExtraDetails = __async__(function(hostname){
     var linkEnrichmentData;
     var cabinetPOP = __await__ (Cabinet.findOne({cabinet:parsedHostName.devicePOPName}));
     var POPDetails ;
-    if(cabinetPOP) POPDetails = __await__ (POP.findOne({shortName:cabinetPOP.pop,gov:parsedHostName.popGove}));
-    else POPDetails = __await__ (POP.findOne({shortName:parsedHostName.devicePOPName,gov:parsedHostName.popGove}));
+    if(cabinetPOP) {
+        POPDetails = __await__ (POP.findOne({shortName:cabinetPOP.pop,gov:parsedHostName.popGove}));
+    }
+    else {
+        POPDetails = __await__ (POP.findOne({shortName:parsedHostName.devicePOPName,gov:parsedHostName.popGove}));
+    }
     if(POPDetails == null){
         POPDetails = {};
         POPDetails.shortName = "Unknown";
@@ -2177,7 +2225,7 @@ router.delete("/api/:hostname",  middleware.isAPIAuthenticated ,function(request
                 });
             }
             else{
-                response.json({ message: "IBM IIB is trying to delete device not in database" });
+                response.json({ message: "IBM is trying to delete device not in database" });
                 logger.warn("IBM IIB is trying to delete device not in database");
             }
             
