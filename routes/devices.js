@@ -1406,7 +1406,6 @@ self.checkInterfaceInLinks = function(interfaceName){
         var nonProviso2 =0, proviso2=0;
 
         var sum = self.interfaceUpdateMap.size + self.filteredInterestInterfacesMap.size;
-        console.log("sum: "+sum);
         var extra,ratio1,ratio2,toBeDeleted1,toBeDeleted2;
 
         self.interfaceUpdateMap.forEach(function(interface,key) {
@@ -1425,14 +1424,12 @@ self.checkInterfaceInLinks = function(interfaceName){
             nonProviso2++;
           }
         });
-        console.log(proviso1+" | "+nonProviso1+" | "+proviso2+" | "+nonProviso2);
         if(sum >= ARRAY_SIZE_LIMIT){
            extra = sum -ARRAY_SIZE_LIMIT;
-          // console.log("extra: "+extra);
-          ratio1 = nonProviso1/(nonProviso1+nonProviso2);console.log("ratio1: "+ratio1);
-          ratio2 = nonProviso2/(nonProviso1+nonProviso2);console.log("ratio2: "+ratio2);
-          toBeDeleted1 = Math.ceil(ratio1 * extra);console.log("toBeDeleted1: "+toBeDeleted1);
-          toBeDeleted2 = Math.ceil(ratio2 * extra);console.log("toBeDeleted2: "+toBeDeleted2);
+          ratio1 = nonProviso1/(nonProviso1+nonProviso2);
+          ratio2 = nonProviso2/(nonProviso1+nonProviso2);
+          toBeDeleted1 = Math.ceil(ratio1 * extra);
+          toBeDeleted2 = Math.ceil(ratio2 * extra);
         }
         var counter1=0,counter2=0;
 
@@ -1455,8 +1452,6 @@ self.checkInterfaceInLinks = function(interfaceName){
             counter2++;
           }
         });
-        console.log(counter1+" | "+counter2);
-        console.log(self.filteredInterestInterfacesMap.size + self.interfaceUpdateMap.size);
     };
 
     self.applySyncRules = function(){
@@ -1509,7 +1504,6 @@ self.checkInterfaceInLinks = function(interfaceName){
                         self.interfaceUpdateMap.set(interface.ifIndex,interface);
             }
         });//end of async.forEachOf
-        console.log("will apply limits");
         if((self.interfaceUpdateMap.size + self.filteredInterestInterfacesMap.size) > ARRAY_SIZE_LIMIT) self.applyLimit();
     };
     self.checkDeviceDecommisionCondition = function(){
