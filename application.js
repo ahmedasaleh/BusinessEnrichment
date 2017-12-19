@@ -32,7 +32,8 @@ var interfaceRoutes       = require("./routes/interfaces"),
     deviceRoutes    = require("./routes/devices"),  
     enrichmentRoutes    = require("./routes/enrichments"),  
     deviceModelsRoutes    = require("./routes/devicemodels"),  
-    indexRoutes     = require("./routes/index"); 
+    indexRoutes     = require("./routes/index"), 
+    cabinetRoutes    = require("./routes/cabinets");  
 
 var indexBaseURL        = "/",
     popBaseURL   = "/pops",
@@ -44,8 +45,9 @@ var indexBaseURL        = "/",
     deviceBaseURL   = "/devices",
     enrichmentBaseURL   = "/enrichments",
     deviceModelBaseURL   = "/devicemodels",
-    interfaceBaseURL      = "/interfaces";
+    interfaceBaseURL      = "/interfaces",
     // interfaceBaseURL      = "/devices/:id/interfaces";
+    cabinetBaseURL   = "/cabinets";
 
 var applicationVersion  = 1;
 
@@ -61,7 +63,7 @@ app.use(flash());
 app.use(bodyParser.urlencoded({extended: true}));
 mongoose.Promise = global.Promise; //to vercome the warning about Mongoose mpromise
 
-mongoose.connect("mongodb://localhost/"+process.env.PROD_DB, {useMongoClient: true,keepAlive:300000,connectTimeoutMS:30000});
+mongoose.connect("mongodb://localhost/"+process.env.DEV_DB, {useMongoClient: true,keepAlive:300000,connectTimeoutMS:30000});
 
 //Passport configuration
 app.use(require("express-session")({
@@ -99,10 +101,12 @@ app.use(linkBaseURL, linkRoutes);
 app.use(validatedUserBaseURL, validatedUserRoutes);
 app.use(enrichmentBaseURL, enrichmentRoutes);
 app.use(deviceModelBaseURL, deviceModelsRoutes);
+app.use(cabinetBaseURL, cabinetRoutes);
+
 //start server
 process.on('uncaughtException', function (err) {
   console.error(err);
-  console.log("Node NOT Exiting...");
+  console.log("nodeJS NOT Exiting...");
 });
 
 

@@ -42,6 +42,8 @@ var $jtable = $j('#eventsTable');
         $j('#interface-update-form').attr('action', '/interfaces/'+value.id+'/edit');
         $j('#devicemodel-delete-form').attr('action', '/devicemodels/'+value.id+'/?_method=DELETE');
         $j('#devicemodel-update-form').attr('action', '/devicemodels/'+value.id+'/edit');
+        $j('#cabinet-delete-form').attr('action', '/cabinets/'+value.id+'/?_method=DELETE');
+        $j('#cabinet-update-form').attr('action', '/cabinets/'+value.id+'/edit');
     });
 
   });

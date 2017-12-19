@@ -26,21 +26,21 @@ $j(document).ready(function() {
 		sectors_pagination_url = "http://"+socket+"/sectors/pagination";
 		governorates_pagination_url = "http://"+socket+"/governorates/pagination";
 		
-$j('#newxx-device-pop-name').select2({
-  ajax: {
-    url: 'http://213.158.183.140:8080/pops/pagination',
-    data: function (params) {
-    	console.log(params);
-      var query = {
-        search: params.term,
-        type: 'public'
-      }
+// $j('#newxx-device-pop-name').select2({
+//   ajax: {
+//     url: 'http://213.158.183.140:8080/pops/pagination',
+//     data: function (params) {
+//     	console.log(params);
+//       var query = {
+//         search: params.term,
+//         type: 'public'
+//       }
 
-      // Query parameters will be ?search=[term]&type=public
-      return query;
-    }
-  }
-});
+//       // Query parameters will be ?search=[term]&type=public
+//       return query;
+//     }
+//   }
+// });
 
 		$j.ajax({
 		  url: pops_pagination_url,
@@ -82,6 +82,29 @@ $j('#newxx-device-pop-name').select2({
 				$j("#new-pop-governorate-name").select2({
 					placeholder: 'type something...',
 					selectOnClose: true,
+					data: mappedPopsData,
+			        theme: "bootstrap",
+			        width: null,
+			        containerCssClass: ':all:',
+					minimumInputLength: 1
+				});
+				$j("#cab-pop-name").select2({
+					placeholder: 'type something...',
+					selectOnClose: true,
+					data: mappedPopsData,
+			        theme: "bootstrap",
+			        width: null,
+			        containerCssClass: ':all:',
+					minimumInputLength: 1,
+					initSelection: function(element, callback) {
+						callback({ id: element.val(), text: element.attr('data-init-text') 
+						});
+					}
+				});
+				$j("#new-cab-pop-name").select2({
+					placeholder: 'type something...',
+					selectOnClose: true,
+					// dataType : "json",
 					data: mappedPopsData,
 			        theme: "bootstrap",
 			        width: null,

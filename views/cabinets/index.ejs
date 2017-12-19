@@ -1,0 +1,53 @@
+<% include ../partials/header %>
+    <!--< the class container will give space around our contents>-->
+    <div class="container">
+        <header class="jumbotron">
+            <!--<adding second container to keep spacing around contents when we resize the page>-->
+            <div class="container">
+                <h1>Business Enrichment Portal</h1>
+                <p>View Cabinets Information</p>
+                <div class="btn-group" role="group" aria-label="all">
+                    <a href="/devices/"><button type="button" class="btn btn-default ">All Devices</button></a>
+                    <a href="/pops/"><button type="button" class="btn btn-default ">All POPs</button></a>
+                    <!--<a href="/interfaces/"><button type="button" class="btn btn-default">All Interfaces</button></a>-->
+                    <a href="/sectors/"><button type="button" class="btn btn-default">All Sectors</button></a>
+                    <a href="/governorates/"><button type="button" class="btn btn-default ">All Governorates</button></a>
+                    <a href="/users/"><button type="button" class="btn btn-default">All Users</button></a>
+                    <a href="/links/"><button type="button" class="btn btn-default ">All Links</button></a>
+                    <a href="/validatedusers/"><button type="button" class="btn btn-default">All Validated Users</button></a>
+                    <!-- <a href="/enrichments/"><button type="button" class="btn btn-default ">All Enrichment Data</button></a> -->
+                    <a href="/interfaces/"><button type="button" class="btn btn-default">All Interfaces Data</button></a>
+                     <a href="/cabinets/"><button type="button" class="btn btn-default active">All Cabinets</button></a>
+                </div>        
+            </div>
+        </header>
+        <div class="btn-group" role="group" aria-label="cabinets">
+            <form id="cabinet-add-form"  class="btn-group" action="/cabinets/new" method="GET">
+                <button type="button " class="btn  btn-primary">Add Cabinet</button>
+            </form>
+            <form id="cabinet-delete-form"  class="btn-group" action="/cabinets/-1/?_method=DELETE" method="POST">
+                <button id="cabinet-delete-button"  type="button " class="btn  btn-danger">Delete Cabinet</button>
+            </form>
+            <form id="cabinet-update-form"  class="btn-group" action="" method="GET">
+                <button type="button " class="btn  btn-warning">Update Cabinet</button>
+            </form>
+        </div>        
+        
+        <div class="row text-left">
+            <div class="table-responsive">
+     <table id="eventsTable" data-pagination="true" data-height="525" data-side-pagination="server" data-url="/cabinets/pagination" data-toggle="table" data-search="true" data-flat="true" data-show-columns="true" data-show-toggle="true" data-show-refresh="true" data-single-select="true">
+                    <thead>
+                        <tr>
+                            <th data-field="state" data-checkbox="true"> </th>
+                            <th data-field="_id" data-visible="false">ID</th>
+                            <th data-field="cabinet" data-sortable="true">cabinet</th>
+                            <th data-field="pop">pop</th>
+                            
+                        </tr>
+                    </thead>
+                     
+                </table>
+            </div>
+        </div>
+    </div>
+<% include ../partials/footer %>
