@@ -347,9 +347,11 @@ self.checkInterfaceInLinks = function(interfaceName){
                         isInterfaceLink = true;
                         secondHost = self.linkEnrichmentData[i].device2;
                         secondInterface = self.linkEnrichmentData[i].interface2;
-                        // secondPOP = S(self.linkEnrichmentData[i].device2).splitLeft('-')[0];
                         parsedHostName = Parser.parseHostname(secondHost);
-                        secondPOP = parsedHostName.devicePOPName;
+                        // console.log(self.linkEnrichmentData[i]);
+                        if(self.linkEnrichmentData[i].secondPOPShortName == "Unknown") secondPOP = 'Unknown';
+                        else secondPOP = self.linkEnrichmentData[i].secondPOPShortName+"_"+self.linkEnrichmentData[i].secondPOPGov;//parsedHostName.devicePOPName;
+                        
                         secondDeviceType = parsedHostName.deviceType;
                         i = self.linkEnrichmentData.length;//break only first loop 
                     }
@@ -361,9 +363,11 @@ self.checkInterfaceInLinks = function(interfaceName){
                         isInterfaceLink = true;
                         secondHost = self.linkEnrichmentData[i].device1;
                         secondInterface = self.linkEnrichmentData[i].interface1;
-                        // secondPOP = S(self.linkEnrichmentData[i].device1).splitLeft('-')[0];
                         parsedHostName = Parser.parseHostname(secondHost);
-                        secondPOP = parsedHostName.devicePOPName;
+                        // console.log(self.linkEnrichmentData[i]);
+                        if(self.linkEnrichmentData[i].secondPOPShortName == "Unknown") secondPOP = 'Unknown';
+                        else secondPOP = self.linkEnrichmentData[i].secondPOPShortName+"_"+self.linkEnrichmentData[i].secondPOPGov;//parsedHostName.devicePOPName;
+
                         secondDeviceType = parsedHostName.deviceType;
                         i = self.linkEnrichmentData.length;//break only first loop 
                     }
@@ -375,9 +379,11 @@ self.checkInterfaceInLinks = function(interfaceName){
                         isInterfaceLink = true;
                         secondHost = self.linkEnrichmentData[i].device2;
                         secondInterface = self.linkEnrichmentData[i].interface2;
-                        // secondPOP = S(self.linkEnrichmentData[i].device2).splitLeft('-')[0];
                         parsedHostName = Parser.parseHostname(secondHost);
-                        secondPOP = parsedHostName.devicePOPName;
+                        // console.log(self.linkEnrichmentData[i]);
+                        if(self.linkEnrichmentData[i].secondPOPShortName == "Unknown") secondPOP = 'Unknown';
+                        else secondPOP = self.linkEnrichmentData[i].secondPOPShortName+"_"+self.linkEnrichmentData[i].secondPOPGov;//parsedHostName.devicePOPName;
+
                         secondDeviceType = parsedHostName.deviceType;
                         i = self.linkEnrichmentData.length;//break only first loop 
                     }
@@ -385,9 +391,11 @@ self.checkInterfaceInLinks = function(interfaceName){
                         isInterfaceLink = true;
                         secondHost = self.linkEnrichmentData[i].device1;
                         secondInterface = self.linkEnrichmentData[i].interface1;
-                        // secondPOP = S(self.linkEnrichmentData[i].device1).splitLeft('-')[0];
                         parsedHostName = Parser.parseHostname(secondHost);
-                        secondPOP = parsedHostName.devicePOPName;
+                        // console.log(self.linkEnrichmentData[i]);
+                        if(self.linkEnrichmentData[i].secondPOPShortName == "Unknown") secondPOP = 'Unknown';
+                        else secondPOP = self.linkEnrichmentData[i].secondPOPShortName+"_"+self.linkEnrichmentData[i].secondPOPGov;//parsedHostName.devicePOPName;
+
                         secondDeviceType = parsedHostName.deviceType;
                         i = self.linkEnrichmentData.length;//break only first loop 
                     }
@@ -886,8 +894,7 @@ self.checkInterfaceInLinks = function(interfaceName){
             }
         }
         else if((self.linkEnrichmentData && self.linkEnrichmentData.length > 0) && self.checkInterfaceInLinks(interfaceName) == true){
-            // var pop = S(self.name).splitLeft('-')[0];
-            var pop = S(self.name).trim().splitRight('-',3)[0];
+            var pop = self.devicePOP;//S(self.name).trim().splitRight('-',3)[0];
             var secondHost,secondInterface,secondPOP,type;
             anErichment = null; 
             if(self.deviceType == "MSAN" || self.deviceType == "GPON") {
@@ -895,7 +902,9 @@ self.checkInterfaceInLinks = function(interfaceName){
                     parentPOP = interfaceLinkDetails.secondPOP;
                 }
             }
-            if(interfaceLinkDetails.secondPOP == pop) type = "Local";
+            // console.log("interfaceLinkDetails.secondPOP: "+interfaceLinkDetails.secondPOP+" , pop: "+pop);
+            if(interfaceLinkDetails.secondPOP == 'Unknown') type = "Unknown"
+            else if(interfaceLinkDetails.secondPOP == pop) type = "Local";
             else type = "WAN";
             anErichment = {
                 secondHost:interfaceLinkDetails.secondHost,secondInterface:interfaceLinkDetails.secondInterface,secondPOP:interfaceLinkDetails.secondPOP, provisoFlag:1,
@@ -984,7 +993,7 @@ self.checkInterfaceInLinks = function(interfaceName){
         if(self.errorRetrievingSysOID == true && self.deviceSaved == false){
             try{
                 self.deviceSaved = true;
-                console.log("self.saveDeviceOnError() - errorRetrievingSysOID "+self.name);
+                // console.log("self.saveDeviceOnError() - errorRetrievingSysOID "+self.name);
                 self.deviceSyncCycles = self.deviceSyncCycles + 1;
                 Device.findByIdAndUpdate(device._id,{ lastSyncTime: new Date(),deviceSyncCycles:self.deviceSyncCycles,
                 pop:self.devicePOP,popLongName:self.devicePOPLongName,cabinet:self.cabinetName,sector:self.deviceSector,gov:self.deviceGove,district:self.deviceDistrict,
@@ -1051,7 +1060,7 @@ self.checkInterfaceInLinks = function(interfaceName){
         if(self.deviceSaved == false){
             try{
                 self.deviceSaved = true;
-                console.log(self.interfaceUpdateMap.size + self.filteredInterestInterfacesMap.size);
+                // console.log(self.interfaceUpdateMap.size + self.filteredInterestInterfacesMap.size);
                     self.interfaceUpdateMap.forEach(function(interface,key) {
                         self.deviceInterfaces.push(interface);
                         if(self.filteredInterestInterfacesMap.has(key)) self.filteredInterestInterfacesMap.delete(key);
@@ -1774,31 +1783,52 @@ router.get("/", middleware.isLoggedIn , function(request, response) {
 
 
 var getDeviceInfo = __async__ (function(modelOID,hostname){
-var parsedHostName = Parser.parseHostname(S(hostname));
+    var parsedHostName = Parser.parseHostname(S(hostname));
     var linkEnrichmentData;
     var deviceModelOID = __await__ (DeviceModel.findOne({oid: modelOID}));
-    var cabinetPOP = __await__ (Cabinet.findOne({cabinet:parsedHostName.devicePOPName}));
-    var POPDetails ;
-    if(cabinetPOP) POPDetails = __await__ (POP.findOne({shortName:cabinetPOP.pop,gov:parsedHostName.popGove}));
-    else POPDetails = __await__ (POP.findOne({shortName:parsedHostName.devicePOPName,gov:parsedHostName.popGove}));
-    if(POPDetails == null){
-        POPDetails = {};
-        POPDetails.shortName = "Unknown";
-        POPDetails.gov = "Unknown";
-        POPDetails.district = "Unknown";
-        POPDetails.sector = "Unknown";
-        POPDetails.popType = "Unknown";
-        POPDetails.popLongName = "Unknown";
+    var POPDetails,secondPOPDetails ;
+    var rightLinks = [], leftLinks = [];
+    var tempLink  = null;
+
+    POPDetails = checkPOPandCabinet(parsedHostName);
+    // var cabinetPOP = __await__ (Cabinet.findOne({cabinet:parsedHostName.devicePOPName}));
+    // var POPDetails ;
+    // if(cabinetPOP) POPDetails = __await__ (POP.findOne({shortName:cabinetPOP.pop,gov:parsedHostName.popGove}));
+    // else POPDetails = __await__ (POP.findOne({shortName:parsedHostName.devicePOPName,gov:parsedHostName.popGove}));
+    // if(POPDetails == null){
+    //     POPDetails = {};
+    //     POPDetails.shortName = "Unknown";
+    //     POPDetails.gov = "Unknown";
+    //     POPDetails.district = "Unknown";
+    //     POPDetails.sector = "Unknown";
+    //     POPDetails.popType = "Unknown";
+    //     POPDetails.popLongName = "Unknown";
+    // }
+
+    var foundRightLink = __await__ (Link.find({device1:hostname}));//right link composed of Device2 and Interface2
+    for(var i=0;i<foundRightLink.length;i++){
+        secondPOPDetails = checkPOPandCabinet(Parser.parseHostname(S(foundRightLink[i].device2)));
+        tempLink = {device1: foundRightLink[i].device1,interface1: foundRightLink[i].interface1,device2: foundRightLink[i].device2,interface2: foundRightLink[i].interface2,
+            secondPOPShortName:secondPOPDetails.shortName,secondPOPLongName:secondPOPDetails.popLongName,secondPOPType:secondPOPDetails.popType,
+            secondPOPSector:secondPOPDetails.sector,secondPOPDistrict:secondPOPDetails.district,secondPOPGov:secondPOPDetails.gov};
+        rightLinks.push(tempLink);
     }
 
-    var foundRightLink = __await__ (Link.find({device1:hostname}));
-    var foundLeftLink = __await__ (Link.find({device2:hostname}));
+    var foundLeftLink = __await__ (Link.find({device2:hostname}));//left link composed of Device1 and Interface1
+    for(var j=0;j<foundLeftLink.length;j++){
+        secondPOPDetails = checkPOPandCabinet(Parser.parseHostname(S(foundLeftLink[j].device1)));
+        tempLink = {device1: foundLeftLink[j].device1,interface1: foundLeftLink[j].interface1,device2: foundLeftLink[j].device2,interface2: foundLeftLink[j].interface2,
+            secondPOPShortName:secondPOPDetails.shortName,secondPOPLongName:secondPOPDetails.popLongName,secondPOPType:secondPOPDetails.popType,
+            secondPOPSector:secondPOPDetails.sector,secondPOPDistrict:secondPOPDetails.district,secondPOPGov:secondPOPDetails.gov};
+        leftLinks.push(tempLink);
+    }
 
-    if(foundRightLink.length > 0 || foundLeftLink.length > 0) {
-        linkEnrichmentData = foundRightLink.concat(foundLeftLink);
-        if(foundRightLink.length > 0 && foundLeftLink.length > 0) linkEnrichmentData.End = "both";
-        else if(foundRightLink.length > 0) linkEnrichmentData.End = "left";
-        else if(foundLeftLink.length > 0) linkEnrichmentData.End = "right";
+    // if(foundRightLink.length > 0 || foundLeftLink.length > 0) {
+    if(rightLinks.length > 0 || leftLinks.length > 0) {
+        linkEnrichmentData = rightLinks.concat(leftLinks);
+        if(rightLinks.length > 0 && leftLinks.length > 0) linkEnrichmentData.End = "both";
+        else if(rightLinks.length > 0) linkEnrichmentData.End = "left";
+        else if(leftLinks.length > 0) linkEnrichmentData.End = "right";
     }
     else{
         linkEnrichmentData = null;
@@ -1893,18 +1923,41 @@ router.get("/new", middleware.isLoggedIn ,function(request, response) {
 
 var getDeviceFarLinks = __async__ (function(ahostname){
     var linkEnrichmentData;
+    var secondPOPDetails ;
+    var rightLinks = [], leftLinks = [];
+    var tempLink  = null;
+
     var foundRightLink = __await__ (Link.find({device1:ahostname}));
+    for(var i=0;i<foundRightLink.length;i++){
+        secondPOPDetails = checkPOPandCabinet(Parser.parseHostname(S(foundRightLink[i].device2)));
+        tempLink = {device1: foundRightLink[i].device1,interface1: foundRightLink[i].interface1,device2: foundRightLink[i].device2,interface2: foundRightLink[i].interface2,
+            secondPOPShortName:secondPOPDetails.shortName,secondPOPLongName:secondPOPDetails.popLongName,secondPOPType:secondPOPDetails.popType,
+            secondPOPSector:secondPOPDetails.sector,secondPOPDistrict:secondPOPDetails.district,secondPOPGov:secondPOPDetails.gov};
+        rightLinks.push(tempLink);
+    }
+
     var foundLeftLink = __await__ (Link.find({device2:ahostname}));
-        if(foundRightLink.length > 0 || foundLeftLink.length > 0) {
-            linkEnrichmentData = foundRightLink.concat(foundLeftLink);
-            if(foundRightLink.length > 0 && foundLeftLink.length > 0) linkEnrichmentData.End = "both";
-            else if(foundRightLink.length > 0) linkEnrichmentData.End = "left";
-            else if(foundLeftLink.length > 0) linkEnrichmentData.End = "right";
-        }
-        else{
-            linkEnrichmentData = null;
-        }
-        return linkEnrichmentData;
+    for(var j=0;j<foundLeftLink.length;j++){
+        secondPOPDetails = checkPOPandCabinet(Parser.parseHostname(S(foundLeftLink[j].device1)));
+        tempLink = {device1: foundLeftLink[j].device1,interface1: foundLeftLink[j].interface1,device2: foundLeftLink[j].device2,interface2: foundLeftLink[j].interface2,
+            secondPOPShortName:secondPOPDetails.shortName,secondPOPLongName:secondPOPDetails.popLongName,secondPOPType:secondPOPDetails.popType,
+            secondPOPSector:secondPOPDetails.sector,secondPOPDistrict:secondPOPDetails.district,secondPOPGov:secondPOPDetails.gov};
+        leftLinks.push(tempLink);
+    }
+
+    // if(foundRightLink.length > 0 || foundLeftLink.length > 0) {
+    if(rightLinks.length > 0 || leftLinks.length > 0) {
+        linkEnrichmentData = rightLinks.concat(leftLinks);
+        if(rightLinks.length > 0 && leftLinks.length > 0) linkEnrichmentData.End = "both";
+        else if(rightLinks.length > 0) linkEnrichmentData.End = "left";
+        else if(leftLinks.length > 0) linkEnrichmentData.End = "right";
+    }
+    else{
+        linkEnrichmentData = null;
+    }
+
+
+    return linkEnrichmentData;
 });
 
 
@@ -1916,31 +1969,54 @@ var getDeviceList = __async__ (function(){
 
     foundDevices.forEach(function (device, i) {
         var parsedHostName = Parser.parseHostname(S(device.hostname));
-        var cabinetPOP = __await__ (Cabinet.findOne({cabinet:parsedHostName.devicePOPName}));
-        var POPDetails ;
-        if(cabinetPOP) POPDetails = __await__ (POP.findOne({shortName:cabinetPOP.pop,gov:parsedHostName.popGove}));
-        else POPDetails = __await__ (POP.findOne({shortName:parsedHostName.devicePOPName,gov:parsedHostName.popGove}));
-        if(POPDetails == null){
-            POPDetails = {};
-            POPDetails.shortName = "Unknown";
-            POPDetails.gov = "Unknown";
-            POPDetails.district = "Unknown";
-            POPDetails.sector = "Unknown";
-            POPDetails.popType = "Unknown";
-            POPDetails.popLongName = "Unknown";
-            // POPDetails.parentPOP = "Unknown";
-        }
-        var foundRightLink = __await__ (Link.find({device1:device.hostname}));
-        var foundLeftLink = __await__ (Link.find({device2:device.hostname}));
+        var POPDetails,secondPOPDetails ;
+        var rightLinks = [], leftLinks = [];
+        var tempLink  = null;
 
-        if(foundRightLink.length > 0 || foundLeftLink.length > 0) {
-            linkEnrichmentData = foundRightLink.concat(foundLeftLink);
-            if(foundRightLink.length > 0) linkEnrichmentData.isLeftEnd = true;
-            else linkEnrichmentData.isLeftEnd = false;
+        // var cabinetPOP = __await__ (Cabinet.findOne({cabinet:parsedHostName.devicePOPName}));
+        // if(cabinetPOP) POPDetails = __await__ (POP.findOne({shortName:cabinetPOP.pop,gov:parsedHostName.popGove}));
+        // else POPDetails = __await__ (POP.findOne({shortName:parsedHostName.devicePOPName,gov:parsedHostName.popGove}));
+        // if(POPDetails == null){
+        //     POPDetails = {};
+        //     POPDetails.shortName = "Unknown";
+        //     POPDetails.gov = "Unknown";
+        //     POPDetails.district = "Unknown";
+        //     POPDetails.sector = "Unknown";
+        //     POPDetails.popType = "Unknown";
+        //     POPDetails.popLongName = "Unknown";
+        // }
+
+        POPDetails = checkPOPandCabinet(parsedHostName);
+
+        var foundRightLink = __await__ (Link.find({device1:device.hostname}));
+        for(var i=0;i<foundRightLink.length;i++){
+            secondPOPDetails = checkPOPandCabinet(Parser.parseHostname(S(foundRightLink[i].device2)));
+            tempLink = {device1: foundRightLink[i].device1,interface1: foundRightLink[i].interface1,device2: foundRightLink[i].device2,interface2: foundRightLink[i].interface2,
+                secondPOPShortName:secondPOPDetails.shortName,secondPOPLongName:secondPOPDetails.popLongName,secondPOPType:secondPOPDetails.popType,
+                secondPOPSector:secondPOPDetails.sector,secondPOPDistrict:secondPOPDetails.district,secondPOPGov:secondPOPDetails.gov};
+            rightLinks.push(tempLink);
+        }
+        
+        var foundLeftLink = __await__ (Link.find({device2:device.hostname}));
+        for(var j=0;j<foundLeftLink.length;j++){
+            secondPOPDetails = checkPOPandCabinet(Parser.parseHostname(S(foundLeftLink[j].device1)));
+            tempLink = {device1: foundLeftLink[j].device1,interface1: foundLeftLink[j].interface1,device2: foundLeftLink[j].device2,interface2: foundLeftLink[j].interface2,
+                secondPOPShortName:secondPOPDetails.shortName,secondPOPLongName:secondPOPDetails.popLongName,secondPOPType:secondPOPDetails.popType,
+                secondPOPSector:secondPOPDetails.sector,secondPOPDistrict:secondPOPDetails.district,secondPOPGov:secondPOPDetails.gov};
+            leftLinks.push(tempLink);
+        }
+
+        // if(foundRightLink.length > 0 || foundLeftLink.length > 0) {
+        if(rightLinks.length > 0 || leftLinks.length > 0) {
+            linkEnrichmentData = rightLinks.concat(leftLinks);
+            if(rightLinks.length > 0 && leftLinks.length > 0) linkEnrichmentData.End = "both";
+            else if(rightLinks.length > 0) linkEnrichmentData.End = "left";
+            else if(leftLinks.length > 0) linkEnrichmentData.End = "right";
         }
         else{
             linkEnrichmentData = null;
         }
+
         var deviceExtraDetails = {POPDetails:POPDetails,cabinetName:parsedHostName.devicePOPName,linkEnrichmentData:linkEnrichmentData};
 
         if (POPDetails) deviceList.push( new discoveredDevice(device.toObject(),deviceExtraDetails.linkEnrichmentData,deviceExtraDetails.cabinetName,
@@ -1953,9 +2029,7 @@ var getDeviceList = __async__ (function(){
     return deviceList;
 });
 
-var getdeviceExtraDetails = __async__(function(hostname){
-    var parsedHostName = Parser.parseHostname(S(hostname));
-    var linkEnrichmentData;
+var checkPOPandCabinet = function(parsedHostName){
     var cabinetPOP = __await__ (Cabinet.findOne({cabinet:parsedHostName.devicePOPName}));
     var POPDetails ;
     if(cabinetPOP) {
@@ -1973,15 +2047,39 @@ var getdeviceExtraDetails = __async__(function(hostname){
         POPDetails.popType = "Unknown";
         POPDetails.popLongName = "Unknown";
     }
-    
-    var foundRightLink = __await__ (Link.find({device1:hostname}));
-    var foundLeftLink = __await__ (Link.find({device2:hostname}));
+    return POPDetails;
+}
+var getdeviceExtraDetails = __async__(function(hostname){
+    var parsedHostName = Parser.parseHostname(S(hostname));
+    var linkEnrichmentData;
+    var POPDetails,secondPOPDetails ;
+    var rightLinks = [], leftLinks = [];
+    var tempLink  = null;
+    POPDetails = checkPOPandCabinet(parsedHostName);
 
-    if(foundRightLink.length > 0 || foundLeftLink.length > 0) {
-        linkEnrichmentData = foundRightLink.concat(foundLeftLink);
-        if(foundRightLink.length > 0 && foundLeftLink.length > 0) linkEnrichmentData.End = "both";
-        else if(foundRightLink.length > 0) linkEnrichmentData.End = "left";
-        else if(foundLeftLink.length > 0) linkEnrichmentData.End = "right";
+    var foundRightLink = __await__ (Link.find({device1:hostname}));//right link composed of Device2 and Interface2
+    for(var i=0;i<foundRightLink.length;i++){
+        secondPOPDetails = checkPOPandCabinet(Parser.parseHostname(S(foundRightLink[i].device2)));
+        tempLink = {device1: foundRightLink[i].device1,interface1: foundRightLink[i].interface1,device2: foundRightLink[i].device2,interface2: foundRightLink[i].interface2,
+            secondPOPShortName:secondPOPDetails.shortName,secondPOPLongName:secondPOPDetails.popLongName,secondPOPType:secondPOPDetails.popType,
+            secondPOPSector:secondPOPDetails.sector,secondPOPDistrict:secondPOPDetails.district,secondPOPGov:secondPOPDetails.gov};
+        rightLinks.push(tempLink);
+    }
+    var foundLeftLink = __await__ (Link.find({device2:hostname}));//left link composed of Device1 and Interface1
+    for(var j=0;j<foundLeftLink.length;j++){
+        secondPOPDetails = checkPOPandCabinet(Parser.parseHostname(S(foundLeftLink[j].device1)));
+        tempLink = {device1: foundLeftLink[j].device1,interface1: foundLeftLink[j].interface1,device2: foundLeftLink[j].device2,interface2: foundLeftLink[j].interface2,
+            secondPOPShortName:secondPOPDetails.shortName,secondPOPLongName:secondPOPDetails.popLongName,secondPOPType:secondPOPDetails.popType,
+            secondPOPSector:secondPOPDetails.sector,secondPOPDistrict:secondPOPDetails.district,secondPOPGov:secondPOPDetails.gov};
+        leftLinks.push(tempLink);
+    }
+
+    // if(foundRightLink.length > 0 || foundLeftLink.length > 0) {
+    if(rightLinks.length > 0 || leftLinks.length > 0) {
+        linkEnrichmentData = rightLinks.concat(leftLinks);
+        if(rightLinks.length > 0 && leftLinks.length > 0) linkEnrichmentData.End = "both";
+        else if(rightLinks.length > 0) linkEnrichmentData.End = "left";
+        else if(leftLinks.length > 0) linkEnrichmentData.End = "right";
     }
     else{
         linkEnrichmentData = null;

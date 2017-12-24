@@ -50,6 +50,7 @@ router.get("/pagination?",middleware.isLoggedIn ,function(request, response) {
                 Interface.find({'$or' : [{ifName: new RegExp(searchQuery,'i')},
                 {ifAlias: new RegExp(searchQuery,'i')},
                 {ifDescr: new RegExp(searchQuery,'i')},
+                {type: new RegExp(searchQuery,'i')},
                 {ipaddress: new RegExp(searchQuery,'i')},
                 {hostname: new RegExp(searchQuery,'i')}]},'ifName ifAlias ifIndex ifDescr ifType ifSpeed ifHighSpeed counters type specialService secondPOP secondHost secondInterface label provisoFlag noEnrichFlag sp_service sp_provider sp_termination sp_bundleId sp_linkNumber sp_CID sp_TECID sp_subCable sp_customer sp_sourceCore sp_destCore sp_vendor sp_speed sp_pop sp_fwType sp_serviceType sp_ipType sp_siteCode sp_connType sp_emsOrder sp_connectedBW sp_dpiName sp_portID unknownFlag adminStatus operStatus actualspeed createdAt lastUpdate hostname ipaddress pop lastSyncTime ifSpeedText ifHighSpeedText sp_speedText actualspeedText devPOP devPOPLongName devCabinet devGov devDistrict devSector devPOPType',{lean:true,skip:skip,limit:limit}, function(err, foundInterfaces) {
                     if (err) {
