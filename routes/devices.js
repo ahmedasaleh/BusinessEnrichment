@@ -132,7 +132,7 @@ function discoveredDevice(device,linkEnrichmentData,cabinetName,POPDetails) {
     if(!S(self.device.pop).isEmpty() && self.device.pop != "Unknown") self.devicePOP = self.device.pop;
     else if(POPDetails.shortName && POPDetails.shortName != "Unknown") self.devicePOP = POPDetails.shortName+"_"+self.deviceGove;
 
-    console.log(self.devicePOP +" | "+self.devicePOPLongName+ " | "+ self.deviceGove + " | "+ self.deviceSector + " | "+ self.deviceDistrict + " | "+ self.devicePOPType + " | "+self.cabinetName);
+    // console.log(self.devicePOP +" | "+self.devicePOPLongName+ " | "+ self.deviceGove + " | "+ self.deviceSector + " | "+ self.deviceDistrict + " | "+ self.devicePOPType + " | "+self.cabinetName);
 
     self.destroy = function(){
         if(self.inSyncMode && !self.cleanSessionClose){
@@ -340,7 +340,8 @@ function discoveredDevice(device,linkEnrichmentData,cabinetName,POPDetails) {
     self.interfaceLinkDetails = "";
 self.checkInterfaceInLinks = function(interfaceName){
         var isInterfaceLink = false;
-        var secondHost,secondInterface,secondPOP,parsedHostName,secondDeviceType;
+        var secondHost="Unknown",secondInterface="Unknown",secondPOP="Unknown",parsedHostName,secondDeviceType;
+
             if(self.linkEnrichmentData.End == "left"){
                 for (var i=0; i < self.linkEnrichmentData.length; i++) {
                     if (S(self.linkEnrichmentData[i].interface1).s == interfaceName) {
@@ -897,13 +898,14 @@ self.checkInterfaceInLinks = function(interfaceName){
             var pop = self.devicePOP;//S(self.name).trim().splitRight('-',3)[0];
             var secondHost,secondInterface,secondPOP,type;
             anErichment = null; 
+            // console.log("interfaceLinkDetails.secondPOP: "+interfaceLinkDetails.secondPOP+" , pop: "+pop);
             if(self.deviceType == "MSAN" || self.deviceType == "GPON") {
                 if(interfaceLinkDetails.secondDeviceType == "MSAN" || interfaceLinkDetails.secondDeviceType == "GPON" || interfaceLinkDetails.secondDeviceType == "Router"){
                     parentPOP = interfaceLinkDetails.secondPOP;
                 }
             }
-            // console.log("interfaceLinkDetails.secondPOP: "+interfaceLinkDetails.secondPOP+" , pop: "+pop);
-            if(interfaceLinkDetails.secondPOP == 'Unknown') type = "Unknown"
+            
+            if(interfaceLinkDetails.secondPOP == 'Unknown' || pop == 'Unknown') type = "Unknown"
             else if(interfaceLinkDetails.secondPOP == pop) type = "Local";
             else type = "WAN";
             anErichment = {
@@ -2030,13 +2032,15 @@ var getDeviceList = __async__ (function(){
 });
 
 var checkPOPandCabinet = function(parsedHostName){
-    var cabinetPOP = __await__ (Cabinet.findOne({cabinet:parsedHostName.devicePOPName}));
-    var POPDetails ;
+    var cabinetPOP = null;
+    if(parsedHostName) cabinetPOP = __await__ (Cabinet.findOne({cabinet:parsedHostName.devicePOPName}));
+
+    var POPDetails = null;
     if(cabinetPOP) {
         POPDetails = __await__ (POP.findOne({shortName:cabinetPOP.pop,gov:parsedHostName.popGove}));
     }
     else {
-        POPDetails = __await__ (POP.findOne({shortName:parsedHostName.devicePOPName,gov:parsedHostName.popGove}));
+        if(parsedHostName) POPDetails = __await__ (POP.findOne({shortName:parsedHostName.devicePOPName,gov:parsedHostName.popGove}));
     }
     if(POPDetails == null){
         POPDetails = {};
@@ -2058,7 +2062,7 @@ var getdeviceExtraDetails = __async__(function(hostname){
     POPDetails = checkPOPandCabinet(parsedHostName);
 
     var foundRightLink = __await__ (Link.find({device1:hostname}));//right link composed of Device2 and Interface2
-    for(var i=0;i<foundRightLink.length;i++){
+    for(var i=0;i<foundRightLink.length;i++){console.lo
         secondPOPDetails = checkPOPandCabinet(Parser.parseHostname(S(foundRightLink[i].device2)));
         tempLink = {device1: foundRightLink[i].device1,interface1: foundRightLink[i].interface1,device2: foundRightLink[i].device2,interface2: foundRightLink[i].interface2,
             secondPOPShortName:secondPOPDetails.shortName,secondPOPLongName:secondPOPDetails.popLongName,secondPOPType:secondPOPDetails.popType,
