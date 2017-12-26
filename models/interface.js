@@ -20,6 +20,8 @@ var interfaceSchema = new mongoose.Schema({
     secondPOP: String,
     secondHost: String,
     secondInterface: String,
+    secondDeviceType: String,
+    secondPOPType: String,
     label: String,
     provisoFlag: Number,
     noEnrichFlag: Number,

@@ -340,7 +340,7 @@ function discoveredDevice(device,linkEnrichmentData,cabinetName,POPDetails) {
     self.interfaceLinkDetails = "";
 self.checkInterfaceInLinks = function(interfaceName){
         var isInterfaceLink = false;
-        var secondHost="Unknown",secondInterface="Unknown",secondPOP="Unknown",parsedHostName,secondDeviceType;
+        var secondHost="Unknown",secondInterface="Unknown",secondPOP="Unknown",parsedHostName,secondDeviceType,secondPOPType='Unknown';
 
             if(self.linkEnrichmentData.End == "left"){
                 for (var i=0; i < self.linkEnrichmentData.length; i++) {
@@ -351,9 +351,12 @@ self.checkInterfaceInLinks = function(interfaceName){
                         parsedHostName = Parser.parseHostname(secondHost);
                         // console.log(self.linkEnrichmentData[i]);
                         if(self.linkEnrichmentData[i].secondPOPShortName == "Unknown") secondPOP = 'Unknown';
-                        else secondPOP = self.linkEnrichmentData[i].secondPOPShortName+"_"+self.linkEnrichmentData[i].secondPOPGov;//parsedHostName.devicePOPName;
+                        else {
+                            secondPOP = self.linkEnrichmentData[i].secondPOPShortName+"_"+self.linkEnrichmentData[i].secondPOPGov;//parsedHostName.devicePOPName;
+                            secondPOPType = self.linkEnrichmentData[i].secondPOPType;
+                        }
                         
-                        secondDeviceType = parsedHostName.deviceType;
+                        secondDeviceType = parsedHostName.deviceType || 'Unknown';
                         i = self.linkEnrichmentData.length;//break only first loop 
                     }
                 }
@@ -367,9 +370,12 @@ self.checkInterfaceInLinks = function(interfaceName){
                         parsedHostName = Parser.parseHostname(secondHost);
                         // console.log(self.linkEnrichmentData[i]);
                         if(self.linkEnrichmentData[i].secondPOPShortName == "Unknown") secondPOP = 'Unknown';
-                        else secondPOP = self.linkEnrichmentData[i].secondPOPShortName+"_"+self.linkEnrichmentData[i].secondPOPGov;//parsedHostName.devicePOPName;
+                        else {
+                            secondPOP = self.linkEnrichmentData[i].secondPOPShortName+"_"+self.linkEnrichmentData[i].secondPOPGov;//parsedHostName.devicePOPName;
+                            secondPOPType = self.linkEnrichmentData[i].secondPOPType;
+                        }
 
-                        secondDeviceType = parsedHostName.deviceType;
+                        secondDeviceType = parsedHostName.deviceType || 'Unknown';
                         i = self.linkEnrichmentData.length;//break only first loop 
                     }
                 }
@@ -383,9 +389,12 @@ self.checkInterfaceInLinks = function(interfaceName){
                         parsedHostName = Parser.parseHostname(secondHost);
                         // console.log(self.linkEnrichmentData[i]);
                         if(self.linkEnrichmentData[i].secondPOPShortName == "Unknown") secondPOP = 'Unknown';
-                        else secondPOP = self.linkEnrichmentData[i].secondPOPShortName+"_"+self.linkEnrichmentData[i].secondPOPGov;//parsedHostName.devicePOPName;
+                        else {
+                            secondPOP = self.linkEnrichmentData[i].secondPOPShortName+"_"+self.linkEnrichmentData[i].secondPOPGov;//parsedHostName.devicePOPName;
+                            secondPOPType = self.linkEnrichmentData[i].secondPOPType;
+                        }
 
-                        secondDeviceType = parsedHostName.deviceType;
+                        secondDeviceType = parsedHostName.deviceType || 'Unknown';
                         i = self.linkEnrichmentData.length;//break only first loop 
                     }
                     else if (S(self.linkEnrichmentData[i].device2).s == self.name && S(self.linkEnrichmentData[i].interface2).s == S(interfaceName).s) {
@@ -395,14 +404,17 @@ self.checkInterfaceInLinks = function(interfaceName){
                         parsedHostName = Parser.parseHostname(secondHost);
                         // console.log(self.linkEnrichmentData[i]);
                         if(self.linkEnrichmentData[i].secondPOPShortName == "Unknown") secondPOP = 'Unknown';
-                        else secondPOP = self.linkEnrichmentData[i].secondPOPShortName+"_"+self.linkEnrichmentData[i].secondPOPGov;//parsedHostName.devicePOPName;
+                        else {
+                            secondPOP = self.linkEnrichmentData[i].secondPOPShortName+"_"+self.linkEnrichmentData[i].secondPOPGov;//parsedHostName.devicePOPName;
+                            secondPOPType = self.linkEnrichmentData[i].secondPOPType;
+                        }
 
-                        secondDeviceType = parsedHostName.deviceType;
+                        secondDeviceType = parsedHostName.deviceType || 'Unknown';
                         i = self.linkEnrichmentData.length;//break only first loop 
                     }
                 }
             }
-        interfaceLinkDetails = {secondHost:secondHost,secondInterface:secondInterface,secondPOP:secondPOP,secondDeviceType:secondDeviceType};
+        interfaceLinkDetails = {secondHost:secondHost,secondInterface:secondInterface,secondPOP:secondPOP,secondDeviceType:secondDeviceType,secondPOPType:secondPOPType};
         return isInterfaceLink;
 };
     self.parseIfAlias = function(ifAlias,hostname,ifName,ifIndex,ipaddress,ifSpeed,ifHighSpeed){
@@ -500,7 +512,8 @@ self.checkInterfaceInLinks = function(interfaceName){
                         actualspeed:actualspeed,pollInterval:pollInterval,speedCat:speedCat,parentPOP:parentPOP,
 
                         sp_customer : '',sp_pop : '',sp_emsOrder : '', sp_connectedBW : '',sp_fwType : '', sp_serviceType : '', sp_ipType : '', sp_vendor : '',
-                        sp_sourceCore : '', sp_destCore : '',sp_siteCode:'',sp_preNumber:'',sp_portID:'',secondHost:'',secondInterface:'',secondPOP:'',type:'',pop:''                        
+                        sp_sourceCore : '', sp_destCore : '',sp_siteCode:'',sp_preNumber:'',sp_portID:'',secondHost:'',secondInterface:'',secondPOP:'',type:'',pop:'',
+                        secondDeviceType:'',secondPOPType:''                        
             }
         }
         else if(alias && S(alias.toLowerCase()).startsWith("cache-")){
@@ -547,7 +560,7 @@ self.checkInterfaceInLinks = function(interfaceName){
 
                         sp_service : '',sp_CID : '', sp_TECID : '', sp_customer : '',
                         sp_pop : '',sp_emsOrder : '', sp_connectedBW : '',sp_fwType : '', sp_serviceType : '', sp_ipType : '', sp_vendor : '',sp_sourceCore : '', sp_destCore : '', 
-                        sp_siteCode:'',sp_preNumber:'',sp_portID:'',secondHost:'',secondInterface:'',secondPOP:'',type:'',pop:''                        
+                        sp_siteCode:'',sp_preNumber:'',sp_portID:'',secondHost:'',secondInterface:'',secondPOP:'',type:'',pop:'',secondDeviceType:'',secondPOPType:''                        
             }
         }
         else if(alias && S(alias.toLowerCase()).contains("alpha-bitstream")){
@@ -585,7 +598,7 @@ self.checkInterfaceInLinks = function(interfaceName){
                     sp_service : '', sp_provider : '', sp_termination : '',sp_connType : '', sp_bundleId : '',  
                     sp_CID : '', sp_TECID : '', sp_subCable : '', 
                     sp_pop : '',sp_emsOrder : '', sp_connectedBW : '',sp_fwType : '', sp_serviceType : '', sp_ipType : '', sp_vendor : '',sp_sourceCore : '', sp_destCore : '', 
-                    sp_siteCode:'',sp_preNumber:'',sp_portID:'',secondHost:'',secondInterface:'',secondPOP:'',type:'',pop:''                        
+                    sp_siteCode:'',sp_preNumber:'',sp_portID:'',secondHost:'',secondInterface:'',secondPOP:'',type:'',pop:'',secondDeviceType:'',secondPOPType:''                        
             }
         }
         else if(alias && S(alias.toLowerCase()).contains("-esp-bitstream")){
@@ -619,7 +632,7 @@ self.checkInterfaceInLinks = function(interfaceName){
                     sp_service : '', sp_provider : '', sp_termination : '',sp_connType : '', sp_bundleId : '',  
                     sp_CID : '', sp_TECID : '', sp_subCable : '', actualspeed:'',
                     sp_pop : '',sp_emsOrder : '', sp_connectedBW : '',sp_fwType : '', sp_serviceType : '', sp_ipType : '', sp_vendor : '',sp_sourceCore : '', sp_destCore : '', 
-                    sp_siteCode:'',sp_preNumber:'',sp_portID:'',secondHost:'',secondInterface:'',secondPOP:'',type:'',pop:''                        
+                    sp_siteCode:'',sp_preNumber:'',sp_portID:'',secondHost:'',secondInterface:'',secondPOP:'',type:'',pop:'',secondDeviceType:'',secondPOPType:''                        
             }
         }
         else if(alias && S(alias.toLowerCase()).contains("-bitstream")){
@@ -655,7 +668,7 @@ self.checkInterfaceInLinks = function(interfaceName){
                     sp_service : '', sp_provider : '', sp_termination : '',sp_connType : '', sp_bundleId : '',  
                     sp_CID : '', sp_TECID : '', sp_subCable : '', actualspeed:'',
                     sp_pop : '',sp_emsOrder : '', sp_connectedBW : '',sp_fwType : '', sp_serviceType : '', sp_ipType : '', sp_vendor : '',sp_sourceCore : '', sp_destCore : '', 
-                    sp_siteCode:'',sp_preNumber:'',sp_portID:'',secondHost:'',secondInterface:'',secondPOP:'',type:'',pop:''                        
+                    sp_siteCode:'',sp_preNumber:'',sp_portID:'',secondHost:'',secondInterface:'',secondPOP:'',type:'',pop:'',secondDeviceType:'',secondPOPType:''                        
             }
         }
         else if(alias && S(alias.toLowerCase()).startsWith("esp-")){
@@ -693,7 +706,7 @@ self.checkInterfaceInLinks = function(interfaceName){
                     sp_service : '', sp_provider : '', sp_termination : '',sp_bundleId : '', sp_linkNumber : '', 
                     sp_CID : '', sp_TECID : '', sp_subCable : '', 
                     sp_fwType : '', sp_serviceType : '', sp_ipType : '', sp_vendor : '',sp_sourceCore : '', sp_destCore : '', 
-                    sp_siteCode:'',sp_preNumber:'',sp_portID:'',secondHost:'',secondInterface:'',secondPOP:'',type:'',pop:''                        
+                    sp_siteCode:'',sp_preNumber:'',sp_portID:'',secondHost:'',secondInterface:'',secondPOP:'',type:'',pop:'',secondDeviceType:'',secondPOPType:''                        
             }
         }
         else if(alias && S(alias.toLowerCase()).contains("-fw") && S(alias.toLowerCase()).contains("-eg")){
@@ -732,7 +745,7 @@ self.checkInterfaceInLinks = function(interfaceName){
                     sp_service : '', sp_provider : '', sp_termination : '',sp_connType : '', sp_bundleId : '', sp_linkNumber : '', 
                     sp_CID : '', sp_TECID : '', sp_subCable : '', sp_speed:'',actualspeed:'',sp_customer : '',
                     sp_emsOrder : '', sp_connectedBW : '', sp_sourceCore : '', sp_destCore : '', 
-                    sp_siteCode:'',sp_preNumber:'',sp_portID:'',secondHost:'',secondInterface:'',secondPOP:'',type:'',pop:''                        
+                    sp_siteCode:'',sp_preNumber:'',sp_portID:'',secondHost:'',secondInterface:'',secondPOP:'',type:'',pop:'',secondDeviceType:'',secondPOPType:''                        
             }
         }
         else if(alias && S(alias.toLowerCase()).startsWith("nr_") ){
@@ -780,7 +793,7 @@ self.checkInterfaceInLinks = function(interfaceName){
                     sp_termination : '',sp_connType : '', sp_bundleId : '',  
                     sp_CID : '', sp_TECID : '', sp_subCable : '', actualspeed:'',sp_customer : '',
                     sp_pop : '',sp_emsOrder : '', sp_connectedBW : '',sp_fwType : '', sp_serviceType : '', sp_ipType : '',  
-                    sp_siteCode:'',sp_preNumber:'',sp_portID:'',secondHost:'',secondInterface:'',secondPOP:'',type:'',pop:''                        
+                    sp_siteCode:'',sp_preNumber:'',sp_portID:'',secondHost:'',secondInterface:'',secondPOP:'',type:'',pop:'',secondDeviceType:'',secondPOPType:''                        
             }
         }
         // # LTE Interfaces
@@ -821,7 +834,7 @@ self.checkInterfaceInLinks = function(interfaceName){
                     sp_service : '', sp_provider : '', sp_termination : '',sp_connType : '', sp_bundleId : '',  
                     sp_CID : '', sp_TECID : '', sp_subCable : '', actualspeed:'',sp_customer : '',
                     sp_emsOrder : '', sp_connectedBW : '',sp_fwType : '', sp_serviceType : '', sp_ipType : '', sp_sourceCore : '', sp_destCore : '', 
-                    sp_preNumber:'',sp_portID:'',secondHost:'',secondInterface:'',secondPOP:'',type:'',pop:''                        
+                    sp_preNumber:'',sp_portID:'',secondHost:'',secondInterface:'',secondPOP:'',type:'',pop:'',secondDeviceType:'',secondPOPType:''                        
             }
         }
         // # EPC
@@ -857,7 +870,7 @@ self.checkInterfaceInLinks = function(interfaceName){
                     sp_service : '', sp_termination : '',sp_connType : '', sp_bundleId : '',  
                     sp_CID : '', sp_TECID : '', sp_subCable : '', actualspeed:'',sp_customer : '',
                     sp_pop : '',sp_emsOrder : '', sp_connectedBW : '',sp_fwType : '', sp_serviceType : '', sp_ipType : '', sp_vendor : '',sp_sourceCore : '', sp_destCore : '', 
-                    sp_siteCode:'',sp_preNumber:'',sp_portID:'',secondHost:'',secondInterface:'',secondPOP:'',type:'',pop:''                        
+                    sp_siteCode:'',sp_preNumber:'',sp_portID:'',secondHost:'',secondInterface:'',secondPOP:'',type:'',pop:'',secondDeviceType:'',secondPOPType:''                        
             }
         }
         // # DPI
@@ -891,7 +904,7 @@ self.checkInterfaceInLinks = function(interfaceName){
                     sp_service : '', sp_provider : '', sp_termination : '',sp_connType : '', sp_bundleId : '', sp_linkNumber : '', 
                     sp_CID : '', sp_TECID : '', sp_subCable : '', sp_speed:'',actualspeed:'',pollInterval:'',sp_customer : '',
                     sp_emsOrder : '', sp_connectedBW : '',sp_fwType : '', sp_serviceType : '', sp_ipType : '', sp_vendor : '',sp_sourceCore : '', sp_destCore : '', 
-                    sp_siteCode:'',secondHost:'',secondInterface:'',secondPOP:'',type:'',pop:''                        
+                    sp_siteCode:'',secondHost:'',secondInterface:'',secondPOP:'',type:'',pop:'',secondDeviceType:'',secondPOPType:''                        
             }
         }
         else if((self.linkEnrichmentData && self.linkEnrichmentData.length > 0) && self.checkInterfaceInLinks(interfaceName) == true){
@@ -911,6 +924,7 @@ self.checkInterfaceInLinks = function(interfaceName){
             anErichment = {
                 secondHost:interfaceLinkDetails.secondHost,secondInterface:interfaceLinkDetails.secondInterface,secondPOP:interfaceLinkDetails.secondPOP, provisoFlag:1,
                 noEnrichFlag:noEnrichFlag,unknownFlag:unknownFlag,type:type,label:label,pollInterval:pollInterval,speedCat:speedCat,parentPOP:parentPOP,pop:pop,
+                secondDeviceType:interfaceLinkDetails.secondDeviceType,secondPOPType:interfaceLinkDetails.secondPOPType,
                 // noEnrichFlag:noEnrichFlag,unknownFlag:unknownFlag,type:type,pop:pop,label:label,pollInterval:pollInterval,speedCat:speedCat,
 
                 specialService : '', sp_service : '', sp_provider : '', sp_termination : '',sp_connType : '', sp_bundleId : '', sp_linkNumber : '', 
@@ -954,7 +968,7 @@ self.checkInterfaceInLinks = function(interfaceName){
                         specialService : '', sp_service : '', sp_provider : '', sp_termination : '',sp_connType : '', sp_bundleId : '', sp_linkNumber : '', 
                         sp_CID : '', sp_TECID : '', sp_subCable : '', sp_speed:'',actualspeed:'',sp_customer : '',
                         sp_pop : '',sp_emsOrder : '', sp_connectedBW : '',sp_fwType : '', sp_serviceType : '', sp_ipType : '', sp_vendor : '',sp_sourceCore : '', sp_destCore : '', 
-                        sp_siteCode:'',sp_preNumber:'',sp_portID:'',secondHost:'',secondInterface:'',secondPOP:'',type:'',pop:''                        
+                        sp_siteCode:'',sp_preNumber:'',sp_portID:'',secondHost:'',secondInterface:'',secondPOP:'',type:'',pop:'',secondDeviceType:'',secondPOPType:''                        
                     };
 
         }
@@ -969,7 +983,7 @@ self.checkInterfaceInLinks = function(interfaceName){
                 specialService : '', sp_service : '', sp_provider : '', sp_termination : '',sp_connType : '', sp_bundleId : '', sp_linkNumber : '', 
                 sp_CID : '', sp_TECID : '', sp_subCable : '', sp_speed:'',actualspeed:'',sp_customer : '', sp_pop : '',sp_emsOrder : '', sp_connectedBW : '',sp_fwType : '', 
                 sp_serviceType : '', sp_ipType : '', sp_vendor : '',sp_sourceCore : '', sp_destCore : '', 
-                sp_siteCode:'',sp_preNumber:'',sp_portID:'',secondHost:'',secondInterface:'',secondPOP:'',type:'',pop:''                        
+                sp_siteCode:'',sp_preNumber:'',sp_portID:'',secondHost:'',secondInterface:'',secondPOP:'',type:'',pop:'',secondDeviceType:'',secondPOPType:''                        
             };
         }
         
@@ -1410,6 +1424,10 @@ self.checkInterfaceInLinks = function(interfaceName){
         if(fromObject.ifHighSpeedText && override == true) toObject.ifHighSpeedText = fromObject.ifHighSpeedText;
         if(fromObject.sp_speedText && override == true) toObject.sp_speedText = fromObject.sp_speedText;
         if(fromObject.actualspeedText && override == true) toObject.actualspeedText = fromObject.actualspeedText;
+        if(fromObject.secondDeviceType && override == true) toObject.secondDeviceType = fromObject.secondDeviceType;
+        else toObject.secondDeviceType = "";
+        if(fromObject.secondPOPType && override == true) toObject.secondPOPType = fromObject.secondPOPType;
+        else toObject.secondPOPType = "";
 
     };
         self.applyLimit = function(){
@@ -2284,6 +2302,7 @@ router.delete("/:id",  middleware.isLoggedIn , function(request,response){
 router.delete("/api/:hostname",  middleware.isAPIAuthenticated ,function(request,response){
     indexRoutes.invalidateAPIsession();
     var hostname = request.params.hostname;
+    hostname = hostname.trim();
     logger.warn("NNM Deleting device with hostname: "+hostname);
     //check device existence and find its list of interfaces
 
