@@ -75,7 +75,12 @@ var interfaceSchema = new mongoose.Schema({
     devGov: {type: String,default: "Unknown"},//governorate
     devDistrict: {type: String,default: "Unknown"},//district
     devSector: {type: String,default: "Unknown"},//sector
-    devPOPType: {type: String,default: "Unknown"}
+    devPOPType: {type: String,default: "Unknown"},
+    teMSANCode: String,
+    teMngIP: String,
+    teSector: String,
+    teDistrict: String
+
     // delete: {type: Boolean, default: false},//used to mark interface for deletion
     // author: {
     //     id:{

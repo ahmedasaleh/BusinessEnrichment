@@ -53,6 +53,11 @@ var deviceSchema = new mongoose.Schema({
     sysObjectID: String,
     sysName: String,
     interfaces: [Interface.schema],
+    teMSANCode: String,
+    teMngIP: String,
+    teSector: String,
+    teDistrict: String,
+
     author: {
         id:{
             type: mongoose.Schema.Types.ObjectId,

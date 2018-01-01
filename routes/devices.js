@@ -9,6 +9,7 @@ var Governorate     = require("../models/governorate");
 var Link            = require("../models/link");
 var DeviceModel     = require("../models/devicemodel");
 var Cabinet         = require("../models/cabinet");
+var TeMSANInfo      = require("../models/temsaninfo");
 var Promise         = require('bluebird');
 var snmp            = Promise.promisifyAll(require ("net-snmp"));
 var session         = snmp.createSession (process.env.IP, "public");
@@ -2089,6 +2090,23 @@ var checkPOPandCabinet = function(parsedHostName){
     }
     return POPDetails;
 }
+
+var checkTEMSANInfo = function(ipaddress){
+    var TeMSANInfo = null;
+    if(ipaddress) TeMSANInfo = __await__ (TeMSANInfo.findOne({TEDataMngIP:ipaddress}));
+
+    if(TeMSANInfo == null){
+        POPDetails = {};
+        POPDetails.shortName = "Unknown";
+        POPDetails.gov = "Unknown";
+        POPDetails.district = "Unknown";
+        POPDetails.sector = "Unknown";
+        POPDetails.popType = "Unknown";
+        POPDetails.popLongName = "Unknown";
+    }
+    return TeMSANInfo;
+}
+
 var getdeviceExtraDetails = __async__(function(hostname){
     var parsedHostName = Parser.parseHostname(S(hostname));
     var linkEnrichmentData;
