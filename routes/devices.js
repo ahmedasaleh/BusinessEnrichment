@@ -39,7 +39,7 @@ var syncCyclesThreshold = 3;
 var SYNC_DIFFERENCE_IN_DAYS = 7;//difference in days
 var SYNC_DIFFERENCE_IN_HOURS = 168;//difference in hours
 var SYNC_DIFFERENCE_IN_MINUTES = 10080;//difference in minutes
-var ARRAY_SIZE_LIMIT = 10123;
+var ARRAY_SIZE_LIMIT = 8123;
 //*********************
 //  SNMP HANDLER
 //*********************
@@ -1295,18 +1295,36 @@ self.checkInterfaceInLinks = function(interfaceName){
         return self.filteredInterestInterfacesMap;
     };    
     self.createInterfaces  = function(interfaceList){
-        try{
-            self.filteredInterestInterfacesMap.forEach(function(interface, key) {
-                interface._id = self.constructInterfaceID(interface.ipaddress,interface.ifIndex);
-                Interface.create(interface,function(error,createdInterface){
-                    if(error){
-                         logger.error(error);
-                    }
+        if(self.inSyncMode){
+            try{
+                self.filteredInterestInterfacesMap.forEach(function(interface, key) {
+                    interface._id = self.constructInterfaceID(interface.ipaddress,interface.ifIndex);
+                    Interface.create(interface,function(error,createdInterface){
+                        if(error){
+                             logger.error(error);
+                        }
+                    });
                 });
-            });
+            }
+            catch(error){
+                logger.error("caught an error while creating interface: "+error);
+            }            
         }
-        catch(error){
-            logger.error("caught an error while creating interface: "+error);
+        else{
+            if((self.interfaceUpdateMap.size + self.filteredInterestInterfacesMap.size) > ARRAY_SIZE_LIMIT) self.applyLimit();
+            try{
+                self.filteredInterestInterfacesMap.forEach(function(interface, key) {
+                    interface._id = self.constructInterfaceID(interface.ipaddress,interface.ifIndex);
+                    Interface.create(interface,function(error,createdInterface){
+                        if(error){
+                             logger.error(error);
+                        }
+                    });
+                });
+            }
+            catch(error){
+                logger.error("caught an error while creating interface: "+error);
+            }            
         }
     };
     self.updateInterfaces  = function(interfaceList){
@@ -1518,7 +1536,6 @@ self.checkInterfaceInLinks = function(interfaceName){
                         interface.lastSyncTime = new Date();
                         self.interfaceUpdateMap.set(interface.ifIndex,interface);
                     }
-
                 }
                 else{
                     interface.lastSyncTime = new Date();
@@ -1532,6 +1549,7 @@ self.checkInterfaceInLinks = function(interfaceName){
                         interface.lastSyncTime = new Date();
                         self.interfaceUpdateMap.set(interface.ifIndex,interface);
             }
+            else {console.log("missed");}
         });//end of async.forEachOf
         if((self.interfaceUpdateMap.size + self.filteredInterestInterfacesMap.size) > ARRAY_SIZE_LIMIT) self.applyLimit();
     };
