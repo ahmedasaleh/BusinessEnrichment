@@ -121,6 +121,10 @@
                                 <th data-field="adminStatus" data-visible="false"> adminStatus  </th>
                                 <th data-field="operStatus" data-visible="false"> operStatus  </th>
                                 <th data-field="pop"> POP  </th>
+                                <th data-field="teMSANCode"> teMSANCode  </th>
+                                <th data-field="teMngIP"> teMngIP  </th>
+                                <th data-field="teSector"> teSector  </th>
+                                <th data-field="teDistrict"> teDistrict  </th>
                                 <th data-field="lastSyncTime" data-sortable="true">Last Sync Time</th>
                                 <th data-field="lastUpdate" data-sortable="true">Date Updated</th>
                             </tr>
@@ -196,6 +200,10 @@
                                     <td><%= interface.adminStatus %></td>
                                     <td><%= interface.operStatus %></td>
                                     <td><%= interface.pop %></td>
+                                    <td><%= interface.teMSANCode %></td>
+                                    <td><%= interface.teMngIP %></td>
+                                    <td><%= interface.teSector %></td>
+                                    <td><%= interface.teDistrict %></td>
                                     <td><% if(interface.lastSyncTime) { %>
                                             <%= interface.lastSyncTime.toLocaleString() %>
                                         <% } %>

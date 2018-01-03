@@ -83,7 +83,7 @@ var oids = {
 };
 
 // function discoveredDevice(device,linkEnrichmentData,devicePOP,deviceGove,deviceSector,deviceDistrict,popType,parentPOP,cabinetName,POPDetails) {
-function discoveredDevice(device,linkEnrichmentData,cabinetName,POPDetails) {
+function discoveredDevice(device,linkEnrichmentData,cabinetName,POPDetails,TeMSANData) {
     var self = null;
     self = this;
     self.name = device.hostname;
@@ -120,6 +120,11 @@ function discoveredDevice(device,linkEnrichmentData,cabinetName,POPDetails) {
     self.deviceDistrict = self.device.district;
     self.devicePOPType = self.device.popType;
     self.devicePOPLongName = self.device.popLongName;
+    self.TeMSANData = TeMSANData ;
+    self.msanCode = self.TeMSANData.msanCode ;
+    self.teMngIP = self.TeMSANData.teMngIP;
+    self.teSector = self.TeMSANData.teSector;
+    self.teDistrict = self.TeMSANData.teDistrict;
 
     if(self.device.sector == S("#N/A").s) self.deviceSector = "";
     if(self.device.district == S("#N/A").s) self.deviceDistrict = "";
@@ -261,6 +266,10 @@ function discoveredDevice(device,linkEnrichmentData,cabinetName,POPDetails) {
         theInterface.devSector = self.deviceSector ;
         theInterface.devPOPType = self.devicePOPType;
         theInterface.devPOPLongName = self.devicePOPLongName;
+        theInterface.teMSANCode = self.TeMSANData.msanCode;
+        theInterface.teMngIP = self.TeMSANData.teMngIP;
+        theInterface.teSector = self.TeMSANData.teSector;
+        theInterface.teDistrict = self.TeMSANData.teDistrict;
     };
     self.parseSpeed = function(speed){
         var multiplier, unit;
@@ -1014,7 +1023,7 @@ self.checkInterfaceInLinks = function(interfaceName){
                 self.deviceSyncCycles = self.deviceSyncCycles + 1;
                 Device.findByIdAndUpdate(device._id,{ lastSyncTime: new Date(),deviceSyncCycles:self.deviceSyncCycles,
                 pop:self.devicePOP,popLongName:self.devicePOPLongName,cabinet:self.cabinetName,sector:self.deviceSector,gov:self.deviceGove,district:self.deviceDistrict,
-                popType:self.devicePOPType },function(error,updatedDevice){
+                popType:self.devicePOPType,teMSANCode:self.msanCode,teMngIP:self.teMngIP,teSector:self.teSector,teDistrict:self.teDistrict},function(error,updatedDevice){
                     if(error){
                          logger.error(error);
                     }
@@ -1047,7 +1056,7 @@ self.checkInterfaceInLinks = function(interfaceName){
                 Device.findByIdAndUpdate(device._id,{ lastSyncTime: new Date(),deviceSyncCycles:self.deviceSyncCycles,type: self.deviceType,model: self.deviceModel,
                     vendor: self.deviceVendor,sysObjectID: self.modelOID,sysName: self.sysName,popLongName:self.devicePOPLongName,
                     pop:self.devicePOP,cabinet:self.cabinetName,sector:self.deviceSector,gov:self.deviceGove,district:self.deviceDistrict,
-                    popType:self.devicePOPType },function(error,updatedDevice){
+                    popType:self.devicePOPType,teMSANCode:self.msanCode,teMngIP:self.teMngIP,teSector:self.teSector,teDistrict:self.teDistrict },function(error,updatedDevice){
                     if(error){
                          logger.error(error);
                     }
@@ -1091,7 +1100,7 @@ self.checkInterfaceInLinks = function(interfaceName){
                     Device.findByIdAndUpdate(device._id,{interfaces: self.deviceInterfaces, discovered: true, lastSyncTime: new Date(),deviceSyncCycles:self.deviceSyncCycles,
                         type: self.deviceType,model: self.deviceModel,vendor: self.deviceVendor,sysObjectID: self.device.sysObjectID,sysName: self.sysName,pop:self.devicePOP,
                         popLongName:self.devicePOPLongName,cabinet:self.cabinetName,sector:self.deviceSector,gov:self.deviceGove,district:self.deviceDistrict,
-                        popType:self.devicePOPType},function(error,updatedDevice){
+                        popType:self.devicePOPType,teMSANCode:self.msanCode,teMngIP:self.teMngIP,teSector:self.teSector,teDistrict:self.teDistrict},function(error,updatedDevice){
                         if(error){
                              logger.error(error);
                         }
@@ -1447,6 +1456,10 @@ self.checkInterfaceInLinks = function(interfaceName){
         else toObject.secondDeviceType = "";
         if(fromObject.secondPOPType && override == true) toObject.secondPOPType = fromObject.secondPOPType;
         else toObject.secondPOPType = "";
+        if(fromObject.teMSANCode && override == true) toObject.teMSANCode = fromObject.teMSANCode;
+        if(fromObject.teMngIP && override == true) toObject.teMngIP = fromObject.teMngIP;
+        if(fromObject.teSector && override == true) toObject.teSector = fromObject.teSector;
+        if(fromObject.teDistrict && override == true) toObject.teDistrict = fromObject.teDistrict;
 
     };
         self.applyLimit = function(){
@@ -1763,10 +1776,10 @@ router.get("/pagination?", middleware.isLoggedIn ,function(request, response) {
         var skip  = parseInt(request.query.offset);
         // search string
         var searchQuery = request.query.search ;//: 'xe-'
-
+        var columns = 'hostname ipaddress pop popLongName sector gov district type model vendor community createdAt updatedAt lastSyncTime author lastUpdatedBy sysObjectID sysName sysDescr  teMSANCode teMngIP teSector teDistrict';
         if(S(searchQuery).isEmpty()){
             Device.count({}, function(err, devicesCount) {
-                Device.find({},'hostname ipaddress pop popLongName sector gov district type model vendor community createdAt updatedAt lastSyncTime author lastUpdatedBy sysObjectID sysName sysDescr',{lean:true,skip:skip,limit:limit}, function(err, foundDevices) {
+                Device.find({},columns,{lean:true,skip:skip,limit:limit}, function(err, foundDevices) {
                     if (err) {
                          logger.error(err);
                     }
@@ -1799,7 +1812,7 @@ router.get("/pagination?", middleware.isLoggedIn ,function(request, response) {
                 {type: new RegExp(searchQuery,'i')},
                 {model: new RegExp(searchQuery,'i')},
                 {vendor: new RegExp(searchQuery,'i')},
-                {pop: new RegExp(searchQuery,'i')}]},'hostname ipaddress pop popLongName sector gov district type model vendor community createdAt updatedAt lastSyncTime author lastUpdatedBy sysObjectID sysName sysDescr',{lean:true,skip:skip,limit:limit}, function(err, foundDevices) {
+                {pop: new RegExp(searchQuery,'i')}]},columns,{lean:true,skip:skip,limit:limit}, function(err, foundDevices) {
                     if (err) {
                          logger.error(err);
                     }
@@ -1821,7 +1834,7 @@ router.get("/", middleware.isLoggedIn , function(request, response) {
 });
 
 
-var getDeviceInfo = __async__ (function(modelOID,hostname){
+var getDeviceInfo = __async__ (function(modelOID,hostname,ipaddress){
     var parsedHostName = Parser.parseHostname(S(hostname));
     var linkEnrichmentData;
     var deviceModelOID = __await__ (DeviceModel.findOne({oid: modelOID}));
@@ -1872,8 +1885,9 @@ var getDeviceInfo = __async__ (function(modelOID,hostname){
     else{
         linkEnrichmentData = null;
     }
-
-    var deviceExtraDetails = {POPDetails:POPDetails,cabinetName:parsedHostName.devicePOPName,deviceModelOID:deviceModelOID,linkEnrichmentData:linkEnrichmentData};
+    var TeMSANData = checkTEMSANInfo(ipaddress);
+    var deviceExtraDetails = {POPDetails:POPDetails,cabinetName:parsedHostName.devicePOPName,deviceModelOID:deviceModelOID,linkEnrichmentData:linkEnrichmentData,
+        TeMSANData:TeMSANData};
     return deviceExtraDetails;
 
 });
@@ -1912,7 +1926,7 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
             modelOID = "."+modelOID;
 
             var discoDevice ;
-            getDeviceInfo(modelOID,hostname)
+            getDeviceInfo(modelOID,hostname,ipaddress)
             .then(function(deviceExtraDetails){
             aDevice = {
                     hostname: hostname.trim(),
@@ -1924,8 +1938,8 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
                     vendor: deviceExtraDetails.deviceModelOID.vendor.trim(),
                     sysObjectID: modelOID,
                     sysName: sysName,
-                    pop:  deviceExtraDetails.POPDetails.shortName+"_"+deviceExtraDetails.POPDetails.gov,
-                    sector: deviceExtraDetails.POPDetails.sector, 
+                    // pop:  deviceExtraDetails.POPDetails.shortName+"_"+deviceExtraDetails.POPDetails.gov,
+                    pop: (deviceExtraDetails.POPDetails.shortName=="Unknown")? "Unknown":deviceExtraDetails.POPDetails.shortName+"_"+deviceExtraDetails.POPDetails.gov,                    sector: deviceExtraDetails.POPDetails.sector, 
                     gov:  deviceExtraDetails.POPDetails.gov 
             };
             aDevice.interfaces = [];
@@ -1941,7 +1955,8 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
                      logger.info("new device created and saved");
                     request.flash("success","Successfully added device, will start device discovery now");
                     // var discoDevice = new discoveredDevice(device);
-                     discoDevice = new discoveredDevice(device,deviceExtraDetails.linkEnrichmentData,deviceExtraDetails.cabinetName,deviceExtraDetails.POPDetails);
+                     discoDevice = new discoveredDevice(device,deviceExtraDetails.linkEnrichmentData,deviceExtraDetails.cabinetName,deviceExtraDetails.POPDetails,
+                        deviceExtraDetails.TeMSANData);
                         discoDevice.discoverInterfaces();
                 }
                 response.redirect("/devices"); //will redirect as a GET request
@@ -2011,6 +2026,7 @@ var getDeviceList = __async__ (function(){
         var POPDetails,secondPOPDetails ;
         var rightLinks = [], leftLinks = [];
         var tempLink  = null;
+        var TeMSANData = null;
 
         // var cabinetPOP = __await__ (Cabinet.findOne({cabinet:parsedHostName.devicePOPName}));
         // if(cabinetPOP) POPDetails = __await__ (POP.findOne({shortName:cabinetPOP.pop,gov:parsedHostName.popGove}));
@@ -2055,12 +2071,13 @@ var getDeviceList = __async__ (function(){
         else{
             linkEnrichmentData = null;
         }
+        TeMSANData = checkTEMSANInfo(device.ipaddress);
 
-        var deviceExtraDetails = {POPDetails:POPDetails,cabinetName:parsedHostName.devicePOPName,linkEnrichmentData:linkEnrichmentData};
+        var deviceExtraDetails = {POPDetails:POPDetails,cabinetName:parsedHostName.devicePOPName,linkEnrichmentData:linkEnrichmentData,TeMSANData:TeMSANData};
 
         if (POPDetails) deviceList.push( new discoveredDevice(device.toObject(),deviceExtraDetails.linkEnrichmentData,deviceExtraDetails.cabinetName,
-            deviceExtraDetails.POPDetails));    
-        else deviceList.push( new discoveredDevice(device.toObject(),linkEnrichmentData));
+            deviceExtraDetails.POPDetails,deviceExtraDetails.TeMSANData));    
+        // else deviceList.push( new discoveredDevice(device.toObject(),linkEnrichmentData));
 
         if(deviceList.length % 250 == 0) process.stdout.write("=");
 
@@ -2092,31 +2109,25 @@ var checkPOPandCabinet = function(parsedHostName){
 }
 
 var checkTEMSANInfo = function(ipaddress){
-    var TeMSANInfo = null;
-    if(ipaddress) TeMSANInfo = __await__ (TeMSANInfo.findOne({TEDataMngIP:ipaddress}));
-
-    if(TeMSANInfo == null){
-        POPDetails = {};
-        POPDetails.shortName = "Unknown";
-        POPDetails.gov = "Unknown";
-        POPDetails.district = "Unknown";
-        POPDetails.sector = "Unknown";
-        POPDetails.popType = "Unknown";
-        POPDetails.popLongName = "Unknown";
-    }
-    return TeMSANInfo;
+    var tempTeMSANData = {msanCode:"Unknown",teMngIP:"Unknown",TEDataMngIP: ipaddress,teSector:"Unknown",teDistrict: "Unknown"};
+    var TeMSANData;
+    if(ipaddress) TeMSANData = __await__ (TeMSANInfo.findOne({TEDataMngIP:ipaddress}));
+    if(TeMSANData == null) TeMSANData = tempTeMSANData;
+    
+    return TeMSANData;
 }
 
-var getdeviceExtraDetails = __async__(function(hostname){
+var getdeviceExtraDetails = __async__(function(hostname,ipaddress){
     var parsedHostName = Parser.parseHostname(S(hostname));
     var linkEnrichmentData;
     var POPDetails,secondPOPDetails ;
     var rightLinks = [], leftLinks = [];
     var tempLink  = null;
+    var TeMSANData = null;
     POPDetails = checkPOPandCabinet(parsedHostName);
 
     var foundRightLink = __await__ (Link.find({device1:hostname}));//right link composed of Device2 and Interface2
-    for(var i=0;i<foundRightLink.length;i++){console.lo
+    for(var i=0;i<foundRightLink.length;i++){
         secondPOPDetails = checkPOPandCabinet(Parser.parseHostname(S(foundRightLink[i].device2)));
         tempLink = {device1: foundRightLink[i].device1,interface1: foundRightLink[i].interface1,device2: foundRightLink[i].device2,interface2: foundRightLink[i].interface2,
             secondPOPShortName:secondPOPDetails.shortName,secondPOPLongName:secondPOPDetails.popLongName,secondPOPType:secondPOPDetails.popType,
@@ -2143,7 +2154,8 @@ var getdeviceExtraDetails = __async__(function(hostname){
         linkEnrichmentData = null;
     }
 
-    var deviceExtraDetails = {POPDetails:POPDetails,cabinetName:parsedHostName.devicePOPName,linkEnrichmentData:linkEnrichmentData};
+    TeMSANData = checkTEMSANInfo(ipaddress);
+    var deviceExtraDetails = {POPDetails:POPDetails,cabinetName:parsedHostName.devicePOPName,linkEnrichmentData:linkEnrichmentData,TeMSANData:TeMSANData};
 
     return deviceExtraDetails;
 });
@@ -2195,9 +2207,9 @@ router.get("/sync/:id",  middleware.isLoggedIn ,function(request, response) {
                 logger.info("single sync mode, device " + foundDevice.hostname +" will be synced now");
                 // perform interface sync
                 var discoDevice ;
-                getdeviceExtraDetails(foundDevice.hostname)
+                getdeviceExtraDetails(foundDevice.hostname,foundDevice.ipaddress)
                 .then(function(deviceExtraDetails){
-                 discoDevice = new discoveredDevice(foundDevice,deviceExtraDetails.linkEnrichmentData,deviceExtraDetails.cabinetName,deviceExtraDetails.POPDetails);
+                 discoDevice = new discoveredDevice(foundDevice,deviceExtraDetails.linkEnrichmentData,deviceExtraDetails.cabinetName,deviceExtraDetails.POPDetails,deviceExtraDetails.TeMSANData);
                     discoDevice.syncInterfaces();
                 })
                 .catch();
@@ -2433,7 +2445,7 @@ router.post("/api/:hostname/:ipaddress/:communitystring/:popname", middleware.is
 
             modelOID = "."+modelOID;
 
-            getDeviceInfo(modelOID,hostname)
+            getDeviceInfo(modelOID,hostname,ipaddress)
             .then(function(deviceExtraDetails){
                 aDevice = {
                         hostname: hostname.trim(),
@@ -2445,7 +2457,7 @@ router.post("/api/:hostname/:ipaddress/:communitystring/:popname", middleware.is
                         vendor: deviceExtraDetails.deviceModelOID.vendor.trim(),
                         sysObjectID: modelOID,
                         sysName: sysName,
-                        pop:  deviceExtraDetails.POPDetails.shortName+"_"+deviceExtraDetails.POPDetails.gov,
+                        pop:  (deviceExtraDetails.POPDetails.shortName=="Unknown")? "Unknown":deviceExtraDetails.POPDetails.shortName+"_"+deviceExtraDetails.POPDetails.gov,
                         sector: deviceExtraDetails.POPDetails.sector, 
                         gov:  deviceExtraDetails.POPDetails.gov 
                 };
