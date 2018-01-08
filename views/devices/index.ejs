@@ -17,6 +17,8 @@
                     <a href="/validatedusers/"><button type="button" class="btn btn-default">All Validated Users</button></a>
                     <a href="/devicemodels/"><button type="button" class="btn btn-default ">All Device Models</button></a>
                     <a href="/interfaces/"><button type="button" class="btn btn-default">All Interfaces Data</button></a>
+                     <a href="/cabinets/"><button type="button" class="btn btn-default ">All Cabinets</button></a>
+                     <a href="/temsaninfos/"><button type="button" class="btn btn-default ">All TE-Msans</button></a>
                 </div>        
             </div>
         </header>
@@ -25,19 +27,20 @@
                 <button type="button " class="btn  btn-primary">Add Device</button>
             </form>
             <form id="device-delete-form"  class="btn-group" action="/devices/-1/?_method=DELETE" method="POST">
-                <button type="button " class="btn  btn-danger">Delete Device</button>
+                <button type="button " id="device-delete-button" onclick="return confirm('Are you sure you would to delete this item ?');"
+                type="button " disabled="true"  class="btn  btn-danger">Delete Device</button>
             </form>
             <form id="device-update-form"  class="btn-group" action="" method="GET">
-                <button type="button " class="btn  btn-warning">Update Device</button>
+                <button type="button " id="device-update-button" disabled="true" class="btn  btn-warning">Update Device</button>
             </form>
             <form id="device-sync-form"  class="btn-group" action="" method="GET">
-                <button type="button " class="btn  btn-info">Sync Device</button>
+                <button type="button " id="device-sync-button" disabled="true" class="btn  btn-info">Sync Device</button>
             </form>
             <form id="device-interfaces-form"  class="btn-group" action="" method="GET">
-                <button type="button " class="btn  btn-success">Show Interfaces</button>
+                <button type="button " id="device-interfaces-button" disabled="true" class="btn  btn-success">Show Interfaces</button>
             </form>
             <form id="device-tnpm-form"  class="btn-group" action="" method="GET">
-                <button type="button " class="btn  btn-secondary">TNPM Discovery</button>
+                <button type="button " id="device-tnpm-button" disabled="true" class="btn  btn-secondary">TNPM Discovery</button>
             </form>
         </div>        
 

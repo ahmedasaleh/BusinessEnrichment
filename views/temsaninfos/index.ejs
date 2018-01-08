@@ -5,7 +5,7 @@
             <!--<adding second container to keep spacing around contents when we resize the page>-->
             <div class="container">
                 <h1>Business Enrichment Portal</h1>
-                <p>View Cabinets Information</p>
+                <p>View TE-Msan Information</p>
                 <div class="btn-group" role="group" aria-label="all">
                     <a href="/devices/"><button type="button" class="btn btn-default ">All Devices</button></a>
                     <a href="/pops/"><button type="button" class="btn btn-default ">All POPs</button></a>
@@ -17,34 +17,36 @@
                     <a href="/validatedusers/"><button type="button" class="btn btn-default">All Validated Users</button></a>
                     <!-- <a href="/enrichments/"><button type="button" class="btn btn-default ">All Enrichment Data</button></a> -->
                     <a href="/interfaces/"><button type="button" class="btn btn-default">All Interfaces Data</button></a>
-                     <a href="/cabinets/"><button type="button" class="btn btn-default active">All Cabinets</button></a>
-                     <a href="/temsaninfos/"><button type="button" class="btn btn-default ">All TE-Msans</button></a>
+                     <a href="/cabinets/"><button type="button" class="btn btn-default ">All Cabinets</button></a>
+                     <a href="/temsaninfos/"><button type="button" class="btn btn-default active">All TE-Msans</button></a>
                 </div>        
             </div>
         </header>
-        <div class="btn-group" role="group" aria-label="cabinets">
-            <form id="cabinet-add-form"  class="btn-group" action="/cabinets/new" method="GET">
-                <button type="button " class="btn  btn-primary">Add Cabinet</button>
+        <div class="btn-group" role="group" aria-label="temsans">
+            <form id="temsan-add-form"  class="btn-group" action="/temsaninfos/new" method="GET">
+                <button type="button "  class="btn  btn-primary">Add Msan</button>
             </form>
-            <form id="cabinet-delete-form"  class="btn-group" action="/cabinets/-1/?_method=DELETE" method="POST">
-                <button id="cabinet-delete-button"  onclick="return confirm('Are you sure you would to delete this item ?');"
-                type="button " disabled="true" class="btn  btn-danger">Delete Cabinet</button>
+            <form id="temsan-delete-form"  class="btn-group" action="/temsaninfos/-1/?_method=DELETE" method="POST">
+                <button  id="temsan-delete-button" onclick="return confirm('Are you sure you would to delete this item ?');"
+                type="button " disabled="true" class="btn  btn-danger">Delete Msan</button>
             </form>
-            <form id="cabinet-update-form"  class="btn-group" action="" method="GET">
-                <button type="button " id="cabinet-update-button" disabled="true" class="btn  btn-warning">Update Cabinet</button>
+            <form id="temsan-update-form"  class="btn-group" action="" method="GET">
+                <button id="temsan-update-button" type="button " disabled="true" class="btn  btn-warning">Update Msan</button>
             </form>
         </div>        
         
         <div class="row text-left">
             <div class="table-responsive">
-     <table id="eventsTable" data-pagination="true" data-height="525" data-side-pagination="server" data-url="/cabinets/pagination" data-toggle="table" data-search="true" data-flat="true" data-show-columns="true" data-show-toggle="true" data-show-refresh="true" data-single-select="true">
+     <table id="eventsTable" data-pagination="true" data-height="525" data-side-pagination="server" data-url="/temsaninfos/pagination" data-toggle="table" data-search="true" data-flat="true" data-show-columns="true" data-show-toggle="true" data-show-refresh="true" data-single-select="true">
                     <thead>
                         <tr>
                             <th data-field="state" data-checkbox="true"> </th>
                             <th data-field="_id" data-visible="false">ID</th>
-                            <th data-field="cabinet" data-sortable="true">cabinet</th>
-                            <th data-field="pop">pop</th>
-                            
+                            <th data-field="msanCode" data-sortable="true">Msan Code</th>
+                            <th data-field="teMngIP">TE MngIP</th>
+                            <th data-field="TEDataMngIP">TEData MngIP</th>
+                            <th data-field="teSector">TE Sector</th>
+                            <th data-field="teDistrict">TE District</th>
                         </tr>
                     </thead>
                      

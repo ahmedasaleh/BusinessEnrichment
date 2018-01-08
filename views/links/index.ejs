@@ -17,6 +17,8 @@
                     <a href="/validatedusers/"><button type="button" class="btn btn-default">All Validated Users</button></a>
                     <!-- <a href="/enrichments/"><button type="button" class="btn btn-default ">All Enrichment Data</button></a> -->
                     <a href="/interfaces/"><button type="button" class="btn btn-default">All Interfaces Data</button></a>
+                     <a href="/cabinets/"><button type="button" class="btn btn-default ">All Cabinets</button></a>
+                     <a href="/temsaninfos/"><button type="button" class="btn btn-default ">All TE-Msans</button></a>
                 </div>        
             </div>
         </header>
@@ -25,18 +27,17 @@
                 <button type="button " class="btn  btn-primary">Add Link</button>
             </form>
             <form id="link-delete-form"  class="btn-group" action="/links/-1/?_method=DELETE" method="POST">
-                <button id="link-delete-button"  type="button " class="btn  btn-danger">Delete Link</button>
+                <button id="link-delete-button" onclick="return confirm('Are you sure you would to delete this item ?');"
+                 disabled="true" type="button " class="btn  btn-danger">Delete Link</button>
             </form>
             <form id="link-update-form"  class="btn-group" action="" method="GET">
-                <button type="button " class="btn  btn-warning">Update Link</button>
+                <button type="button " id="link-update-button"  disabled="true" class="btn  btn-warning">Update Link</button>
             </form>
         </div>        
         
         <div class="row text-left">
             <div class="table-responsive">
-                <table id="eventsTable" data-pagination="true" data-search="true"data-toggle="table" data-height="525" data-pagination="true" 
-                data-maintain-selected="true" data-search="true" data-show-refresh="true" data-show-toggle="true" data-show-columns="true" 
-                data-toolbar="#toolbar" data-single-select="true">
+     <table id="eventsTable" data-pagination="true" data-height="525" data-side-pagination="server" data-url="/links/pagination" data-toggle="table" data-search="true" data-flat="true" data-show-columns="true" data-show-toggle="true" data-show-refresh="true" data-single-select="true">
                     <thead>
                         <tr>
                             <th data-field="state" data-checkbox="true"> </th>
@@ -47,18 +48,7 @@
                             <th data-field="interface2">Interface2</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <% links.forEach(function(link){ %>
-                            <tr>
-                                <td><% %></td>
-                                <td><%= link._id %></td>
-                                <td><%= link.device1 %></td>
-                                <td><%= link.interface1 %></td>
-                                <td><%= link.device2 %></td>
-                                <td><%= link.interface2 %></td>
-                            </tr>
-                        <% }); %>
-                    </tbody>
+                    
                 </table>
             </div>
         </div>

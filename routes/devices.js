@@ -2473,7 +2473,7 @@ router.post("/api/:hostname/:ipaddress/:communitystring/:popname", middleware.is
                           logger.info("new device created and saved");
                          // response.json("Successfully added device, will start device discovery now");
                          // var discoDevice = new discoveredDevice(device);
-                          discoDevice = new discoveredDevice(device,deviceExtraDetails.linkEnrichmentData,deviceExtraDetails.cabinetName,deviceExtraDetails.POPDetails);
+                          discoDevice = new discoveredDevice(device,deviceExtraDetails.linkEnrichmentData,deviceExtraDetails.cabinetName,deviceExtraDetails.POPDetails,deviceExtraDetails.TeMSANData);
                              discoDevice.discoverInterfaces();
                      }
                      response.json("Successfully added device, will start device discovery now"); 

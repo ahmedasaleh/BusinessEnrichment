@@ -33,8 +33,8 @@ var interfaceRoutes       = require("./routes/interfaces"),
     enrichmentRoutes    = require("./routes/enrichments"),  
     deviceModelsRoutes    = require("./routes/devicemodels"),  
     indexRoutes     = require("./routes/index"), 
-    cabinetRoutes    = require("./routes/cabinets");  
-
+    cabinetRoutes    = require("./routes/cabinets"),
+    temsansinfosRoutes    = require("./routes/temsaninfos");  
 var indexBaseURL        = "/",
     popBaseURL   = "/pops",
     sectorBaseURL   = "/sectors",
@@ -47,7 +47,8 @@ var indexBaseURL        = "/",
     deviceModelBaseURL   = "/devicemodels",
     interfaceBaseURL      = "/interfaces",
     // interfaceBaseURL      = "/devices/:id/interfaces";
-    cabinetBaseURL   = "/cabinets";
+    cabinetBaseURL   = "/cabinets",
+    temsanBaseURL   = "/temsaninfos";;
 
 var applicationVersion  = 1;
 
@@ -102,6 +103,7 @@ app.use(validatedUserBaseURL, validatedUserRoutes);
 app.use(enrichmentBaseURL, enrichmentRoutes);
 app.use(deviceModelBaseURL, deviceModelsRoutes);
 app.use(cabinetBaseURL, cabinetRoutes);
+app.use(temsanBaseURL, temsansinfosRoutes);
 
 //start server
 process.on('uncaughtException', function (err) {

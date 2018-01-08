@@ -17,6 +17,9 @@
                     <a href="/validatedusers/"><button type="button" class="btn btn-default">All Validated Users</button></a>
                     <a href="/devicemodels/"><button type="button" class="btn btn-default active">All Device Models</button></a>
                     <a href="/interfaces/"><button type="button" class="btn btn-default">All Interfaces Data</button></a>
+                     <a href="/cabinets/"><button type="button" class="btn btn-default ">All Cabinets</button></a>
+                     <a href="/temsaninfos/"><button type="button" class="btn btn-default ">All TE-Msans</button></a>
+                </div>        
                 </div>        
             </div>
         </header>
@@ -25,16 +28,17 @@
                 <button type="button " class="btn  btn-primary">Add Model</button>
             </form>
             <form id="devicemodel-delete-form"  class="btn-group" action="/devicemodels/-1/?_method=DELETE" method="POST">
-                <button id="devicemodel-delete-button"  type="button " class="btn  btn-danger">Delete Model</button>
+                <button id="devicemodel-delete-button"  onclick="return confirm('Are you sure you would to delete this item ?');"
+                type="button " disabled="true" class="btn  btn-danger">Delete Model</button>
             </form>
             <form id="devicemodel-update-form"  class="btn-group" action="" method="GET">
-                <button type="button " class="btn  btn-warning">Update Model</button>
+                <button type="button " id="devicemodel-update-button" disabled="true" class="btn  btn-warning">Update Model</button>
             </form>
         </div>        
         
         <div class="row text-left">
             <div class="table-responsive">
-                <table id="eventsTable" data-pagination="true" data-search="true"data-toggle="table" data-height="525" data-pagination="true" 
+                <table id="eventsTable" data-pagination="true" data-search="true" data-toggle="table" data-height="525" 
                 data-maintain-selected="true" data-search="true" data-show-refresh="true" data-show-toggle="true" data-show-columns="true" 
                 data-toolbar="#toolbar" data-single-select="true">
                     <thead>
@@ -42,22 +46,26 @@
                             <th data-field="state" data-checkbox="true"> </th>
                             <th data-field="_id" data-visible="false">ID</th>
                             <th data-field="oid" data-sortable="true">OID</th>
-                            <th data-field="type">Type</th>
+                            <th data-field="type" >Type</th>
                             <th data-field="vendor" data-sortable="true">Vendor</th>
                             <th data-field="model">Model</th>
                         </tr>
                     </thead>
                     <tbody>
+
+
                         <% devicemodels.forEach(function(devicemodel){ %>
                             <tr>
-                                <td><% %></td>
+                                <td> <% %> </td>
                                 <td><%= devicemodel._id %></td>
-                                <td><%= devicemodel.oid %></td>
-                                <td><%= devicemodel.type %></td>
-                                <td><%= devicemodel.vendor %></td>
+                                <td><%= devicemodel.oid %> </td>
+                                <td><%= devicemodel.type %> </td>
+                                <td><%= devicemodel.vendor %> </td>
                                 <td><%= devicemodel.model %></td>
-                            </tr>
-                        <% }); %>
+                           
+                           </tr>
+                       <% }); %>
+
                     </tbody>
                 </table>
             </div>

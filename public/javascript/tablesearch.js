@@ -21,6 +21,12 @@ var $jtable = $j('#eventsTable');
     $j.each(checkedRows, function(index, value) {
       console.log(index);
       console.log(value);
+      $j("button[id*=-delete-]").removeAttr("disabled"); 
+      $j("button[id*=-update-]").removeAttr("disabled"); 
+      $j("button[id*=-sync-]").removeAttr("disabled"); 
+      $j("button[id*=-interfaces-]").removeAttr("disabled");
+      $j("button[id*=-tnpm-]").removeAttr("disabled");
+
         $j('#device-delete-form').attr('action', '/devices/'+value.id+'/?_method=DELETE');
         $j('#device-update-form').attr('action', '/devices/'+value.id+'/edit');
         $j('#device-sync-form').attr('action', '/devices/sync/'+value.id);
@@ -44,6 +50,9 @@ var $jtable = $j('#eventsTable');
         $j('#devicemodel-update-form').attr('action', '/devicemodels/'+value.id+'/edit');
         $j('#cabinet-delete-form').attr('action', '/cabinets/'+value.id+'/?_method=DELETE');
         $j('#cabinet-update-form').attr('action', '/cabinets/'+value.id+'/edit');
+        $j('#temsan-update-form').attr('action', '/temsaninfos/'+value.id+'/edit');
+        $j('#temsan-delete-form').attr('action', '/temsaninfos/'+value.id+'/?_method=DELETE');
+
     });
 
   });
@@ -53,6 +62,11 @@ var $jtable = $j('#eventsTable');
     $j.each(checkedRows, function(index, value) {
       console.log(value.id);
       checkedRows.splice(index,1);
+       $j("button[id*=-delete-]").attr("disabled", "disabled");
+       $j("button[id*=-update-]").attr("disabled", "disabled");
+       $j("button[id*=-sync-]").attr("disabled", "disabled");
+      $j("button[id*=-interfaces-]").attr("disabled", "disabled");
+      $j("button[id*=-tnpm-]").attr("disabled", "disabled");
     });
       console.log(checkedRows);
   });

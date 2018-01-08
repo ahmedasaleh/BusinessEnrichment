@@ -4,9 +4,11 @@ var Link  = require("../models/link");
 var middleware  = require("../middleware");
 var exec = require('child_process').exec;
 var aLink = new Link() ;
+var S       = require('string');
 var seedDB      = require("../seeds");
 
 //INDEX - show all pops
+/*
 router.get("/", middleware.isLoggedIn ,function(request, response) {
     Link.find({}, function(error, foundLinks) {
         if (error) {
@@ -16,6 +18,79 @@ router.get("/", middleware.isLoggedIn ,function(request, response) {
             response.render("links/index", { links: foundLinks });
         }
     });
+});
+*/
+
+router.get("/pagination?", middleware.isLoggedIn ,function(request, response) {
+        // limit is the number of rows per page
+
+        ///console.log("ddddddddddddd");
+        var limit = parseInt(request.query.limit);
+        console.log("limit: "+limit)
+        // offset is the page number
+        var skip  = parseInt(request.query.offset);
+        console.log("skip: "+skip)
+        // search string
+        var searchQuery = request.query.search ;//: 'xe-'
+        console.log("searchQuery: "+searchQuery)
+
+        if(S(searchQuery).isEmpty()){
+            Link.count({}, function(err, linksCount) {
+                Link.find({},'device1 interface1 device2 interface2',{lean:true,skip:skip,limit:limit}, function(err, foundLinks) {
+                    if (err) {
+                         logger.error(err);
+                    }
+                    else {
+                       // console.log(foundLinks)
+                        var data = "{\"total\":"+ linksCount+",\"rows\":" +  JSON.stringify(foundLinks).escapeSpecialChars()+"}";
+                        response.setHeader('Content-Type', 'application/json');
+                       
+                       //console.log(data);
+                        response.send(data);        
+                    }
+
+                });
+
+            });
+
+        } 
+        else {
+            searchQuery = ".*"+S(searchQuery).s.toLowerCase()+".*";
+            Link.count({'$or' : [{device1: new RegExp(searchQuery,'i')},
+              {interface1: new RegExp(searchQuery,'i')},
+              {device2: new RegExp(searchQuery,'i')},
+                {interface2: new RegExp(searchQuery,'i')}]}, function(err, m_linkscount) {
+                Link.find({'$or' : [{device1: new RegExp(searchQuery,'i')},
+              {interface1: new RegExp(searchQuery,'i')},
+              {device2: new RegExp(searchQuery,'i')},
+                {interface2: new RegExp(searchQuery,'i')}]},'device1 interface1 device2 interface2',{lean:true,skip:skip,limit:limit}, function(err, foundLinks) {
+                    if (err) {
+                         logger.error(err);
+                    }
+                    else {
+                        var data = "{\"total\":"+ m_linkscount+",\"rows\":" + JSON.stringify(foundLinks)+"}";
+                        response.setHeader('Content-Type', 'application/json');
+                         
+                        response.send(data);        
+                    }
+
+                });
+            });
+
+        }
+});
+
+router.get("/", middleware.isLoggedIn ,function(request, response) {
+   // console.log(" we here ")
+   /* Cabinet.find({}, function(error, foundCabinets) {
+        if (error) {
+            console.log(error);
+        }
+        else {
+            response.render("cabinets/index", { cabinets: foundCabinets });
+        }
+    });*/
+    response.render("links/index");
 });
 
 //NEW - show form to create new Link
@@ -114,5 +189,16 @@ router.delete("/:id",  function(request,response){
     });
 });
 
+
+String.prototype.escapeSpecialChars = function() {
+    return this.replace(/\\n/g, "")
+               .replace(/\\'/g, "")
+               .replace(/\\"/g, '')
+               .replace(/\\&/g, "")
+               .replace(/\\r/g, "")
+               .replace(/\\t/g, "")
+               .replace(/\\b/g, "")
+               .replace(/\\f/g, "");
+};
 
 module.exports = router;

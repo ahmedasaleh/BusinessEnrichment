@@ -18,6 +18,8 @@
                     <a href="/validatedusers/"><button type="button" class="btn btn-default">All Validated Users</button></a>
                     <!-- <a href="/enrichments/"><button type="button" class="btn btn-default ">All Enrichment Data</button></a> -->
                     <a href="/interfaces/"><button type="button" class="btn btn-default">All Interfaces Data</button></a>
+                     <a href="/cabinets/"><button type="button" class="btn btn-default ">All Cabinets</button></a>
+                     <a href="/temsaninfos/"><button type="button" class="btn btn-default ">All TE-Msans</button></a>
                 </div>        
             </div>
         </header>
@@ -26,10 +28,11 @@
                 <button type="button " class="btn  btn-primary">Add POP</button>
             </form>
             <form id="pop-delete-form"  class="btn-group" action="/pops/-1/?_method=DELETE" method="POST">
-                <button id="pop-delete-button"  type="button " class="btn  btn-danger">Delete POP</button>
+                <button id="pop-delete-button"   onclick="return confirm('Are you sure you would to delete this item ?');"
+                 disabled="true" type="button " class="btn  btn-danger">Delete POP</button>
             </form>
             <form id="pop-update-form"  class="btn-group" action="" method="GET">
-                <button type="button " class="btn  btn-warning">Update POP</button>
+                <button type="button " id="pop-update-button" disabled="true" class="btn  btn-warning">Update POP</button>
             </form>
         </div>        
 <!--<button class="add_cart">Add to card</button>-->

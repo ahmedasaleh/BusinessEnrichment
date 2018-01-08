@@ -17,6 +17,8 @@
                     <a href="/validatedusers/"><button type="button" class="btn btn-default">All Validated Users</button></a>
                     <!-- <a href="/enrichments/"><button type="button" class="btn btn-default ">All Enrichment Data</button></a> -->
                     <a href="/interfaces/"><button type="button" class="btn btn-default">All Interfaces Data</button></a>
+                    <a href="/cabinets/"><button type="button" class="btn btn-default ">All Cabinets</button></a>
+                     <a href="/temsaninfos/"><button type="button" class="btn btn-default ">All TE-Msans</button></a>
                 </div>        
             </div>
         </header>
@@ -25,10 +27,11 @@
             <!--    <button type="button " class="btn  btn-primary">Add User</button>-->
             <!--</form>-->
             <form id="user-delete-form"  class="btn-group" action="/users/-1/?_method=DELETE" method="POST">
-                <button id="user-delete-button"  type="button " class="btn  btn-danger">Delete User</button>
+                <button id="user-delete-button" onclick="return confirm('Are you sure you would to delete this item ?');"
+                 disabled="true" type="button " class="btn  btn-danger">Delete User</button>
             </form>
             <form id="user-update-form"  class="btn-group" action="" method="GET">
-                <button type="button " class="btn  btn-warning">Update User</button>
+                <button type="button " id="user-update-button" disabled="true" class="btn  btn-warning">Update User</button>
             </form>
         </div>        
         

@@ -1,0 +1,47 @@
+<% include ../partials/header %>
+<div class="container">
+    <!--<will need to create my own style sheet to center the 2 inputs and make them
+    smaller>-->
+    <div class="row">
+        <h1 style="text-align: center;">Add A New TE-Msan</h1>
+        <!--<margin 25 px for top and bottom, auto for left and right>-->
+        <div style="width:30%; margin:25px auto;">
+            <form method="POST" action="/temsaninfos">
+                <!--<use form-group to make spacing between components>-->
+                <div class="form-group">
+                <label for="msanCode">Msan Code</label>
+                    <input class="form-control" type="text" name="temsaninfo[msanCode]" required="true" 
+                    pattern="^(([0-9]|[0-9][0-9])[-]){3}([0-9]|[0-9][0-9])$" title="You Should  Enter Valid Msan Code" placeholder="Msan Code">
+                </div>
+                 <div class="form-group">
+                 <label for="teMngIP">Te Mng IP</label>
+                    <input class="form-control" type="text" name="temsaninfo[teMngIP]" required="true" 
+                    pattern="^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$" title="You Should  Enter Valid IP "  placeholder="Te Mng IP">
+                </div>
+                 <div class="form-group">
+                  <label for="TEDataMngIP">TEData Mng IP</label>
+                    <input class="form-control" type="text" name="temsaninfo[TEDataMngIP]" pattern="^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$" title="You Should  Enter Valid IP " required="true" placeholder="TEData Mng IP">
+                </div>
+                 <div class="form-group">
+                 <label for="teSector">TE Sector</label>
+                    <input class="form-control" type="text" name="temsaninfo[teSector]" required="true" placeholder="TE Sector">
+                </div>
+                 <div class="form-group">
+                  <label for="teDistrict">TE District</label>
+                    <input class="form-control" type="text" name="temsaninfo[teDistrict]" required="true" placeholder="TE District">
+                </div>
+                 
+
+                     
+                
+                <div class="form-group">
+                    <!--<btn-block will let the button takes width of the 2 inputs>-->
+                    <button class="btn btn-lg btn-primary btn-block">Add</button>
+                </div>
+            </form>
+            <a href="/temsaninfos">Go Back</a>
+        </div>
+    </div>
+</div>
+<% include ../partials/footer %>
+
