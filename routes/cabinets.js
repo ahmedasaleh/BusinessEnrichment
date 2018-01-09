@@ -112,7 +112,7 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
 //SHOW cabinet ROUTE
 router.get("/:id",middleware.isLoggedIn ,function(request,response){
     //find cabinet with provided id
-    console.log("request.params.id: "+request.params.id);
+   // console.log("request.params.id: "+request.params.id);
     Cabinet.findById(request.params.id, function(error,foundCabinet){
         if(error){
             console.log(error);
@@ -127,7 +127,7 @@ router.get("/:id",middleware.isLoggedIn ,function(request,response){
 //EDIT cabinet ROUTE
 router.get("/:id/edit",  function(request,response){
     //is user logged in?
-    console.log("Update a cabinet");
+   // console.log("Update a cabinet");
     Cabinet.findById(request.params.id,function(error,foundCabinets){
         response.render("cabinets/edit",{cabinet: foundCabinets});
     });
@@ -165,7 +165,7 @@ router.delete("/:id",  function(request,response){
     }
 
     Cabinet.findByIdAndRemove(request.params.id,function(error){
-        console.log("Deleting cabinet with id: "+request.params.id);
+       // console.log("Deleting cabinet with id: "+request.params.id);
         if(error){
             console.log(error);
         }

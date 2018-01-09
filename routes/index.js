@@ -52,11 +52,11 @@ router.get("/signup",function(request,response){
 });
 //handle signup logic
 router.post("/signup",function(request,response){
-    console.log(request.body.name);
-    console.log(request.body.email);
+   // console.log(request.body.name);
+    //console.log(request.body.email);
     var newUser =new User({name: request.body.name, email: request.body.email});
     ValidatedUser.findOne({email: S(request.body.email).s},function(error,foundUser){
-        console.log(foundUser);
+       // console.log(foundUser);
         if(error){
             request.flash("error",error);
             return response.render("signup");
@@ -75,14 +75,14 @@ router.post("/signup",function(request,response){
                 else{
                         //send email verification
                         var authenticationURL = "http://"+process.env.IP+":"+process.env.PORT+"/verify?authToken=" + user.authToken;
-                        console.log("authenticationURL: "+authenticationURL);
-                        console.log("to: "+user.email);
+                      //  console.log("authenticationURL: "+authenticationURL);
+                       // console.log("to: "+user.email);
                         mailOptions.text = "Hi, you have signed for access to Business Enrichment Portal, please activate it by clicking on the following URL:\n"+authenticationURL;
                         transporter.sendMail(mailOptions, function(error, info){
                           if (error) {
                             console.log(error);
                           } else {
-                            console.log('Email sent: ' + info.response);
+                         //   console.log('Email sent: ' + info.response);
                           }
                         }); 
                         //sendgrid.send({
@@ -111,7 +111,7 @@ router.get('/verify', function(request, response) {
             console.log('error:', error);
         }
         else{
-            console.log("Successfully signed Up :) "+ request.body);
+          //  console.log("Successfully signed Up :) "+ request.body);
             //request.flash("success","Hi "+request.body.name+", Welcome to the Business Enrichment Portal");
             response.render('email-verification', { title : 'Email verified succesfully!' });
         }

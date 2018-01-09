@@ -22,7 +22,7 @@ router.get("/", middleware.isLoggedIn ,function(request, response) {
 //should show the form will post data to /users
 router.get("/new",middleware.isLoggedIn ,function(request, response) {
     if(process.env.SEED == "true"){
-        console.log("process.env.SEED: "+process.env.SEED);
+       // console.log("process.env.SEED: "+process.env.SEED);
         seedDB(request.user);
     }
     response.render("validatedusers/new");
@@ -41,15 +41,15 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
             author: {id: request.user._id, email: request.user.email}
     };
 
-    console.log(aValidatedUser);
+   // console.log(aValidatedUser);
     ValidatedUser.create(aValidatedUser, function(error, createdUser) {
         if (error) {
             console.log(error);
             request.flash("error","Something went wrong");
         }
         else {
-            console.log("new User created in the validation collection and saved");
-            console.log(createdUser);
+         //   console.log("new User created in the validation collection and saved");
+           // console.log(createdUser);
             request.flash("success","Successfully added User to list of validated users");
             response.redirect("/validatedusers");
         }
@@ -59,7 +59,7 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
 //SHOW Validated User ROUTE
 router.get("/:id",middleware.isLoggedIn ,function(request,response){
     //find Validated User with provided id
-    console.log("request.params.id: "+request.params.id);
+   // console.log("request.params.id: "+request.params.id);
     ValidatedUser.findById(request.params.id, function(error,foundUser){
         if(error){
             console.log(error);
@@ -74,7 +74,7 @@ router.get("/:id",middleware.isLoggedIn ,function(request,response){
 //EDIT VALIDATED USER ROUTE
 router.get("/:id/edit",  function(request,response){
     //is user logged in?
-    console.log("Update a VALIDATED USER");
+   // console.log("Update a VALIDATED USER");
     ValidatedUser.findById(request.params.id,function(error,foundUser){
         response.render("validatedusers/edit",{user: foundUser});
     });
@@ -102,7 +102,7 @@ router.delete("/:id",  function(request,response){
     }
 
     ValidatedUser.findByIdAndRemove(request.params.id,function(error){
-        console.log("Deleting Validated User with id: "+request.params.id);
+       // console.log("Deleting Validated User with id: "+request.params.id);
         if(error){
             console.log(error);
         }

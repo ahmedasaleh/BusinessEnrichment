@@ -21,7 +21,7 @@ router.delete("/:id",  function(request,response){
         response.redirect("/users");
     }
     User.findByIdAndRemove(request.params.id,function(error){
-        console.log("Deleting User with id: "+request.params.id);
+       // console.log("Deleting User with id: "+request.params.id);
         if(error){
             console.log(error);
         }

@@ -93,7 +93,7 @@ router.get("/", middleware.isLoggedIn ,function(request, response) {
 //should show the form will post data to /pops
 router.get("/new",middleware.isLoggedIn ,function(request, response) {
     if(process.env.SEED == "true"){
-        console.log("process.env.SEED: "+process.env.SEED);
+       // console.log("process.env.SEED: "+process.env.SEED);
         seedDB(request.user);
     }
     response.render("pops/new");
@@ -117,15 +117,15 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
             author: {id: request.user._id, email: request.user.email}
     };
 
-    console.log(aPOP);
+   // console.log(aPOP);
     POP.create(aPOP, function(error, createdPOP) {
         if (error) {
             console.log(error);
             request.flash("error","Something went wrong");
         }
         else {
-            console.log("new POP created and saved");
-            console.log(createdPOP);
+          //  console.log("new POP created and saved");
+           // console.log(createdPOP);
             request.flash("success","Successfully added POP");
             response.redirect("/pops");
         }
@@ -135,7 +135,7 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
 //SHOW POP ROUTE
 router.get("/:id",middleware.isLoggedIn ,function(request,response){
     //find POP with provided id
-    console.log("request.params.id: "+request.params.id);
+   // console.log("request.params.id: "+request.params.id);
     POP.findById(request.params.id, function(error,foundPOP){
         if(error){
             console.log(error);
@@ -150,7 +150,7 @@ router.get("/:id",middleware.isLoggedIn ,function(request,response){
 //EDIT POP ROUTE
 router.get("/:id/edit",  function(request,response){
     //is user logged in?
-    console.log("Update a POP");
+   // console.log("Update a POP");
     POP.findById(request.params.id,function(error,foundPOP){
         response.render("pops/edit",{pop: foundPOP});
     });
@@ -178,7 +178,7 @@ router.delete("/:id",  function(request,response){
     }
 
     POP.findByIdAndRemove(request.params.id,function(error){
-        console.log("Deleting POP with id: "+request.params.id);
+      //  console.log("Deleting POP with id: "+request.params.id);
         if(error){
             console.log(error);
         }

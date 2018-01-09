@@ -8,20 +8,18 @@ var aTemsan = new Temsan() ;
 var seedDB      = require("../seeds");
 var S               = require('string');
 var mongoose        = require('mongoose');
+var logger          = require("../middleware/logger");
 
 //INDEX - show all pops
 router.get("/pagination?", middleware.isLoggedIn ,function(request, response) {
         // limit is the number of rows per page
 
-        console.log("ddddddddddddd");
+        
         var limit = parseInt(request.query.limit);
-        console.log("limit: "+limit)
         // offset is the page number
         var skip  = parseInt(request.query.offset);
-        console.log("skip: "+skip)
         // search string
         var searchQuery = request.query.search ;//: 'xe-'
-        console.log("searchQuery: "+searchQuery)
 
         if(S(searchQuery).isEmpty()){
             Temsan.count({}, function(err, msanCount) {
@@ -74,7 +72,6 @@ router.get("/pagination?", middleware.isLoggedIn ,function(request, response) {
         }
 });
 router.get("/", middleware.isLoggedIn ,function(request, response) {
-    console.log(" we here ")
    /* Cabinet.find({}, function(error, foundCabinets) {
         if (error) {
             console.log(error);
@@ -91,7 +88,6 @@ router.get("/", middleware.isLoggedIn ,function(request, response) {
 router.get("/new",middleware.isLoggedIn ,function(request, response) {
     if(process.env.SEED == "true")
     {
-        console.log("process.env.SEED: "+process.env.SEED);
         seedDB(request.user);
     }
     response.render("temsaninfos/new");
@@ -133,7 +129,6 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
         if (error) {
 
 
-             console.log("error here \n ");
             
       //   request.flash("success","Something went wrong");
 
@@ -148,8 +143,6 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
 
         }
         else {
-            console.log("new cabinet created and saved");
-            console.log(createdtemsan);
             request.flash("success","Successfully added cabinet");
             response.redirect("/temsaninfos");
         }
@@ -173,10 +166,9 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
 //SHOW cabinet ROUTE
 router.get("/:id",middleware.isLoggedIn ,function(request,response){
     //find cabinet with provided id
-    console.log("request.params.id: "+request.params.id);
     Temsan.findById(request.params.id, function(error,foundtemsan){
         if(error){
-            console.log(error);
+            logger.error(error);
         }
         else{
             //render show template with that cabinet
@@ -188,7 +180,6 @@ router.get("/:id",middleware.isLoggedIn ,function(request,response){
 //EDIT cabinet ROUTE
 router.get("/:id/edit",  function(request,response){
     //is user logged in?
-    console.log("Update a cabinet");
     Temsan.findById(request.params.id,function(error,foundtemsan){
         response.render("temsaninfos/edit",{temsaninfo: foundtemsan});
     });
@@ -224,7 +215,7 @@ router.put("/:id", function(request,response){
 
      Temsan.findByIdAndUpdate(request.params.id,request.body.temsaninfo,function(error,updatedtemsan){
         if(error){
-            console.log(error);
+            logger.error(error);
             response.redirect("/temsaninfos");
         }
         else{
@@ -254,9 +245,8 @@ router.delete("/:id",  function(request,response){
     }
 
     Temsan.findByIdAndRemove(request.params.id,function(error){
-        console.log("Deleting cabinet with id: "+request.params.id);
         if(error){
-            console.log(error);
+            logger.error(error);
         }
         request.flash("success","Successfully cabinet deleted");
         response.redirect("/temsaninfos");

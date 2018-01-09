@@ -269,7 +269,7 @@ router.put("/:id", middleware.isLoggedIn,function(request,response){
     request.body.interface.lastUpdatedBy = {id: request.user._id, email: request.user.email};
 
     Interface.findById(request.params.id,function(error,foundInterface){
-        console.log("will update interface id: "+request.params.id+" , ipaddress nad ifIndex: "+foundInterface.ipaddress+" / "+foundInterface.ifIndex);
+        // console.log("will update interface id: "+request.params.id+" , ipaddress nad ifIndex: "+foundInterface.ipaddress+" / "+foundInterface.ifIndex);
         if(error){
             logger.error(error);
             request.flash("error","something went wrong while updating the interface");
@@ -279,9 +279,9 @@ router.put("/:id", middleware.isLoggedIn,function(request,response){
             copyObject(foundInterface,request.body.interface,true);
             foundInterface.lastUpdate = new Date();
             //save view
-            console.log("interface id after copy: "+foundInterface._id+" , ipaddress nad ifIndex: "+foundInterface.ipaddress+" / "+foundInterface.ifIndex);
+            // console.log("interface id after copy: "+foundInterface._id+" , ipaddress nad ifIndex: "+foundInterface.ipaddress+" / "+foundInterface.ifIndex);
             foundInterface._id = constructInterfaceID(foundInterface.ipaddress,foundInterface.ifIndex);
-            console.log("interface constructed id: "+foundInterface._id+" , ipaddress nad ifIndex: "+foundInterface.ipaddress+" / "+foundInterface.ifIndex);
+            // console.log("interface constructed id: "+foundInterface._id+" , ipaddress nad ifIndex: "+foundInterface.ipaddress+" / "+foundInterface.ifIndex);
             foundInterface.save();
             // foundInterface.save(function(error,intf){
             //     if(error) logger.error(error);
@@ -298,9 +298,6 @@ router.put("/:id", middleware.isLoggedIn,function(request,response){
                 else{
                     var subdoc = foundDevice.interfaces.id(request.params.id);
                     setDeviceID(foundDevice._id);
-                    console.log("deviceID:\n");
-                    console.log(interfaceDeviceID);
-                    console.log(getDeviceID());
                     copyObject(subdoc,request.body.interface,true);
                     subdoc.lastUpdate = new Date();
                     Device.findOneAndUpdate(
@@ -314,7 +311,7 @@ router.put("/:id", middleware.isLoggedIn,function(request,response){
 
                         }
                     );                    
-                    console.log("finished updating interface, will redirect to its device with id: "+getDeviceID());
+                   // console.log("finished updating interface, will redirect to its device with id: "+getDeviceID());
                     if(!interfaceDeviceID) response.redirect("/devices/");
                     else response.redirect("/devices/"+interfaceDeviceID);
                 }

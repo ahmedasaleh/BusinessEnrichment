@@ -27,7 +27,7 @@ router.get("/", middleware.isLoggedIn ,function(request, response) {
 //should show the form will post data to /governorates
 router.get("/new",middleware.isLoggedIn ,function(request, response) {
     if(process.env.SEED == "true"){
-        console.log("process.env.SEED: "+process.env.SEED);
+        //console.log("process.env.SEED: "+process.env.SEED);
         seedDB(request.user);
     }
     response.render("governorates/new");
@@ -45,16 +45,16 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
             author: {id: request.user._id, email: request.user.email}
     };
 
-    console.log(aGovernorate.name);
-    console.log(aGovernorate.acronym);
+   // console.log(aGovernorate.name);
+   // console.log(aGovernorate.acronym);
     Governorate.create(aGovernorate, function(error, createdGovernorate) {
         if (error) {
             console.log(error);
             request.flash("error","Something went wrong");
         }
         else {
-            console.log("new governorate created and saved");
-            console.log(createdGovernorate);
+           // console.log("new governorate created and saved");
+         //   console.log(createdGovernorate);
             request.flash("success","Successfully added governorate");
             response.redirect("/governorates");
         }
@@ -65,7 +65,7 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
 //SHOW GOVERNORATE ROUTE
 router.get("/:id",middleware.isLoggedIn ,function(request,response){
     //find Governorate with provided id
-    console.log("request.params.id: "+request.params.id);
+   // console.log("request.params.id: "+request.params.id);
     Governorate.findById(request.params.id, function(error,foundGovernorate){
         if(error){
             console.log(error);
@@ -80,7 +80,7 @@ router.get("/:id",middleware.isLoggedIn ,function(request,response){
 //EDIT GOVERNORATE ROUTE
 router.get("/:id/edit",  function(request,response){
     //is user logged in?
-    console.log("Update a Governorate");
+   // console.log("Update a Governorate");
     Governorate.findById(request.params.id,function(error,foundGovernorate){
         response.render("governorates/edit",{governorate: foundGovernorate});
     });
@@ -107,7 +107,7 @@ router.delete("/:id",  function(request,response){
     }
 
     Governorate.findByIdAndRemove(request.params.id,function(error){
-        console.log("Deleting governorate with id: "+request.params.id);
+       // console.log("Deleting governorate with id: "+request.params.id);
         if(error){
             console.log(error);
         }

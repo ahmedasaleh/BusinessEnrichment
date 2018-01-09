@@ -28,7 +28,7 @@ router.get("/", middleware.isLoggedIn ,function(request, response) {
 //should show the form will post data to /sectors
 router.get("/new",middleware.isLoggedIn ,function(request, response) {
     if(process.env.SEED == "true"){
-        console.log("process.env.SEED: "+process.env.SEED);
+       // console.log("process.env.SEED: "+process.env.SEED);
         seedDB(request.user);
     }
     response.render("sectors/new");
@@ -46,15 +46,15 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
             author: {id: request.user._id, email: request.user.email}
     };
 
-    console.log(aSector);
+   // console.log(aSector);
     Sector.create(aSector, function(error, createdSector) {
         if (error) {
             console.log(error);
             request.flash("error","Something went wrong");
         }
         else {
-            console.log("new Sector created and saved");
-            console.log(createdSector);
+        //    console.log("new Sector created and saved");
+          //  console.log(createdSector);
             request.flash("success","Successfully added Sector");
             response.redirect("/sectors");
         }
@@ -64,7 +64,7 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
 //SHOW SECTOR ROUTE
 router.get("/:id",middleware.isLoggedIn ,function(request,response){
     //find SECTOR with provided id
-    console.log("request.params.id: "+request.params.id);
+    //console.log("request.params.id: "+request.params.id);
     Sector.findById(request.params.id, function(error,foundSector){
         if(error){
             console.log(error);
@@ -79,7 +79,7 @@ router.get("/:id",middleware.isLoggedIn ,function(request,response){
 //EDIT SECTOR ROUTE
 router.get("/:id/edit",  function(request,response){
     //is user logged in?
-    console.log("Update a SECTOR");
+   // console.log("Update a SECTOR");
     Sector.findById(request.params.id,function(error,foundSector){
         response.render("sectors/edit",{sector: foundSector});
     });
@@ -107,7 +107,7 @@ router.delete("/:id",  function(request,response){
     }
 
     Sector.findByIdAndRemove(request.params.id,function(error){
-        console.log("Deleting SECTOR with id: "+request.params.id);
+       // console.log("Deleting SECTOR with id: "+request.params.id);
         if(error){
             console.log(error);
         }

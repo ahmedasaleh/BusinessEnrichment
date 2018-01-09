@@ -1545,6 +1545,7 @@ self.checkInterfaceInLinks = function(interfaceName){
                 if(interface.lastSyncTime instanceof Date){
                     if((self.getMinutesDifference(new Date(),interface.lastSyncTime) > SYNC_DIFFERENCE_IN_MINUTES) && (interface.syncCycles > syncCyclesThreshold)){
                         self.interfaceRemoveList.push(interface);//we will remove directly
+                        logger.warn("interface with index "+interface.ifIndex +" in device "+self.name+" will be decommissioned");
                     }
                     else{
                         interface.lastSyncTime = new Date();

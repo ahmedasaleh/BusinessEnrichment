@@ -26,13 +26,13 @@ router.get("/pagination?", middleware.isLoggedIn ,function(request, response) {
 
         ///console.log("ddddddddddddd");
         var limit = parseInt(request.query.limit);
-        console.log("limit: "+limit)
+        //console.log("limit: "+limit)
         // offset is the page number
         var skip  = parseInt(request.query.offset);
-        console.log("skip: "+skip)
+        //console.log("skip: "+skip)
         // search string
         var searchQuery = request.query.search ;//: 'xe-'
-        console.log("searchQuery: "+searchQuery)
+       // console.log("searchQuery: "+searchQuery)
 
         if(S(searchQuery).isEmpty()){
             Link.count({}, function(err, linksCount) {
@@ -97,7 +97,7 @@ router.get("/", middleware.isLoggedIn ,function(request, response) {
 //should show the form will post data to /links
 router.get("/new",middleware.isLoggedIn ,function(request, response) {
     if(process.env.SEED == "true"){
-        console.log("process.env.SEED: "+process.env.SEED);
+       // console.log("process.env.SEED: "+process.env.SEED);
         seedDB(request.user);
     }
     response.render("links/new");
@@ -119,15 +119,15 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
             author: {id: request.user._id, email: request.user.email}
     };
 
-    console.log(aLink);
+   // console.log(aLink);
     Link.create(aLink, function(error, createdLink) {
         if (error) {
             console.log(error);
             request.flash("error","Something went wrong");
         }
         else {
-            console.log("new link created and saved");
-            console.log(createdLink);
+     //       console.log("new link created and saved");
+       //     console.log(createdLink);
             request.flash("success","Successfully added link");
             response.redirect("/links");
         }
@@ -138,7 +138,7 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
 //SHOW LINK ROUTE
 router.get("/:id",middleware.isLoggedIn ,function(request,response){
     //find Link with provided id
-    console.log("request.params.id: "+request.params.id);
+   // console.log("request.params.id: "+request.params.id);
     Link.findById(request.params.id, function(error,foundLink){
         if(error){
             console.log(error);
@@ -153,7 +153,7 @@ router.get("/:id",middleware.isLoggedIn ,function(request,response){
 //EDIT LINK ROUTE
 router.get("/:id/edit",  function(request,response){
     //is user logged in?
-    console.log("Update a Link");
+   // console.log("Update a Link");
     Link.findById(request.params.id,function(error,foundLink){
         response.render("links/edit",{link: foundLink});
     });
@@ -181,7 +181,7 @@ router.delete("/:id",  function(request,response){
     }
 
     Link.findByIdAndRemove(request.params.id,function(error){
-        console.log("Deleting link with id: "+request.params.id);
+       // console.log("Deleting link with id: "+request.params.id);
         if(error){
             console.log(error);
         }
