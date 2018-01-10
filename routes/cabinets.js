@@ -3,7 +3,7 @@ var router      = express.Router();
 var Cabinet     = require("../models/cabinet");
 var middleware  = require("../middleware");
 var seedDB      = require("../seeds");
-var pop         = require("../models/pop");
+var POP         = require("../models/pop");
 var S           = require('string');
 var mongoose    = require('mongoose');
 
@@ -80,6 +80,7 @@ router.post("/",middleware.isLoggedIn, function(request, response) {
             logger.error(error);
         }
         else{
+            console.log(foundPOP);
             var cabinet = request.body.cabinet.cabinet;
             var pop =  foundPOP.shortName;
 

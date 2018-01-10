@@ -136,7 +136,7 @@ function discoveredDevice(device,linkEnrichmentData,cabinetName,POPDetails,TeMSA
     if(S(self.devicePOPType).isEmpty() || S(self.devicePOPType).s == "Unknown" && !(self.device.updatedAt instanceof Date)) self.devicePOPType = POPDetails.popType;
     if(S(self.devicePOPLongName).isEmpty() || S(self.devicePOPLongName).s == "Unknown" && !(self.device.updatedAt instanceof Date)) self.devicePOPLongName = POPDetails.popLongName;
     if(!S(self.device.pop).isEmpty() && self.device.pop != "Unknown") self.devicePOP = self.device.pop;
-    else if(POPDetails.shortName && POPDetails.shortName != "Unknown") self.devicePOP = POPDetails.shortName+"_"+self.deviceGove;
+    else if(POPDetails.shortName && POPDetails.shortName != "Unknown") self.devicePOP = POPDetails.pop_gov;//POPDetails.shortName+"_"+self.deviceGove;
 
     // console.log(self.devicePOP +" | "+self.devicePOPLongName+ " | "+ self.deviceGove + " | "+ self.deviceSector + " | "+ self.deviceDistrict + " | "+ self.devicePOPType + " | "+self.cabinetName);
 
@@ -1778,6 +1778,7 @@ router.get("/pagination?", middleware.isLoggedIn ,function(request, response) {
         // search string
         var searchQuery = request.query.search ;//: 'xe-'
         var columns = 'hostname ipaddress pop popLongName sector gov district type model vendor community createdAt updatedAt lastSyncTime author lastUpdatedBy sysObjectID sysName sysDescr  teMSANCode teMngIP teSector teDistrict';
+        
         if(S(searchQuery).isEmpty()){
             Device.count({}, function(err, devicesCount) {
                 Device.find({},columns,{lean:true,skip:skip,limit:limit}, function(err, foundDevices) {
@@ -1829,21 +1830,111 @@ router.get("/pagination?", middleware.isLoggedIn ,function(request, response) {
 
         }
 });
+
+router.get("/paginationinterf?",middleware.isLoggedIn ,function(request, response) {
+        // limit is the number of rows per page
+        var limit = parseInt(request.query.limit);
+        // offset is the page number
+        var skip  = parseInt(request.query.offset);
+        // search string
+        var searchQuery = request.query.search ;//: 'xe-'
+        //var hhh=JSON.stringify(pubdevice.device.interfaces).replace("[","{").replace("]","}");
+
+
+
+
+
+var hhh=(pubdevice.device.interfaces);
+
+        console.log(hhh);
+
+       /*   var totalStudents = hhh.length,
+        pageSize = 10,
+        pageCount = totalStudents/10,
+        currentPage = 1,
+       studentsArrays = [];
+            
+        
+         while (hhh.length > 0) {
+        studentsArrays.push(hhh.splice(0, pageSize));
+    }
+    if (typeof request.query.page !== 'undefined') {
+        currentPage = +request.query.limit;
+    }
+        hhh = studentsArrays[+currentPage - 1];
+        */
+
+       // var hhhh=JSON.parse(hhh);
+       //var hhhhh={oo:hhhh};
+        // console.log(hhhh.count);
+      
+        if(S(searchQuery).isEmpty()){
+          //  hhh.count({}, function(err, interfacesCount) {
+                //ifName ifAlias ifIndex ifDescr ifType ifSpeed ifHighSpeed counters type specialService secondPOP secondHost secondInterface label provisoFlag noEnrichFlag sp_service sp_provider sp_termination sp_bundleId sp_linkNumber sp_CID sp_TECID sp_subCable sp_customer sp_sourceCore sp_destCore sp_vendor sp_speed sp_pop sp_fwType sp_serviceType sp_ipType sp_siteCode sp_connType sp_emsOrder sp_connectedBW sp_dpiName sp_portID unknownFlag adminStatus operStatus actualspeed createdAt lastUpdate hostname ipaddress pop 
+                // Interface.find({},'ifIndex ifName hostname ipaddress ifAlias ifDescr ifSpeed actualspeed ifType counters createdAt lastUpdate',{lean:true,skip:skip,limit:limit}, function(err, foundInterfaces) {
+                //hhhhh.find({},'ifName ifAlias ifIndex ifDescr ifType ifSpeed ifHighSpeed counters type specialService secondPOP secondHost secondInterface label provisoFlag noEnrichFlag sp_service sp_provider sp_termination sp_bundleId sp_linkNumber sp_CID sp_TECID sp_subCable sp_customer sp_sourceCore sp_destCore sp_vendor sp_speed sp_pop sp_fwType sp_serviceType sp_ipType sp_siteCode sp_connType sp_emsOrder sp_connectedBW sp_dpiName sp_portID unknownFlag adminStatus operStatus actualspeed createdAt lastUpdate hostname ipaddress pop lastSyncTime',{lean:true,skip:skip,limit:limit}, function(err, foundInterfaces) {
+                  //  if (err) {
+                    //    logger.error(err);
+                   // }
+                    //else {
+                        var data = "{\"total\":"+ hhh.length+",\"rows\":" + JSON.stringify(hhh)+"}";
+                        response.setHeader('Content-Type', 'application/json');
+                        // response.send((foundInterfaces)); 
+                        response.send(data);        
+                  //  }
+
+              //  });
+
+           // });
+
+        } 
+        else {
+            searchQuery = ".*"+S(searchQuery).s.toLowerCase()+".*";
+            hhh.length({'$or' : [{ifName: new RegExp(searchQuery,'i')},
+                {ifAlias: new RegExp(searchQuery,'i')},
+                {ifDescr: new RegExp(searchQuery,'i')},
+                {ipaddress: new RegExp(searchQuery,'i')},
+                {hostname: new RegExp(searchQuery,'i')}]}, function(err, m_interfacesCount) {
+               hhh.find({'$or' : [{ifName: new RegExp(searchQuery,'i')},
+                {ifAlias: new RegExp(searchQuery,'i')},
+                {ifDescr: new RegExp(searchQuery,'i')},
+                {ipaddress: new RegExp(searchQuery,'i')},
+                {hostname: new RegExp(searchQuery,'i')}]},'ifName ifAlias ifIndex ifDescr ifType ifSpeed ifHighSpeed counters type specialService secondPOP secondHost secondInterface label provisoFlag noEnrichFlag sp_service sp_provider sp_termination sp_bundleId sp_linkNumber sp_CID sp_TECID sp_subCable sp_customer sp_sourceCore sp_destCore sp_vendor sp_speed sp_pop sp_fwType sp_serviceType sp_ipType sp_siteCode sp_connType sp_emsOrder sp_connectedBW sp_dpiName sp_portID unknownFlag adminStatus operStatus actualspeed createdAt lastUpdate hostname ipaddress pop lastSyncTime',{lean:true,skip:skip,limit:limit}, function(err, foundInterfaces) {
+                    if (err) {
+                        logger.error(err);
+                    }
+                    else {
+                        var data = "{\"total\":"+ m_interfacesCount+",\"rows\":" + JSON.stringify(foundInterfaces)+"}";
+                        response.setHeader('Content-Type', 'application/json');
+                        // response.send((foundInterfaces)); 
+                        response.send(data);        
+                    }
+
+                });
+            });
+
+        }
+});
+
+
 //INDEX - show all devices
 router.get("/", middleware.isLoggedIn , function(request, response) {
     response.render("devices/index");
 });
 
 
-var getDeviceInfo = __async__ (function(modelOID,hostname,ipaddress){
+var getDeviceInfo = __async__ (function(modelOID,hostname,ipaddress,popname,requester){
     var parsedHostName = Parser.parseHostname(S(hostname));
     var linkEnrichmentData;
     var deviceModelOID = __await__ (DeviceModel.findOne({oid: modelOID}));
     var POPDetails,secondPOPDetails ;
     var rightLinks = [], leftLinks = [];
     var tempLink  = null;
-
-    POPDetails = checkPOPandCabinet(parsedHostName);
+console.log(popname)
+    if(requester== "IIB") POPDetails = __await__ (POP.findOne( {shortName:popname,gov:parsedHostName.popGove}));
+    else if(popname && popname != "Unknown") POPDetails = __await__ (POP.findOne( {_id: mongoose.Types.ObjectId(popname)}));
+    else POPDetails = checkPOPandCabinet(parsedHostName);
+    console.log(POPDetails)
     // var cabinetPOP = __await__ (Cabinet.findOne({cabinet:parsedHostName.devicePOPName}));
     // var POPDetails ;
     // if(cabinetPOP) POPDetails = __await__ (POP.findOne({shortName:cabinetPOP.pop,gov:parsedHostName.popGove}));
@@ -1900,6 +1991,7 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
     var hostname = request.body.device.hostname;
     var ipaddress = request.body.device.ipaddress;
     var communityString = request.body.device.community || "public";
+    var popname = request.body.device.pop;
     // var parsedHostName = Parser.parseHostname(S(hostname));
     var type ;
     var model ;
@@ -1925,9 +2017,9 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
             }               
 
             modelOID = "."+modelOID;
-
+console.log(popname);
             var discoDevice ;
-            getDeviceInfo(modelOID,hostname,ipaddress)
+            getDeviceInfo(modelOID,hostname,ipaddress,popname)
             .then(function(deviceExtraDetails){
             aDevice = {
                     hostname: hostname.trim(),
@@ -1940,7 +2032,7 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
                     sysObjectID: modelOID,
                     sysName: sysName,
                     // pop:  deviceExtraDetails.POPDetails.shortName+"_"+deviceExtraDetails.POPDetails.gov,
-                    pop: (deviceExtraDetails.POPDetails.shortName=="Unknown")? "Unknown":deviceExtraDetails.POPDetails.shortName+"_"+deviceExtraDetails.POPDetails.gov,                    sector: deviceExtraDetails.POPDetails.sector, 
+                    pop: (deviceExtraDetails.POPDetails.shortName=="Unknown")? "Unknown":deviceExtraDetails.POPDetails.pop_gov,//deviceExtraDetails.POPDetails.shortName+"_"+deviceExtraDetails.POPDetails.gov,                    sector: deviceExtraDetails.POPDetails.sector, 
                     gov:  deviceExtraDetails.POPDetails.gov 
             };
             aDevice.interfaces = [];
@@ -2105,6 +2197,7 @@ var checkPOPandCabinet = function(parsedHostName){
         POPDetails.sector = "Unknown";
         POPDetails.popType = "Unknown";
         POPDetails.popLongName = "Unknown";
+        POPDetails.pop_gov = "Unknown";
     }
     return POPDetails;
 }
@@ -2245,6 +2338,7 @@ router.get("/tnpmdisco/:id",  middleware.isLoggedIn ,function(request, response)
 });
 
 //SHOW DEVICE ROUTE
+var pubdevice={};
 router.get("/:id", middleware.isLoggedIn ,function(request,response){
     //find device with provided id
     // Device.findById(request.params.id).populate("interfaces").exec(function(error,foundDevice){
@@ -2254,6 +2348,8 @@ router.get("/:id", middleware.isLoggedIn ,function(request,response){
         }
         else{
             //render show template with that device
+              pubdevice={device: foundDevice};
+             console.log(pubdevice.device.interfaces.length);
             response.render("devices/show",{device: foundDevice,id:foundDevice._id});
         }
     });
@@ -2281,7 +2377,7 @@ router.put("/:id", middleware.isLoggedIn ,function(request,response){
         }
         else{
             // request.body.device.popName.name = foundPOP.name;
-            request.body.device.pop = foundPOP.shortName+"_"+foundPOP.gov;
+            request.body.device.pop =foundPOP.pop_gov; //foundPOP.shortName+"_"+foundPOP.gov;
             request.body.device.popLongName =  foundPOP.popLongName || "Unknown";
             request.body.device.sector =  foundPOP.sector || "Unknown";
             request.body.device.gov =  foundPOP.gov || "Unknown";
@@ -2446,7 +2542,7 @@ router.post("/api/:hostname/:ipaddress/:communitystring/:popname", middleware.is
 
             modelOID = "."+modelOID;
 
-            getDeviceInfo(modelOID,hostname,ipaddress)
+            getDeviceInfo(modelOID,hostname,ipaddress,aPOP,"IIB")
             .then(function(deviceExtraDetails){
                 aDevice = {
                         hostname: hostname.trim(),
@@ -2458,7 +2554,7 @@ router.post("/api/:hostname/:ipaddress/:communitystring/:popname", middleware.is
                         vendor: deviceExtraDetails.deviceModelOID.vendor.trim(),
                         sysObjectID: modelOID,
                         sysName: sysName,
-                        pop:  (deviceExtraDetails.POPDetails.shortName=="Unknown")? "Unknown":deviceExtraDetails.POPDetails.shortName+"_"+deviceExtraDetails.POPDetails.gov,
+                        pop:  (deviceExtraDetails.POPDetails.shortName=="Unknown")? "Unknown":deviceExtraDetails.POPDetails.pop_gov,//deviceExtraDetails.POPDetails.shortName+"_"+deviceExtraDetails.POPDetails.gov,
                         sector: deviceExtraDetails.POPDetails.sector, 
                         gov:  deviceExtraDetails.POPDetails.gov 
                 };

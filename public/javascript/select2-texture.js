@@ -52,7 +52,8 @@ $j(document).ready(function() {
 		        popsData = JSON.parse(data)["rows"];
 				mappedPopsData = $j.map(popsData, function (obj) {
 					// obj.text = obj.text || obj.name; // replace name with the property used for the text
-					obj.text = obj.shortName; // replace name with the property used for the text
+					//obj.text = obj.shortName; // replace name with the property used for the text
+					obj.text = obj.pop_gov;
 					obj.id = obj._id;
 					return obj;
 				});

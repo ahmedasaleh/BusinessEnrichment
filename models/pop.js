@@ -10,6 +10,7 @@ var popSchema = new mongoose.Schema({
     sector: {type: String,default: "Unknown"},
     popType: {type: String,default: "Unknown"},
     popLongName: {type: String,default: "Unknown"},
+     pop_gov: {type: String,default: "Unknown"},
     // governorate: {
     //     id: {
     //     type: mongoose.Schema.Types.ObjectId,

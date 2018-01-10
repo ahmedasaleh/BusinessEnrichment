@@ -26,7 +26,7 @@ router.get("/pagination?", middleware.isLoggedIn ,function(request, response) {
 
         if(S(searchQuery).isEmpty()){
             POP.count({}, function(err, popsCount) {
-                POP.find({},'shortName gov district sector popType popLongName',{lean:true,skip:skip,limit:limit}, function(err, foundPOPs) {
+                POP.find({},'shortName gov district sector popType popLongName pop_gov',{lean:true,skip:skip,limit:limit}, function(err, foundPOPs) {
                     if (err) {
                          logger.error(err);
                     }
@@ -50,7 +50,8 @@ router.get("/pagination?", middleware.isLoggedIn ,function(request, response) {
                 {gov: new RegExp(searchQuery,'i')},
                 {district: new RegExp(searchQuery,'i')},
                 {sector: new RegExp(searchQuery,'i')},
-                {popType: new RegExp(searchQuery,'i')}
+                {popType: new RegExp(searchQuery,'i')},
+                {pop_gov: new RegExp(searchQuery,'i')}
                 ]}, 
                 function(err, m_popsCount) {
                 POP.find({'$or' : [
@@ -59,8 +60,9 @@ router.get("/pagination?", middleware.isLoggedIn ,function(request, response) {
                 {gov: new RegExp(searchQuery,'i')},
                 {district: new RegExp(searchQuery,'i')},
                 {sector: new RegExp(searchQuery,'i')},
-                {popType: new RegExp(searchQuery,'i')}
-                ]},'shortName gov district sector popType popLongName',{lean:true,skip:skip,limit:limit}, function(err, foundPOPs) {
+                {popType: new RegExp(searchQuery,'i')},
+                 {pop_gov: new RegExp(searchQuery,'i')}
+                ]},'shortName gov district sector popType popLongName pop_gov',{lean:true,skip:skip,limit:limit}, function(err, foundPOPs) {
                     if (err) {
                          logger.error(err);
                     }
