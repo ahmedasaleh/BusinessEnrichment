@@ -103,17 +103,18 @@ router.get("/new",middleware.isLoggedIn ,function(request, response) {
 
 //CREATE - add new POP to DB
 router.post("/",middleware.isLoggedIn, function(request, response) {
+    //console.log(request.body.pop)
     //get data from a form and add to POP array
     var name = request.body.pop.name;
     var shortName = request.body.pop.shortName;
-    var governorateAcro = request.body.pop.governorateAcro;
+    var governorateAcro = request.body.pop.gov;
     var district = request.body.pop.district;
     var sector = request.body.pop.sector;
 
     aPOP = {
             name: name,
             shortName: shortName,
-            governorateAcro: governorateAcro,
+            gov: governorateAcro,
             district: district,
             sector: sector,
             author: {id: request.user._id, email: request.user.email}
@@ -154,6 +155,7 @@ router.get("/:id/edit",  function(request,response){
     //is user logged in?
    // console.log("Update a POP");
     POP.findById(request.params.id,function(error,foundPOP){
+        //console.log(foundPOP)
         response.render("pops/edit",{pop: foundPOP});
     });
     

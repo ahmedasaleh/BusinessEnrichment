@@ -20,7 +20,7 @@
                 <div class="caption-full">
                     <h4 class="pull-right">Acronum: <%= pop.shortName  %></h4>
                     <h4><a href="/pops/<%= pop._id %>"><%= pop.name  %></a></h4>
-                    <h4>Governorate: <%= pop.governorateAcro.acronym  %></h4>
+                    <h4>Governorate: <%= pop.gov  %></h4>
                     <h4>District: <%= pop.district  %></h4>
                     <h4>Sector: <%= pop.sector  %></h4>
                     <% if(pop.author.email == undefined){ %>

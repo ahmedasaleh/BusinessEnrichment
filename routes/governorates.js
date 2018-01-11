@@ -7,8 +7,9 @@ var aGovernorate = new Governorate() ;
 
 //Mongoose PAGINATION
 router.get("/pagination",middleware.isLoggedIn ,function(request, response) {
-    Governorate.paginate({}, { select: 'name', lean: true,limit: 500 }, function(err, result) {
+    Governorate.paginate({}, { select: 'name acronym', lean: true,limit: 500 }, function(err, result) {
         response.setHeader('Content-Type', 'application/json');
+        
         response.send(JSON.stringify(result));
     });
 });

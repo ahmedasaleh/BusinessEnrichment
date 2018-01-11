@@ -80,7 +80,7 @@ $j(document).ready(function() {
 			        containerCssClass: ':all:',
 					minimumInputLength: 1
 				});
-				$j("#new-pop-governorate-name").select2({
+			/*	$j("#new-pop-governorate-name").select2({
 					placeholder: 'type something...',
 					selectOnClose: true,
 					data: mappedPopsData,
@@ -88,7 +88,7 @@ $j(document).ready(function() {
 			        width: null,
 			        containerCssClass: ':all:',
 					minimumInputLength: 1
-				});
+				});*/
 				$j("#cab-pop-name").select2({
 					placeholder: 'type something...',
 					selectOnClose: true,
@@ -165,11 +165,12 @@ $j(document).ready(function() {
 		        governoratesData = JSON.parse(data)["docs"];
 		        // console.log(governoratesData);
 				mappedGovernoratesData = $j.map(governoratesData, function (obj) {
-				obj.text = obj.text || obj.name; // replace name with the property used for the text
-				return obj;
+				obj.text = obj.text || obj.acronym; // replace name with the property used for the text
+				//console.log(obj);
+				return obj.text;
 				});
 
-				$j("#device-governorate-name").select2({
+					$j("#governorate-pop-name").select2({
 					placeholder: 'type something...',
 					selectOnClose: true,
 					data: mappedGovernoratesData,
@@ -178,19 +179,43 @@ $j(document).ready(function() {
 			        containerCssClass: ':all:',
 					minimumInputLength: 1,
 					initSelection: function(element, callback) {
-						callback({ id: element.val(), text: element.attr('data-init-text') 
+						console.log(element.val())
+						callback({ acronym: element.attr('data-init-text'),text: element.attr('data-init-text') 
 						});
 					}
 				});
-				$j("#new-device-governorate-name").select2({
+
+				$j("#new-pop-governorate-name").select2({
 					placeholder: 'type something...',
 					selectOnClose: true,
 					data: mappedGovernoratesData,
 			        theme: "bootstrap",
 			        width: null,
 			        containerCssClass: ':all:',
-					minimumInputLength: 1,
+					minimumInputLength: 1
 				});
+				// $j("#device-governorate-name").select2({
+				// 	placeholder: 'type something...',
+				// 	selectOnClose: true,
+				// 	data: mappedGovernoratesData,
+			 //        theme: "bootstrap",
+			 //        width: null,
+			 //        containerCssClass: ':all:',
+				// 	minimumInputLength: 1,
+				// 	initSelection: function(element, callback) {
+				// 		callback({ id: element.val(), text: element.attr('data-init-text') 
+				// 		});
+				// 	}
+				// });
+				// $j("#new-device-governorate-name").select2({
+				// 	placeholder: 'type something...',
+				// 	selectOnClose: true,
+				// 	data: mappedGovernoratesData,
+			 //        theme: "bootstrap",
+			 //        width: null,
+			 //        containerCssClass: ':all:',
+				// 	minimumInputLength: 1,
+				// });
 		    }
 		});
 
