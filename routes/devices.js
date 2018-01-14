@@ -103,10 +103,10 @@ function discoveredDevice(device,linkEnrichmentData,cabinetName,POPDetails,TeMSA
     //1-retrieve parsed host name (parseHostname)
     //2-check if parsedHostName.deviceType == "GPON"
     //3-then self.deviceModel == "GPON"
-    console.log("check if gpon...  "+parsedDeviceType);
+   // console.log("check if gpon...  "+parsedDeviceType);
     if(parsedDeviceType == "GPON") self.deviceType = "GPON";
     else self.deviceType = S(self.device.type) || "Unknown";
-    console.log("self.deviceType: "+self.deviceType);
+   // console.log("self.deviceType: "+self.deviceType);
     self.deviceVendor = S(self.device.vendor) || "Unknown";
     self.deviceModel = S(self.device.model) || "Unknown";
     self.modelOID = "";
@@ -1943,8 +1943,8 @@ var getDeviceInfo = __async__ (function(modelOID,hostname,ipaddress,popname,requ
     var POPDetails,secondPOPDetails ;
     var rightLinks = [], leftLinks = [];
     var tempLink  = null;
-
-    if(requester== "IIB") POPDetails = __await__ (POP.findOne( {shortName:popname,gov:parsedHostName.popGove}));
+    console.log("popname...>   "+popname + "  , gov..."+parsedHostName.popGove);
+    if(requester== "IIB") POPDetails = __await__ (POP.findOne( {shortName:parsedHostName.devicePOPName,gov:parsedHostName.popGove}));
     else if(popname && popname != "Unknown") POPDetails = __await__ (POP.findOne( {_id: mongoose.Types.ObjectId(popname)}));
     else POPDetails = checkPOPandCabinet(parsedHostName);
 
@@ -2170,8 +2170,11 @@ var getDeviceList = __async__ (function(){
 
         var deviceExtraDetails = {POPDetails:POPDetails,cabinetName:parsedHostName.devicePOPName,linkEnrichmentData:linkEnrichmentData,TeMSANData:TeMSANData,parsedDeviceType:parsedHostName.deviceType};
 
-        if (POPDetails) deviceList.push( new discoveredDevice(device.toObject(),deviceExtraDetails.linkEnrichmentData,deviceExtraDetails.cabinetName,
+        if (POPDetails) 
+            {
+                deviceList.push( new discoveredDevice(device.toObject(),deviceExtraDetails.linkEnrichmentData,deviceExtraDetails.cabinetName,
             deviceExtraDetails.POPDetails,deviceExtraDetails.TeMSANData,deviceExtraDetails.parsedDeviceType));    
+             }
         // else deviceList.push( new discoveredDevice(device.toObject(),linkEnrichmentData));
 
         if(deviceList.length % 250 == 0) process.stdout.write("=");
@@ -2505,8 +2508,8 @@ router.delete("/api/:hostname",  middleware.isAPIAuthenticated ,function(request
 //CREATE from NNM- add new device to DB through NM
 //http://213.158.183.140:8080/devices/api/OBORCB11-M99H-C-EG/104.236.166.95/public/OBORCB11
 router.post("/api/:hostname/:ipaddress/:communitystring/:popname", middleware.isAPIAuthenticated ,function(request, response) {
-
-    console.log(request)
+ console.log("IIB Request params:  \n")
+    console.log(request.params)
     indexRoutes.invalidateAPIsession();
     logger.info("received request from IIB");
 
