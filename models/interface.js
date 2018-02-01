@@ -79,7 +79,8 @@ var interfaceSchema = new mongoose.Schema({
     teMSANCode: String,
     teMngIP: String,
     teSector: String,
-    teDistrict: String
+    teDistrict: String,
+    newfield: {type: String,default: "Unknown"}
 
     // delete: {type: Boolean, default: false},//used to mark interface for deletion
     // author: {

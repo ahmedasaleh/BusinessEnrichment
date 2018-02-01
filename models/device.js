@@ -52,7 +52,20 @@ var deviceSchema = new mongoose.Schema({
     vendor: String,
     sysObjectID: String,
     sysName: String,
-    interfaces: [Interface.schema],
+    //interfaces: [Interface.schema],
+    interfaces: [
+            {id:{
+                type: mongoose.Schema.Types.ObjectId,
+                //ref is the name of the model
+                ref: "Interface"
+            },
+         ifIndex: Number,
+        createdAt:  Date,
+        lastSyncTime: Date,
+      lastUpdate: Date,
+        syncCycles:  Number}
+
+        ],
     teMSANCode: String,
     teMngIP: String,
     teSector: String,

@@ -48,7 +48,8 @@
 
             <div class="row text-left">
                 <div class="table-responsive">
-                    <table id="eventsTable" data-pagination="true" data-search="true"data-toggle="table" data-height="525" data-pagination="true" 
+                    <table id="eventsTable" data-pagination="true" data-search="true"data-toggle="table" data-height="525" 
+                    data-side-pagination="server" data-url="/devices/paginationinter" data-pagination="true" 
                     data-maintain-selected="true" data-search="true" data-show-refresh="true" data-show-toggle="true" data-show-columns="true" 
                     data-toolbar="#toolbar" data-single-select="true">
                         <thead>
@@ -127,95 +128,10 @@
                                 <th data-field="teDistrict"> teDistrict  </th>
                                 <th data-field="lastSyncTime" data-sortable="true">Last Sync Time</th>
                                 <th data-field="lastUpdate" data-sortable="true">Date Updated</th>
+                                <th data-field="newfield" data-sortable="true">new field</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <% device.interfaces.forEach(function(interface){ %>
-                                <tr>
-                                    <td><% %></td>
-                                    <td><%= interface._id %></td>
-                                    <td><%= interface.ifIndex %></td>
-                                    <td><%= interface.ifName %></a></td>
-                                    <td><%= interface.ifAlias %></td>
-                                    <td><%= interface.hostname %></a></td>
-                                    <td><%= interface.ipaddress %></td>
-                                    <td><%= interface.ifDescr %></td>
-                                    <td><%= interface.ifType %></td>
-                                    <td><%= interface.ifTypeStr %></td>
-                                    <td><%= interface.devVendor %></td>
-                                    <td><%= interface.devType %></td>
-                                    <td><%= interface.devModel %></td>
-                                    <td><%= interface.ifSpeed %></td>
-                                    <td><%= interface.ifHighSpeed %></td>
-                                    <td><%= interface.speedCat %></td>
-                                    <td><%= interface.adminStatus %></td>
-                                    <td><%= interface.operStatus %></td>
-                                    <td><%= interface.actualspeed %></td>
-                                    <td><%= interface.counters %></td>
-                                    <td><%= interface.type %></td>
-                                    <td><%= interface.specialService %></td>
-                                    <td><%= interface.secondPOP %></td>
-                                    <td><%= interface.secondHost %></td>
-                                    <td><%= interface.secondInterface %></td>
-                                    <td><%= interface.label %></td>
-                                    <td><%= interface.provisoFlag %></td>
-                                    <td><%= interface.noEnrichFlag %></td>
-                                    <td><%= interface.unknownFlag %></td>
-                                    <td><%= interface.pollInterval %></td>
-                                    <td><%= interface.sp_service %></td>
-                                    <td><%= interface.sp_provider %></td>
-                                    <td><%= interface.sp_termination %></td>
-                                    <td><%= interface.sp_bundleId %></td>
-                                    <td><%= interface.sp_linkNumber %></td>
-                                    <td><%= interface.sp_CID %></td>
-                                    <td><%= interface.sp_TECID %></td>
-                                    <td><%= interface.sp_subCable %></td>
-                                    <td><%= interface.sp_customer %></td>
-                                    <td><%= interface.sp_sourceCore %></td>
-                                    <td><%= interface.sp_destCore %></td>
-                                    <td><%= interface.sp_vendor %></td>
-                                    <td><%= interface.sp_speed %></td>
-                                    <td><%= interface.sp_pop %></td>
-                                    <td><%= interface.sp_fwType %></td>
-                                    <td><%= interface.sp_serviceType %></td>
-                                    <td><%= interface.sp_ipType %></td>
-                                    <td><%= interface.sp_siteCode %></td>
-                                    <td><%= interface.sp_connType %></td>
-                                    <td><%= interface.sp_emsOrder %></td>
-                                    <td><%= interface.sp_connectedBW %></td>
-                                    <td><%= interface.sp_dpiName %></td>
-                                    <td><%= interface.sp_portID %></td>
-                                    <td><%= interface.devPOP %></td>
-                                    <td><%= interface.devPOPLongName %></td>
-                                    <td><%= interface.devCabinet %></td>
-                                    <td><%= interface.devGov %></td>
-                                    <td><%= interface.devDistrict %></td>
-                                    <td><%= interface.devSector %></td>
-                                    <td><%= interface.devPOPType %></td>
-                                    <td><%= interface.ifSpeedText %></td>
-                                    <td><%= interface.ifHighSpeedText %></td>
-                                    <td><%= interface.sp_speedText %></td>
-                                    <td><%= interface.actualspeedText %></td>
-                                    <td><%= interface.isUpLink %></td>
-                                    <td><%= interface.adminStatus %></td>
-                                    <td><%= interface.operStatus %></td>
-                                    <td><%= interface.pop %></td>
-                                    <td><%= interface.teMSANCode %></td>
-                                    <td><%= interface.teMngIP %></td>
-                                    <td><%= interface.teSector %></td>
-                                    <td><%= interface.teDistrict %></td>
-                                    <td><% if(interface.lastSyncTime) { %>
-                                            <%= interface.lastSyncTime.toLocaleString() %>
-                                        <% } %>
-                                    </td>
-                                    <td>
-                                        <% if(interface.lastUpdate) { %>
-                                            <%= interface.lastUpdate.toLocaleString() %>
-                                        <% } %>
-                                    </td>
-                                </tr>
-                            <% }); %>
-                        </tbody>
+                        
                     </table>
                 </div>
             </div>

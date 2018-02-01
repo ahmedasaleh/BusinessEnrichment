@@ -24,7 +24,7 @@ router.get("/pagination?",middleware.isLoggedIn ,function(request, response) {
             Interface.count({}, function(err, interfacesCount) {
                 //ifName ifAlias ifIndex ifDescr ifType ifSpeed ifHighSpeed counters type specialService secondPOP secondHost secondInterface label provisoFlag noEnrichFlag sp_service sp_provider sp_termination sp_bundleId sp_linkNumber sp_CID sp_TECID sp_subCable sp_customer sp_sourceCore sp_destCore sp_vendor sp_speed sp_pop sp_fwType sp_serviceType sp_ipType sp_siteCode sp_connType sp_emsOrder sp_connectedBW sp_dpiName sp_portID unknownFlag adminStatus operStatus actualspeed createdAt lastUpdate hostname ipaddress pop 
                 // Interface.find({},'ifIndex ifName hostname ipaddress ifAlias ifDescr ifSpeed actualspeed ifType counters createdAt lastUpdate',{lean:true,skip:skip,limit:limit}, function(err, foundInterfaces) {
-                Interface.find({},'ifName ifAlias ifIndex ifDescr ifType ifSpeed ifHighSpeed counters type specialService secondPOP secondHost secondInterface label provisoFlag noEnrichFlag sp_service sp_provider sp_termination sp_bundleId sp_linkNumber sp_CID sp_TECID sp_subCable sp_customer sp_sourceCore sp_destCore sp_vendor sp_speed sp_pop sp_fwType sp_serviceType sp_ipType sp_siteCode sp_connType sp_emsOrder sp_connectedBW sp_dpiName sp_portID unknownFlag adminStatus operStatus actualspeed createdAt lastUpdate hostname ipaddress pop lastSyncTime ifSpeedText ifHighSpeedText sp_speedText actualspeedText devPOP devPOPLongName devCabinet devGov devDistrict devSector devPOPType',{lean:true,skip:skip,limit:limit}, function(err, foundInterfaces) {
+                Interface.find({},'newfield ifName ifAlias ifIndex ifDescr ifType ifSpeed ifHighSpeed counters type specialService secondPOP secondHost secondInterface label provisoFlag noEnrichFlag sp_service sp_provider sp_termination sp_bundleId sp_linkNumber sp_CID sp_TECID sp_subCable sp_customer sp_sourceCore sp_destCore sp_vendor sp_speed sp_pop sp_fwType sp_serviceType sp_ipType sp_siteCode sp_connType sp_emsOrder sp_connectedBW sp_dpiName sp_portID unknownFlag adminStatus operStatus actualspeed createdAt lastUpdate hostname ipaddress pop lastSyncTime ifSpeedText ifHighSpeedText sp_speedText actualspeedText devPOP devPOPLongName devCabinet devGov devDistrict devSector devPOPType',{lean:true,skip:skip,limit:limit}, function(err, foundInterfaces) {
                     if (err) {
                         logger.error(err);
                     }
@@ -52,7 +52,7 @@ router.get("/pagination?",middleware.isLoggedIn ,function(request, response) {
                 {ifDescr: new RegExp(searchQuery,'i')},
                 {type: new RegExp(searchQuery,'i')},
                 {ipaddress: new RegExp(searchQuery,'i')},
-                {hostname: new RegExp(searchQuery,'i')}]},'ifName ifAlias ifIndex ifDescr ifType ifSpeed ifHighSpeed counters type specialService secondPOP secondHost secondInterface label provisoFlag noEnrichFlag sp_service sp_provider sp_termination sp_bundleId sp_linkNumber sp_CID sp_TECID sp_subCable sp_customer sp_sourceCore sp_destCore sp_vendor sp_speed sp_pop sp_fwType sp_serviceType sp_ipType sp_siteCode sp_connType sp_emsOrder sp_connectedBW sp_dpiName sp_portID unknownFlag adminStatus operStatus actualspeed createdAt lastUpdate hostname ipaddress pop lastSyncTime ifSpeedText ifHighSpeedText sp_speedText actualspeedText devPOP devPOPLongName devCabinet devGov devDistrict devSector devPOPType',{lean:true,skip:skip,limit:limit}, function(err, foundInterfaces) {
+                {hostname: new RegExp(searchQuery,'i')}]},'newfield ifName ifAlias ifIndex ifDescr ifType ifSpeed ifHighSpeed counters type specialService secondPOP secondHost secondInterface label provisoFlag noEnrichFlag sp_service sp_provider sp_termination sp_bundleId sp_linkNumber sp_CID sp_TECID sp_subCable sp_customer sp_sourceCore sp_destCore sp_vendor sp_speed sp_pop sp_fwType sp_serviceType sp_ipType sp_siteCode sp_connType sp_emsOrder sp_connectedBW sp_dpiName sp_portID unknownFlag adminStatus operStatus actualspeed createdAt lastUpdate hostname ipaddress pop lastSyncTime ifSpeedText ifHighSpeedText sp_speedText actualspeedText devPOP devPOPLongName devCabinet devGov devDistrict devSector devPOPType',{lean:true,skip:skip,limit:limit}, function(err, foundInterfaces) {
                     if (err) {
                         logger.error(err);
                     }
@@ -173,6 +173,7 @@ router.delete("/:id", middleware.isLoggedIn,  function(request,response){
                     );                    
 
         }
+         request.flash("success"," Interface deleted Successfully...");
         response.redirect("back");
     });
 });
@@ -233,6 +234,7 @@ var copyObject = function(toObject,fromObject,override){
         if(fromObject.provisoFlag && override == true) toObject.provisoFlag = fromObject.provisoFlag;
         if(fromObject.pop && override == true) toObject.pop = fromObject.pop;
         if(fromObject.isUpLink && override == true) toObject.isUpLink = fromObject.isUpLink;
+        if(fromObject.newfield && override == true) toObject.newfield = fromObject.newfield;
         if(toObject.type == "NONE") toObject.type = null;
     };
 
@@ -280,15 +282,21 @@ router.put("/:id", middleware.isLoggedIn,function(request,response){
             foundInterface.lastUpdate = new Date();
             //save view
             // console.log("interface id after copy: "+foundInterface._id+" , ipaddress nad ifIndex: "+foundInterface.ipaddress+" / "+foundInterface.ifIndex);
-            foundInterface._id = constructInterfaceID(foundInterface.ipaddress,foundInterface.ifIndex);
+            foundInterface._id =foundInterface._id; //constructInterfaceID(foundInterface.ipaddress,foundInterface.ifIndex);
             // console.log("interface constructed id: "+foundInterface._id+" , ipaddress nad ifIndex: "+foundInterface.ipaddress+" / "+foundInterface.ifIndex);
+            // console.log("interface....... \n ");
+            // console.log(foundInterface);
             foundInterface.save();
             // foundInterface.save(function(error,intf){
             //     if(error) logger.error(error);
             // });
+
+           
+            
             
 
-            Device.findOne({hostname: foundInterface.hostname},function(error,foundDevice){
+           Device.findOne({hostname: foundInterface.hostname},function(error,foundDevice){
+
 
                 if(error){
                     request.flash("error","Can't find containing device");
@@ -296,12 +304,21 @@ router.put("/:id", middleware.isLoggedIn,function(request,response){
                     response.redirect("/devices/");
                 }
                 else{
-                    var subdoc = foundDevice.interfaces.id(request.params.id);
+
+                     //console.log("303-subdoc..... \n");
+                    //console.log(foundDevice);
+                    //console.log(foundDevice.interfaces.id);
+                   /* var subdoc = foundDevice.interfaces.id(request.params.id);
+                    console.log("\n request.params.id..... " +request.params.id);
+                     //var subdoc = (request.params.id);
                     setDeviceID(foundDevice._id);
                     copyObject(subdoc,request.body.interface,true);
                     subdoc.lastUpdate = new Date();
+                   console.log("303-subdoc..... \n");
+                    console.log(subdoc);
                     Device.findOneAndUpdate(
                         { "hostname": foundInterface.hostname, "interfaces._id": request.params.id },
+                        
                         { 
                             "$set": {
                                 "interfaces.$": subdoc
@@ -310,10 +327,17 @@ router.put("/:id", middleware.isLoggedIn,function(request,response){
                         function(err,doc) {
 
                         }
-                    );                    
+
+                    ); */  
+                     setDeviceID(foundDevice._id); 
+                    //  console.log(interfaceDeviceID);                
                    // console.log("finished updating interface, will redirect to its device with id: "+getDeviceID());
                     if(!interfaceDeviceID) response.redirect("/devices/");
-                    else response.redirect("/devices/"+interfaceDeviceID);
+                    else 
+                        {
+                            request.flash("success"," Interface Updated Successfully...");
+                            response.redirect("/devices/"+interfaceDeviceID);
+                        }
                 }
             });
         }
