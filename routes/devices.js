@@ -1102,7 +1102,6 @@ self.checkInterfaceInLinks = function(interfaceName){
                         self.deviceInterfaces.push(interface);
                         
                     });
-                    console.log("self.saveDevice: "+self.deviceType);
                     // Device.findByIdAndUpdate(device._id,{interfaces: self.deviceInterfaces, discovered: true, lastSyncTime: new Date(),deviceSyncCycles:self.deviceSyncCycles,
                     Device.findByIdAndUpdate(device._id,{interfaces: self.deviceInterfaces, discovered: true, lastSyncTime: new Date(),deviceSyncCycles:self.deviceSyncCycles,
                         type: self.deviceType,model: self.deviceModel,vendor: self.deviceVendor,sysObjectID: self.device.sysObjectID,sysName: self.sysName,pop:self.devicePOP,
@@ -1550,7 +1549,7 @@ self.checkInterfaceInLinks = function(interfaceName){
             }
             else if(!self.filteredInterestInterfacesMap.has(interface.ifIndex) && !(interface.lastUpdate instanceof Date)){
                 if(interface.lastSyncTime instanceof Date){
-                    if((self.getMinutesDifference(new Date(),interface.lastSyncTime) > SYNC_DIFFERENCE_IN_MINUTES) && (interface.syncCycles > syncCyclesThreshold)){
+                    if(((self.getMinutesDifference(new Date(),interface.lastSyncTime) * interface.syncCycles) > SYNC_DIFFERENCE_IN_MINUTES) && (interface.syncCycles > syncCyclesThreshold)){
                         self.interfaceRemoveList.push(interface);//we will remove directly
                         logger.warn("interface with index "+interface.ifIndex +" in device "+self.name+" will be decommissioned");
                     }
@@ -1722,7 +1721,6 @@ self.checkInterfaceInLinks = function(interfaceName){
                                 self.deviceVendor = foundModel.vendor;
                                 if(parsedDeviceType == "GPON") self.deviceType = "GPON";
                                 else self.deviceType  = foundModel.type;
-                                console.log("self.deviceType: "+self.deviceType);                                                             
                                 self.deviceModel = foundModel.model ;
                                 if(self.session) self.session.tableColumns(oids.ifTable.OID, oids.ifTable.Columns, self.maxRepetitions, self.ifTableResponseCb);
                                 else self.destroy();
@@ -1730,7 +1728,6 @@ self.checkInterfaceInLinks = function(interfaceName){
                             else{
                                 if(parsedDeviceType == "GPON") self.deviceType = "GPON";
                                 else self.deviceType = S(self.device.type);
-                                console.log("self.deviceType: "+self.deviceType);                                                             
                                 
                                 self.deviceVendor = S(self.device.vendor);
                                 self.deviceModel = S(self.device.model);
@@ -1850,54 +1847,11 @@ router.get("/paginationinterf?",middleware.isLoggedIn ,function(request, respons
         var skip  = parseInt(request.query.offset);
         // search string
         var searchQuery = request.query.search ;//: 'xe-'
-        //var hhh=JSON.stringify(pubdevice.device.interfaces).replace("[","{").replace("]","}");
-
-
-
-
-
-var hhh=(pubdevice.device.interfaces);
-
-        console.log(hhh);
-
-       /*   var totalStudents = hhh.length,
-        pageSize = 10,
-        pageCount = totalStudents/10,
-        currentPage = 1,
-       studentsArrays = [];
-            
-        
-         while (hhh.length > 0) {
-        studentsArrays.push(hhh.splice(0, pageSize));
-    }
-    if (typeof request.query.page !== 'undefined') {
-        currentPage = +request.query.limit;
-    }
-        hhh = studentsArrays[+currentPage - 1];
-        */
-
-       // var hhhh=JSON.parse(hhh);
-       //var hhhhh={oo:hhhh};
-        // console.log(hhhh.count);
       
         if(S(searchQuery).isEmpty()){
-          //  hhh.count({}, function(err, interfacesCount) {
-                //ifName ifAlias ifIndex ifDescr ifType ifSpeed ifHighSpeed counters type specialService secondPOP secondHost secondInterface label provisoFlag noEnrichFlag sp_service sp_provider sp_termination sp_bundleId sp_linkNumber sp_CID sp_TECID sp_subCable sp_customer sp_sourceCore sp_destCore sp_vendor sp_speed sp_pop sp_fwType sp_serviceType sp_ipType sp_siteCode sp_connType sp_emsOrder sp_connectedBW sp_dpiName sp_portID unknownFlag adminStatus operStatus actualspeed createdAt lastUpdate hostname ipaddress pop 
-                // Interface.find({},'ifIndex ifName hostname ipaddress ifAlias ifDescr ifSpeed actualspeed ifType counters createdAt lastUpdate',{lean:true,skip:skip,limit:limit}, function(err, foundInterfaces) {
-                //hhhhh.find({},'ifName ifAlias ifIndex ifDescr ifType ifSpeed ifHighSpeed counters type specialService secondPOP secondHost secondInterface label provisoFlag noEnrichFlag sp_service sp_provider sp_termination sp_bundleId sp_linkNumber sp_CID sp_TECID sp_subCable sp_customer sp_sourceCore sp_destCore sp_vendor sp_speed sp_pop sp_fwType sp_serviceType sp_ipType sp_siteCode sp_connType sp_emsOrder sp_connectedBW sp_dpiName sp_portID unknownFlag adminStatus operStatus actualspeed createdAt lastUpdate hostname ipaddress pop lastSyncTime',{lean:true,skip:skip,limit:limit}, function(err, foundInterfaces) {
-                  //  if (err) {
-                    //    logger.error(err);
-                   // }
-                    //else {
                         var data = "{\"total\":"+ hhh.length+",\"rows\":" + JSON.stringify(hhh)+"}";
                         response.setHeader('Content-Type', 'application/json');
-                        // response.send((foundInterfaces)); 
                         response.send(data);        
-                  //  }
-
-              //  });
-
-           // });
 
         } 
         else {
@@ -1937,13 +1891,11 @@ router.get("/", middleware.isLoggedIn , function(request, response) {
 
 var getDeviceInfo = __async__ (function(modelOID,hostname,ipaddress,popname,requester){
     var parsedHostName = Parser.parseHostname(S(hostname));
-    console.log(parsedHostName);
     var linkEnrichmentData;
     var deviceModelOID = __await__ (DeviceModel.findOne({oid: modelOID}));
     var POPDetails,secondPOPDetails ;
     var rightLinks = [], leftLinks = [];
     var tempLink  = null;
-    console.log("popname...>   "+popname + "  , gov..."+parsedHostName.popGove);
     if(requester== "IIB") POPDetails = __await__ (POP.findOne( {shortName:parsedHostName.devicePOPName,gov:parsedHostName.popGove}));
     else if(popname && popname != "Unknown") POPDetails = __await__ (POP.findOne( {_id: mongoose.Types.ObjectId(popname)}));
     else POPDetails = checkPOPandCabinet(parsedHostName);
@@ -1979,7 +1931,6 @@ var getDeviceInfo = __async__ (function(modelOID,hostname,ipaddress,popname,requ
     var TeMSANData = checkTEMSANInfo(ipaddress);
     var deviceExtraDetails = {POPDetails:POPDetails,cabinetName:parsedHostName.devicePOPName,deviceModelOID:deviceModelOID,linkEnrichmentData:linkEnrichmentData,
         TeMSANData:TeMSANData,parsedDeviceType:parsedHostName.deviceType};
-        console.log("getDeviceInfo: deviceExtraDetails.parsedDeviceType"+deviceExtraDetails.parsedDeviceType);
     return deviceExtraDetails;
 
 });
@@ -2017,11 +1968,9 @@ router.post("/",  middleware.isLoggedIn ,function(request, response) {
             }               
 
             modelOID = "."+modelOID;
-//console.log(popname);
             var discoDevice ;
             getDeviceInfo(modelOID,hostname,ipaddress,popname)
             .then(function(deviceExtraDetails){
-                    console.log("adding: "+deviceExtraDetails.parsedDeviceType);
             aDevice = {
                     hostname: hostname.trim(),
                     ipaddress: ipaddress.trim(),
@@ -2309,7 +2258,6 @@ router.get("/sync/:id",  middleware.isLoggedIn ,function(request, response) {
                 var discoDevice ;
                 getdeviceExtraDetails(foundDevice.hostname,foundDevice.ipaddress)
                 .then(function(deviceExtraDetails){
-                    console.log("2313-deviceExtraDetails.parsedDeviceType: "+deviceExtraDetails.parsedDeviceType);
                  discoDevice = new discoveredDevice(foundDevice,deviceExtraDetails.linkEnrichmentData,deviceExtraDetails.cabinetName,deviceExtraDetails.POPDetails,deviceExtraDetails.TeMSANData,
                     deviceExtraDetails.parsedDeviceType);
                     discoDevice.syncInterfaces();
@@ -2356,8 +2304,7 @@ router.get("/:id", middleware.isLoggedIn ,function(request,response){
         }
         else{
             //render show template with that device
-              pubdevice={device: foundDevice};
-             console.log(pubdevice.device.interfaces.length);
+            pubdevice={device: foundDevice};
             response.render("devices/show",{device: foundDevice,id:foundDevice._id});
         }
     });
@@ -2508,8 +2455,6 @@ router.delete("/api/:hostname",  middleware.isAPIAuthenticated ,function(request
 //CREATE from NNM- add new device to DB through NM
 //http://213.158.183.140:8080/devices/api/OBORCB11-M99H-C-EG/104.236.166.95/public/OBORCB11
 router.post("/api/:hostname/:ipaddress/:communitystring/:popname", middleware.isAPIAuthenticated ,function(request, response) {
- console.log("IIB Request params:  \n")
-    console.log(request.params)
     indexRoutes.invalidateAPIsession();
     logger.info("received request from IIB");
 
