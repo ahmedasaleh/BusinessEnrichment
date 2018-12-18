@@ -31,7 +31,25 @@ parserObj.parseHostname = function(hostname){
 		devicePOPName = nameFields[0];
 		popGove = nameFields[2];
 		// deviceType = nameFields[1]
-		deviceType = enrichmentData.deviceType[S(nameFields[1]).left(1).s] ;
+		if(S(nameFields[1]).length > 4){
+
+			if(S(nameFields[1]).length == 5){
+				deviceType = enrichmentData.deviceType[S(nameFields[1]).left(2).s] ;
+					
+			}
+
+			if(S(nameFields[1]).length == 6){
+				deviceType = enrichmentData.deviceType[S(nameFields[1]).left(3).s] ;
+				
+			}
+		}
+		else
+		{
+			deviceType = enrichmentData.deviceType[S(nameFields[1]).left(1).s] ;
+			
+		}	
+
+		//deviceType = enrichmentData.deviceType[S(nameFields[1]).left(1).s] ;
 		deviceVendor = enrichmentData.deviceVendor[S(nameFields[1]).right(1).s] ;
 
 		deviceDetails = {devicePOPName:devicePOPName,popGove:popGove,deviceType:deviceType,deviceVendor:deviceVendor}

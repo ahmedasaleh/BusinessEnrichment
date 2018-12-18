@@ -8,9 +8,70 @@ var async           = require('async');
 var S               = require('string');
 var responseHandler = require('express-response-handler');
 var logger          = require("../middleware/logger");
+var fs              = require('fs');
 var interfaceDeviceID;
 
 //Mongoose PAGINATION
+
+router.get("/upload", middleware.isLoggedIn ,function(request, response) {
+    var count=0;    
+    var filename='/home/bet/workspace/backup_DB_Test_Helal/all_links_updated_BET.csv';
+    fs.readFile(S(filename).s, 'utf8', function(err, contents) {
+   
+     var allTextLines = contents.split(/\r\n|\n/);
+     var headers = allTextLines[0].split(',');
+
+ 
+    
+    for(i=1 ; i<allTextLines.length-1 ; i++)
+    {
+        var hostname=allTextLines[i].split(',')[0];
+        var ipaddress=allTextLines[i].split(',')[1];
+        var ifname=allTextLines[i].split(',')[2];
+        var secondhostname=allTextLines[i].split(',')[3];
+        var secondpop=allTextLines[i].split(',')[4];
+        var type=allTextLines[i].split(',')[5];
+        var noEnrichFlag=allTextLines[i].split(',')[6];
+
+     
+    Interface.updateOne(
+                        { "hostname": hostname, "ipaddress": ipaddress,"ifName":ifname,"secondInterface":{ "$in":["Unknown", ""] }},
+                        { 
+                            "$set": {
+                                "secondHost": secondhostname,"secondPOP":secondpop,"type":type,"noEnrichFlag":noEnrichFlag,"secondInterface":""
+                            }
+                        },
+
+                        function(err,doc) {  
+                         if(err)
+                                     {
+                                        console.log(err)
+                                     }
+                                     else
+                                     {
+                                         // console.log(doc);
+                                            if(doc.nModified ==1)
+                                                {
+                                                    count++;
+
+                                                    console.log("no: "+count);
+                                                }
+                                     }          
+                        }
+                    );  
+
+                    //console.log(i);  
+        }
+
+        //console.log(count);
+    
+    });
+
+    request.flash("success","Successfully Interfaces Updated");
+    response.redirect("/interfaces");
+    
+});
+
 
 router.get("/pagination?",middleware.isLoggedIn ,function(request, response) {
         // limit is the number of rows per page

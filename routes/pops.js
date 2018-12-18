@@ -105,18 +105,24 @@ router.get("/new",middleware.isLoggedIn ,function(request, response) {
 router.post("/",middleware.isLoggedIn, function(request, response) {
     //console.log(request.body.pop)
     //get data from a form and add to POP array
-    var name = request.body.pop.name;
+   // var name = request.body.pop.name;
     var shortName = request.body.pop.shortName;
     var governorateAcro = request.body.pop.gov;
     var district = request.body.pop.district;
     var sector = request.body.pop.sector;
+    var pop_gov=shortName+"_"+governorateAcro;
+    var popType = request.body.pop.popType;
+    var longname=request.body.pop.longName;
 
     aPOP = {
-            name: name,
+            //name: name,
             shortName: shortName,
             gov: governorateAcro,
             district: district,
             sector: sector,
+             pop_gov: pop_gov,
+            popType:popType,
+            popLongName:longname,
             author: {id: request.user._id, email: request.user.email}
     };
 
@@ -163,6 +169,9 @@ router.get("/:id/edit",  function(request,response){
 //UPDATE POP ROUTE
 router.put("/:id", function(request,response){
     //find and update the correct POP
+var pop_gov=request.body.pop.shortName+"_"+request.body.pop.gov;
+    request.body.pop.pop_gov= pop_gov;
+
     POP.findByIdAndUpdate(request.params.id,request.body.pop,function(error,updatedPOP){
         if(error){
             console.log(error);
@@ -170,7 +179,9 @@ router.put("/:id", function(request,response){
         }
         else{
             //redirect somewhere (show page)
-            response.redirect("/pops/"+request.params.id);
+            //response.redirect("/pops/"+request.params.id);
+            request.flash("success","POP Updated Successfully  ");
+            response.redirect("/pops");
         }
     });
 });

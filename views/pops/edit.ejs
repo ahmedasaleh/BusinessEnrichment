@@ -10,21 +10,25 @@
                 <!--<use form-group to make spacing between components>-->
                 <div class="form-group">
                     <label for="shortName">POP Short Name</label>
-                    <input class="form-control" type="text" name="pop[shortName]" value="<%= pop.shortName %>" readonly>
+                    <input class="form-control" type="text" name="pop[shortName]" value="<%= pop.shortName %>" required="true" >
+                </div>
+                 <div class="form-group">
+                    <label for="popLongName">POP Long Name</label>
+                    <input class="form-control" type="text" name="pop[popLongName]" value="<%= pop.popLongName %>" required="true">
                 </div>
                 <div class="form-group">
                     <label for="popname">POP Type</label>
-                    <select class="form-control" type="text" name="pop[name]" value="<%= pop.popType %>">
-                    <% if(pop.popType === undefined) { %>
+                    <select class="form-control" type="text" name="pop[popType]" value="<%= pop.popType %>">
+                    <% if(pop.popType === undefined || pop.popType == "Unknown" || (pop.popType == null)) { %>
                         <option value="Access" selected="selected">Access</option>
                         <option value="Core">Core</option>
                         <option value="Distribution">Distribution</option>
                         <option value="Cabinet">Cabinet</option>
-                    <% } else if(pop.popType == null) {%>
-                        <option value="Access" selected="selected">Access</option>
-                        <option value="Core">Core</option>
-                        <option value="Distribution">Distribution</option>
-                        <option value="Cabinet">Cabinet</option>
+                    // <% } else if(pop.popType == null) {%>
+                    //     <option value="Access" selected="selected">Access</option>
+                    //     <option value="Core">Core</option>
+                    //     <option value="Distribution">Distribution</option>
+                    //     <option value="Cabinet">Cabinet</option>
                     <% } else if(pop.popType == "Access") {%>
                         <option value="Access" selected="selected">Access</option>
                         <option value="Core">Core</option>
@@ -66,10 +70,10 @@
                     <label for="sector">Sector</label>
                     <input class="form-control" type="text" name="pop[sector]" value="<%= pop.sector %>">
                 </div>
-                <div class="form-group">
+               <!--  <div class="form-group">
                     <label for="sector">Parent POP</label>
                     <input class="form-control" type="text" name="pop[parentPOP]" value="<%= pop.parentPOP %>">
-                </div>
+                </div> -->
                 <div class="form-group">
                     <!--<btn-block will let the button takes width of the 2 inputs>-->
                     <button class="btn btn-lg btn-primary btn-block">Submit!</button>

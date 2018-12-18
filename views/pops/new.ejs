@@ -9,7 +9,10 @@
             <form method="POST" action="/pops">
                 <!--<use form-group to make spacing between components>-->
                 <div class="form-group">
-                    <input class="form-control" type="text" name="pop[shortName]" placeholder="Short Name">
+                    <input class="form-control" type="text" name="pop[shortName]" placeholder="Short Name" required="true">
+                </div>
+                <div class="form-group">
+                    <input class="form-control" type="text" name="pop[longName]" placeholder="Long Name" required="true">
                 </div>
                 <div class="form-group">
                     <select class="form-control" type="text" name="pop[popType]" placeholder="POP Type">
@@ -21,8 +24,8 @@
                 </div>
                 <div class="form-group">
                  <label for="new-pop-governorate-name">Gov Name</label>
-                    <select id="new-pop-governorate-name"  class="form-control select2-single" type="text" name="pop[gov]" >
-                    <option value="Unknown"></option>
+                    <select id="new-pop-governorate-name"  class="form-control select2-single" type="text" name="pop[gov]" required="true">
+                    <option value="">Unknown</option>
                     </select>
                 </div>
                 <div class="form-group">

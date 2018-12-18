@@ -64,7 +64,7 @@ app.use(flash());
 app.use(bodyParser.urlencoded({extended: true}));
 mongoose.Promise = global.Promise; //to vercome the warning about Mongoose mpromise
 
-mongoose.connect("mongodb://localhost/"+process.env.PROD_DB, {useMongoClient: true,keepAlive:300000,connectTimeoutMS:30000});
+mongoose.connect("mongodb://localhost/"+process.env.PROD_DB, {useMongoClient: true,keepAlive:500000,connectTimeoutMS:70000});
 
 //Passport configuration
 app.use(require("express-session")({
@@ -113,7 +113,7 @@ process.on('uncaughtException', function (err) {
 
 
 //sec min hour day month weekday
-new CronJob('0 0 0 */2 * *', function() {
+new CronJob('0 0 20 */2 * *', function() {
     console.log('Automatic sync for devices runs every 48 hrs');
     console.log("current syncing time is: "+ new Date());
     if(deviceRoutes.bulkSyncInProgress == false) {

@@ -2,8 +2,13 @@
 // 'ipaddress','ifIndex','hostname','ifType','ifName','ifDescr','ifAlias','ifSpeed','ifHighSpeed','ActualSpeed','counters','type','specialService','pop','2ndpop','2ndhost','2ndinterface','label','provisoFlag','sp_service','sp_provider','sp_termination','sp_bundleId','sp_linkNumber','sp_CID','sp_TECID','sp_subCable','sp_customer','sp_sourceCore','sp_destCore','sp_vendor','sp_speed','sp_pop','sp_fwType','sp_serviceType','sp_ipType','sp_siteCode','sp_connType','sp_emsOrder','sp_connectedBW','sp_dpiName','sp_portID','unknownFlag'
 // ];
 var bulkDeviceImportSchemaKeyList = ['ipaddress','hostname','community'];
-var deviceTypeList = {'R':"Router", 'S':"Switch", 'A':"Access", 'D':"DSLAM", 'M':"MSAN", 'G':"GPON"};
-var deviceVendorList = {'C':"Cisco", 'J':"Juniper", 'H':"Huawei", 'A':"Alcatel", 'B':"Brocade", 'Z':"ZTE"};
+//var deviceTypeList = {'R':"Router", 'S':"Switch", 'A':"Access", 'D':"DSLAM", 'M':"MSAN", 'G':"GPON"};
+//var deviceVendorList = {'C':"Cisco", 'J':"Juniper", 'H':"Huawei", 'A':"Alcatel", 'B':"Brocade", 'Z':"ZTE"};
+
+var deviceTypeList = {'R':"Router", 'S':"Switch", 'A':"Access", 'D':"DSLAM", 'M':"MSAN", 'G':"GPON", 'WF':'WIFI' , 'PSM':'DPI', 'PRE':'DPI', 'PIC':'DPI'};
+var deviceVendorList = {'C':"Cisco", 'J':"Juniper", 'H':"Huawei", 'A':"Alcatel", 'B':"Brocade", 'Z':"ZTE" , 'P':'Procera'};
+
+
 var interfaceAllowedFields = ['ifName','ifAlias','ifIndex','ifDescr','ifType','ifTypeStr','ifSpeed','ifHighSpeed','counters','type','specialService','secondPOP',
 'secondHost','secondInterface','label','provisoFlag','noEnrichFlag','sp_service','sp_provider','sp_termination','sp_bundleId','sp_linkNumber','sp_CID','sp_TECID',
 'sp_subCable','sp_customer','sp_sourceCore','sp_destCore','sp_vendor','sp_speed','sp_pop','sp_fwType','sp_serviceType','sp_ipType','sp_siteCode','sp_connType',
